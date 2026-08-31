@@ -16,7 +16,7 @@ Installing the Fathom server provides the `fathom-server` command. Currently, yo
 
 ## Compatibility
 
-This application requires Python **3.10** or higher. It is only officially supported and tested with *CPython*.
+This application requires Python **3.11** or higher. It is only officially supported and tested with *CPython*.
 
 Even though Fathom is written in pure Python, we only officially support **Debian-based GNU/Linux** distributions and **Windows**. Fathom might run on other platforms as well, however, we do not provide official support for that.
 

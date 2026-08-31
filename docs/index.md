@@ -23,7 +23,7 @@ Fathom simplifies the documentation release workflow by:
 
 ### Requirements
 
-- Python 3.10 or higher
+- Python 3.11 or higher
 
 ## Configuration
 

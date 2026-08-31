@@ -20,7 +20,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: 'pip'
 
       - name: Install Dependencies
@@ -48,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: 'pip'
 
       - name: Install Dependencies
@@ -67,7 +67,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python_version: ["3.10", "3.14"]
+        python_version: ["3.11", "3.14"]
         os: ["ubuntu-latest", "windows-latest"]
         include:
           - os: ubuntu-latest

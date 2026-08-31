@@ -8,6 +8,9 @@ requires = [
 
 build-backend = "setuptools.build_meta"
 
+[tool.pyright]
+pythonVersion = "3.11"
+
 [tool.coverage.run]
 branch = true
 data_file = "build/coverage"

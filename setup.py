@@ -96,6 +96,6 @@ setup(
         "Operating System :: OS Independent"
     ],
     entry_points=entry_points,
-    python_requires=">=3.10",
+    python_requires=">=3.11",
     install_requires=install_requires,
 )

@@ -29,7 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: 'Performing static type checking'
-        run: bash test.sh --types
+        run: bash test.sh --no-virtualenv --types
 
   test-lint:
     name: 'Lint'
@@ -57,7 +57,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: 'Perform Static Code Analysis'
-        run: bash test.sh --lint
+        run: bash test.sh --no-virtualenv --lint
 
   test-run-tests:
     name: '${{ matrix.os_label }}, ${{ matrix.python_version }}'
@@ -96,10 +96,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: 'Execute Unit Tests'
-        run: bash test.sh --unit
+        run: bash test.sh --no-virtualenv --unit
 
       - name: 'Execute Integration Tests'
-        run: bash test.sh --integration
+        run: bash test.sh --no-virtualenv --integration
 
       - name: 'Execute Functionality Tests'
-        run: bash test.sh --functionality
+        run: bash test.sh --no-virtualenv --functionality

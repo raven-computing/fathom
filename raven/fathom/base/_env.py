@@ -40,7 +40,8 @@ class HostSystemEnvironment(SystemEnvironment):
         except OSError:
             if pwd is not None:
                 if hasattr(pwd, "getpwuid") and hasattr(os, "getuid"):
-                    entry = pwd.getpwuid(os.getuid())
+                    # pylint: disable=no-member
+                    entry = pwd.getpwuid(os.getuid()) # type: ignore
                     return entry.pw_name or None
 
             return os.environ.get("USER") or os.environ.get("LOGNAME") or None

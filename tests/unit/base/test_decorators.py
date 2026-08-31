@@ -32,6 +32,7 @@ FLAG_SINGLETON_CLASS_INSTANTIATED = False
 class _SingletonClass:
 
     def __init__(self):
+        # pylint: disable=global-statement
         global FLAG_SINGLETON_CLASS_INSTANTIATED
         if FLAG_SINGLETON_CLASS_INSTANTIATED:
             raise AssertionError(

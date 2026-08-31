@@ -51,10 +51,11 @@ if platform.system() == "Windows":
     _HOST_USER_NAME = os.getlogin()
     _HOST_GROUP_NAME = os.getlogin()
 else:
-    import pwd
-    import grp
+    import pwd # pylint: disable=import-error
+    import grp # pylint: disable=import-error
     IS_OS_WINDOWS = False
     PATH_SEP = "/"
+    # pylint: disable=no-member
     _HOST_USER_UID = os.getuid() # type: ignore
     _HOST_USER_GID = os.getgid() # type: ignore
     _HOST_USER_NAME = pwd.getpwuid(_HOST_USER_UID).pw_name # type: ignore
@@ -345,7 +346,8 @@ class TestFileSystem(FileSystemIntegrationTestCase):
 
     @skipIfNotOnLinux("Cannot use chmod to make file non-writable on Windows")
     def test_creating_dir_tree_when_parent_cannot_be_created_raises_ex(self):
-        if os.getuid() == 0:
+        # pylint: disable=no-member
+        if os.getuid() == 0: # type: ignore
             self.skipTest("Permission restrictions do not apply to root user")
 
         path = self.create_path("parent-a/parent-b/target-dir")

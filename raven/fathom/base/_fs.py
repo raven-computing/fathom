@@ -183,7 +183,10 @@ class HostFileSystem(FileSystem):
     def check_exists(self, path, check_symlink=True):
         path = Path(path)
         try:
-            return path.exists(follow_symlinks=check_symlink)
+            if not check_symlink:
+                return os.path.lexists(path)
+
+            return path.exists()
         except OSError as error:
             raise FileIOException(
                 str(path),
@@ -636,7 +639,7 @@ class HostFileSystem(FileSystem):
     def create_regular_file(self, path):
         path = Path(path)
         try:
-            if path.exists(follow_symlinks=False):
+            if os.path.lexists(path):
                 f_type = self.get_type(path, follow_symlinks=False)
                 if f_type != FileType.REGULAR_FILE:
                     f_type = str(f_type).lower().replace("_", " ")
@@ -748,7 +751,7 @@ class HostFileSystem(FileSystem):
             if no_symlinks:
                 return path  # Does not contain any symlinks
 
-            if not resolved_path.exists(follow_symlinks=True):
+            if not resolved_path.exists():
                 # Broken symlink detection
                 parts = normalized_path.parts
                 span = Path(parts[0])
@@ -777,7 +780,7 @@ class HostFileSystem(FileSystem):
 
                         seen_link_targets.add(link_target)
 
-                        if not link_target.exists(follow_symlinks=False):
+                        if not os.path.lexists(link_target):
                             raise SymbolicLinkResolutionException(
                                 str(source_path),
                                 "Failed to resolve symbolic links "
@@ -1077,7 +1080,7 @@ class HostFileSystem(FileSystem):
         return True
 
     def _check_is_hidden_linux(self, path):
-        if not path.exists(follow_symlinks=True):
+        if not path.exists():
             raise FileNotFoundException(
                 str(path),
                 "Failed to check if file is hidden. "

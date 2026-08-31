@@ -298,7 +298,8 @@ class FileSystemIntegrationTestCase(TestCase):
         Raises:
             AssertionError: If the given file does exist.
         """
-        if self.create_path(file).exists(follow_symlinks=False):
+        path = self.create_path(file)
+        if os.path.lexists(path):
             raise AssertionError(
                 f"Expected that file '{file}' does not exist"
             )

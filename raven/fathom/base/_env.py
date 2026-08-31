@@ -15,6 +15,7 @@
 """Provides an implementation of the `SystemEnvironment` interface."""
 
 import os
+import pwd
 import sys
 import platform
 import locale
@@ -30,7 +31,14 @@ class HostSystemEnvironment(SystemEnvironment):
         return os.getuid() if hasattr(os, "getuid") else None # type: ignore
 
     def get_user_name(self):
-        return os.getlogin() or None
+        try:
+            return os.getlogin() or None
+        except OSError:
+            if hasattr(pwd, "getpwuid") and hasattr(os, "getuid"):
+                entry = pwd.getpwuid(os.getuid())
+                return entry.pw_name or None
+
+            return os.environ.get("USER") or os.environ.get("LOGNAME") or None
 
     def get_home_path(self):
         home = os.environ.get("HOME")

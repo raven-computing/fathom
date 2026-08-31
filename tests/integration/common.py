@@ -165,7 +165,7 @@ class FileSystemIntegrationTestCase(TestCase):
         super().setUpClass()
         FileSystemIntegrationTestCase.TEST_DIR_PATH = Path(
             tempfile.mkdtemp(prefix="fathom-tests-")
-        )
+        ).resolve()
         FileSystemIntegrationTestCase.TEST_DIR_CNT = 0
 
     @classmethod

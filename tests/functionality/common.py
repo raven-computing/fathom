@@ -285,6 +285,7 @@ class TestCase(FathomTestCase):
 
         env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
         env.env_vars["XDG_STATE_HOME"] = ""
+        env.env_vars["XDG_CONFIG_HOME"] = ""
         self._client = ClientDriver(env)
 
     def assertClientSuccess(self, msg: Optional[str] = None):

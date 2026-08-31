@@ -60,7 +60,7 @@ jobs:
         run: bash test.sh --no-virtualenv --lint
 
   test-run-tests:
-    name: '${{ matrix.os_label }}, ${{ matrix.python_version }}'
+    name: '${{ matrix.os_label }}, Python ${{ matrix.python_version }}'
     runs-on: ${{ matrix.os }}
     needs: test-lint
     timeout-minutes: 10

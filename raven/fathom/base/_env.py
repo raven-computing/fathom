@@ -15,11 +15,15 @@
 """Provides an implementation of the `SystemEnvironment` interface."""
 
 import os
-import pwd
 import sys
 import platform
 import locale
 import pathlib
+
+try:
+    import pwd
+except ImportError:
+    pwd = None
 
 from raven.fathom.base.system import SystemEnvironment, OperatingSystem
 
@@ -34,9 +38,10 @@ class HostSystemEnvironment(SystemEnvironment):
         try:
             return os.getlogin() or None
         except OSError:
-            if hasattr(pwd, "getpwuid") and hasattr(os, "getuid"):
-                entry = pwd.getpwuid(os.getuid())
-                return entry.pw_name or None
+            if pwd is not None:
+                if hasattr(pwd, "getpwuid") and hasattr(os, "getuid"):
+                    entry = pwd.getpwuid(os.getuid())
+                    return entry.pw_name or None
 
             return os.environ.get("USER") or os.environ.get("LOGNAME") or None
 

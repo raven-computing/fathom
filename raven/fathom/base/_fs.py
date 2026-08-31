@@ -135,6 +135,15 @@ def _get_account_name_win32(path: str, security_info: int) -> Optional[str]:
 
     return name_buf.value
 
+def _has_symlink_component(path: Path) -> bool:
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            return True
+
+    return False
+
 def _host_os() -> OperatingSystem:
     global _HOST_OS  # pylint: disable=global-statement
     if _HOST_OS is None:
@@ -501,10 +510,13 @@ class HostFileSystem(FileSystem):
         o_x = stat.S_IXOTH if other.can_execute else 0
         other = o_r | o_w | o_x
         try:
-            path.chmod(
-                user | group | other,
-                follow_symlinks=False
-            )
+            if _host_os() == OperatingSystem.MS_WINDOWS:
+                path.chmod(user | group | other)
+            else:
+                path.chmod(
+                    user | group | other,
+                    follow_symlinks=False
+                )
         except OSError as error:
             msg = (
                 f"Failed to set file permission to {permissions} "
@@ -592,6 +604,10 @@ class HostFileSystem(FileSystem):
                 name = _get_account_name_win32(
                     str(path), _GROUP_SECURITY_INFORMATION
                 )
+                if not name or name == "None":
+                    name = _get_account_name_win32(
+                        str(path), _OWNER_SECURITY_INFORMATION
+                    )
             except OSError as error:
                 self._checked_io_err(path, error, msg)
                 raise FileQueryException(
@@ -744,12 +760,8 @@ class HostFileSystem(FileSystem):
         try:
             resolved_path = source_path.resolve(strict=False)
             normalized_path = Path(os.path.normpath(source_path)).absolute()
-            no_symlinks = (
-                normalized_path == resolved_path
-                and not source_path.is_symlink()
-            )
-            if no_symlinks:
-                return path  # Does not contain any symlinks
+            if not _has_symlink_component(normalized_path):
+                return path
 
             if not resolved_path.exists():
                 # Broken symlink detection

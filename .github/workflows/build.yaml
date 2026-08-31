@@ -1,0 +1,56 @@
+name: 'Build'
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build-packages:
+    name: 'Packages'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v6
+
+      - name: Install Dependencies
+        run: python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 'Build'
+        run: bash build.sh
+
+      - name: 'Upload Build Artifacts'
+        uses: actions/upload-artifact@v6
+        with:
+          name: fathom-build
+          path: build/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  build-docs:
+    name: 'Docs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v6
+
+      - name: Install Dependencies
+        run: python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 'Build Documentation'
+        run: bash build.sh --docs
+
+      - name: 'Upload Build Artifacts'
+        uses: actions/upload-artifact@v6
+        with:
+          name: fathom-build-docs
+          path: build/site/
+          if-no-files-found: error
+          retention-days: 1

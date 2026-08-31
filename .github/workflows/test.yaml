@@ -17,8 +17,15 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
       - name: Install Dependencies
-        run: python -m pip install --upgrade pip
+        run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: 'Performing static type checking'
@@ -38,8 +45,15 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v6
 
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
       - name: Install Dependencies
-        run: python -m pip install --upgrade pip
+        run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: 'Perform Static Code Analysis'
@@ -77,7 +91,8 @@ jobs:
           cache: 'pip'
 
       - name: Install Dependencies
-        run: python -m pip install --upgrade pip
+        run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: 'Execute Unit Tests'

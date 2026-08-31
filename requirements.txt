@@ -1,0 +1,14 @@
+build==1.5.0
+setuptools==84.0.0
+wheel==0.48.0
+pylint==4.0.7
+pyright[nodejs]==1.1.411
+coverage==7.15.4
+twine==7.0.0
+mkdocs==1.6.1
+mkdocs-material==9.7.6
+mkdocstrings==1.0.0
+mkdocstrings-python==2.0.1
+CherryPy==18.10.0
+jsonschema==4.26.0
+peewee==4.4.0

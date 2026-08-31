@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Fathom Client",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "raven.fathom.client",
+      "args": [
+        "deploy"
+      ]
+    },
+    {
+      "name": "Debug Fathom Server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "raven.fathom.server",
+      "justMyCode": false
+    },
+    {
+      "name": "Debug Fathom Tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "tests.unit.server.${fileBasenameNoExtension}",
+      "args": [],
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}",
+      }
+    },
+  ]
+}

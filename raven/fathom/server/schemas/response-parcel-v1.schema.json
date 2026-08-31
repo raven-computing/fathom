@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raven-computing.com/fathom/response-parcel-v1.schema.json",
+  "title": "Client Response Parcel",
+  "description": "A response sent by a Fathom server back to a Fathom client.",
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string"
+    },
+    "errors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "The numeric error code.",
+            "type": "integer"
+          },
+          "message": {
+            "description": "The descriptive error message.",
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"]
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "The numeric warning code.",
+            "type": "integer"
+          },
+          "message": {
+            "description": "The descriptive warning message.",
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"]
+      }
+    },
+    "serverInfo": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "description": "The web domain under which the server operates.",
+          "type": "string"
+        },
+        "remainingCapacity": {
+          "description": "The remaining storage capacity of the server, in number of bytes.",
+          "type": "number"
+        }
+      }
+    },
+    "deploymentAuthorization": {
+      "type": "object",
+      "properties": {
+        "isGranted": {
+          "type": "boolean"
+        },
+        "token": {
+          "type": "string"
+        },
+        "expirationTime": {
+          "type": "string"
+        },
+        "statusCode": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "deploymentResult": {
+    "type": "object",
+    "properties": {
+      "isSuccessful": {
+        "type": "boolean"
+      },
+      "message": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,42 @@
+site_name: "Fathom"
+site_description: "Manage the Release of Documentation"
+site_author: "Raven Computing"
+copyright: "Copyright © 2026 Raven Computing"
+docs_dir: "."
+site_dir: "../build/site"
+# use_directory_urls: false
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/brightness-6
+        name: Switch to dark mode
+
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+extra:
+  generator: false
+
+plugins:
+- search
+- mkdocstrings:
+    enable_inventory: true
+    handlers:
+      python:
+        paths: [../src/client]
+        options:
+          docstring_style: google
+          show_source: false
+          docstring_options:
+            returns_named_value: false

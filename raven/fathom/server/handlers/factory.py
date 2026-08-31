@@ -1,0 +1,64 @@
+# Copyright (C) 2026 Raven Computing
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Factories for server `ActionHandler` objects."""
+
+from typing import Optional
+
+from raven.fathom.base import ClientRequest, Interaction
+from raven.fathom.base import SystemClock
+from raven.fathom.server.config import ConfigurationManager
+from raven.fathom.server.security import DeploymentAuthorizer
+from raven.fathom.server.deployment import DeploymentManager
+
+from .handler import ActionHandler
+from .server_info import ServerInfoHandler
+from .deployment_intent import DeploymentIntentHandler
+from .deployment_transaction import DeploymentTransactionHandler
+
+
+class HandlerFactory:
+    """Factory class for creating `ActionHandler` objects."""
+
+    def create_action_handler_for(
+        self,
+        request: ClientRequest
+    ) -> Optional[ActionHandler]:
+        """Creates a new `ActionHandler` object capable of processing
+        the specified client request.
+
+        Args:
+            request (ClientRequest): The client request to create
+                an action handler for.
+
+        Returns:
+            ActionHandler: An `ActionHandler` implementation suitable
+                for the specified request, or `None` if no suitable handler
+                is available.
+        """
+        handler = None
+        client_action = request.action
+        if client_action == Interaction.QUERY_SERVER_INFO:
+            handler = ServerInfoHandler()
+        elif client_action == Interaction.REQUEST_DEPLOYMENT:
+            handler = DeploymentIntentHandler(
+                DeploymentAuthorizer(SystemClock())
+            )
+        elif client_action == Interaction.TRANSACT_DEPLOYMENT:
+            handler = DeploymentTransactionHandler(
+                DeploymentAuthorizer(SystemClock()),
+                DeploymentManager(ConfigurationManager().get_server_config())
+            )
+
+        return handler

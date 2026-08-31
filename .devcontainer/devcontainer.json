@@ -1,0 +1,29 @@
+{
+  "name": "Fathom",
+  "build": {
+    "dockerfile": "../.docker/Dockerfile-devel",
+    "context": "..",
+    "args": {
+      "UID": "${localEnv:A_DOCKER_CONTAINER_UID:0}",
+      "GID": "${localEnv:A_DOCKER_CONTAINER_GID:0}",
+      "DWORKDIR": "${localEnv:A_DOCKER_CONTAINER_WORKDIR:/root/fathom}"
+    }
+  },
+  "workspaceMount": "source=${localWorkspaceFolder},target=${localEnv:A_DOCKER_CONTAINER_WORKDIR:/root/fathom},type=bind,consistency=cached",
+  "workspaceFolder": "${localEnv:A_DOCKER_CONTAINER_WORKDIR:/root/fathom}",
+  "updateRemoteUserUID": false,
+  "overrideCommand": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-vscode.hexeditor"
+      ],
+      "settings": {
+        "python.testing.unittestEnabled": true,
+        "python.testing.pytestEnabled": false
+      }
+    }
+  }
+}

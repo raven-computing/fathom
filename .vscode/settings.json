@@ -1,0 +1,14 @@
+{
+  "python.testing.unittestArgs": [
+    "--verbose",
+    "--top-level-directory",
+    "${workspaceFolder}",
+    "--start-directory",
+    "./tests/unit",
+    "--pattern",
+    "test_*.py"
+  ],
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": true,
+  "pylint.args": []
+}

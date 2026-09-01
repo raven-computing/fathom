@@ -297,6 +297,14 @@ if [[ $ARG_LINT == true ]]; then
       lint_status=$next_lint_status;
     fi
   fi
+  if [[ $run_all == true ]]; then
+    logI "Performing static code analysis of the test suite";
+    pylint --source-roots "$PWD" --disable duplicate-code "tests";
+    next_lint_status=$?;
+    if (( $lint_status == 0 )); then
+      lint_status=$next_lint_status;
+    fi
+  fi
   if (( $lint_status == 0 )); then
     logI "No issues found in source files";
   else

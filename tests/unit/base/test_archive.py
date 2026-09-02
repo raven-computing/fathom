@@ -243,7 +243,7 @@ class TestArchiveFile(TestCase):
     def test_path_property_is_readonly(self):
         archive = ArchiveFile(self.file_transient)
         with self.assertRaises(AttributeError):
-            archive.file.path = "/other/file/state/transient" # type: ignore
+            archive.file = File("/other/file/state/transient") # type: ignore
 
     def test_file_format_property_is_set(self):
         archive = ArchiveFile(self.file_packed)

@@ -20,6 +20,7 @@ from raven.fathom.base import SystemEnvironment
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
+from raven.fathom.base.context import ENV_VAR_FATHOM_DEBUG, _ENV_VAR_ENABLED
 from raven.fathom.base.logging import LogManager, LogLevel
 from raven.fathom.base.logging import LogFormatterCLI
 from raven.fathom.base.logging import LogHandlerCLI, LogHandlerFile
@@ -41,6 +42,11 @@ def _determine_log_level(args: "ArgumentsCLI") -> LogLevel:
     log_debug = args.debug
     if log_debug:
         log_level = LogLevel.DEBUG
+    else:
+        env = SystemEnvironment.instance()
+        log_debug = env.get_variable(ENV_VAR_FATHOM_DEBUG)
+        if log_debug == _ENV_VAR_ENABLED:
+            log_level = LogLevel.DEBUG
 
     return log_level
 

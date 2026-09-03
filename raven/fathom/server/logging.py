@@ -22,8 +22,9 @@ from typing import Final
 
 import cherrypy
 
-from raven.fathom.base import File
+from raven.fathom.base import File, SystemEnvironment
 from raven.fathom.base import ApplicationContext, ApplicationMode
+from raven.fathom.base.context import ENV_VAR_FATHOM_DEBUG, _ENV_VAR_ENABLED
 from raven.fathom.base.logging import LogManager, LogLevel
 from raven.fathom.base.logging import LogFormatterCLI
 from raven.fathom.base.logging import LogHandlerCLI, LogHandlerFile
@@ -69,6 +70,11 @@ def _setup_server_application_logging(args):
     log_debug = args.debug
     if log_debug:
         log_level = LogLevel.DEBUG
+    else:
+        env = SystemEnvironment.instance()
+        log_debug = env.get_variable(ENV_VAR_FATHOM_DEBUG)
+        if log_debug == _ENV_VAR_ENABLED:
+            log_level = LogLevel.DEBUG
 
     command = args.command
     handlers: list[logging.Handler] = []

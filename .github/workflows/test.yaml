@@ -76,9 +76,6 @@ jobs:
           - os: windows-latest
             os_label: Windows
 
-    env:
-      FATHOM_DEBUG: ${{ runner.debug }}
-
     defaults:
       run:
         shell: bash
@@ -106,3 +103,5 @@ jobs:
 
       - name: 'Execute Functionality Tests'
         run: bash test.sh --no-virtualenv --functionality
+        env:
+          FATHOM_DEBUG: ${{ runner.debug }}

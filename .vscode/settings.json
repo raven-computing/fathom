@@ -1,4 +1,6 @@
 {
+  "python.testing.pytestEnabled": false,
+  "python.testing.unittestEnabled": true,
   "python.testing.unittestArgs": [
     "--verbose",
     "--top-level-directory",
@@ -8,10 +10,8 @@
     "--pattern",
     "test_*.py"
   ],
-  "python.testing.pytestEnabled": false,
-  "python.testing.unittestEnabled": true,
+  "python.experiments.enabled": false,
   "pylint.enabled": true,
-  "pylint.importStrategy": "fromEnvironment",
   "pylint.args": [
     "--source-roots",
     "${workspaceFolder}"

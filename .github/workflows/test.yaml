@@ -76,6 +76,9 @@ jobs:
           - os: windows-latest
             os_label: Windows
 
+    env:
+      FATHOM_DEBUG: ${{ runner.debug }}
+
     defaults:
       run:
         shell: bash

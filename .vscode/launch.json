@@ -8,7 +8,8 @@
       "module": "raven.fathom.client",
       "args": [
         "deploy"
-      ]
+      ],
+      "justMyCode": true
     },
     {
       "name": "Debug Fathom Server",
@@ -25,7 +26,8 @@
       "args": [],
       "env": {
         "PYTHONPATH": "${workspaceFolder}",
-      }
+      },
+      "justMyCode": true
     },
   ]
 }

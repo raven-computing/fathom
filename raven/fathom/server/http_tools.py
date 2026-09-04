@@ -105,7 +105,6 @@ class _RequestProcessorHTTP(cherrypy.Tool):
                 request.header_list[i] = (name, redacted_auth_val)
                 break
 
-        auth_header = ClientAuthenticationHeader(auth_header)
         content_type = request.headers.get("Content-Type", "")
         if content_type != _INTERACTION_CONTENT_TYPE:
             raise cherrypy.HTTPError(
@@ -125,7 +124,9 @@ class _RequestProcessorHTTP(cherrypy.Tool):
                 data,
                 ParcelValidatorJSON(SchemaLoaderJSON.for_request_schema())
             ).decode()
-            client_request.authentication = auth_header.decode()
+            client_request.authentication = ClientAuthenticationHeader(
+                auth_header
+            ).decode()
         except ParcelDecodingException:
             raise cherrypy.HTTPError(
                 400, "Bad request: Expected a valid JSON entity"

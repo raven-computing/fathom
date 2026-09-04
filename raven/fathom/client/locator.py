@@ -236,3 +236,47 @@ def load_server_locator(
         return _load_from_cli_args(args)
 
     return _load_from_configs(user_config, project_config)
+
+
+def load_management_server_locator(
+    args: "ArgumentsCLI",
+    user_config: Configuration,
+) -> ServerLocator:
+    """Retrieves the server location details for management commands.
+
+    Args:
+        args (ArgumentsCLI): The command line arguments. May be empty.
+        user_config (Configuration): The user configuration. May be empty.
+
+    Returns:
+        ServerLocator: The loaded server location details.
+
+    Raises:
+        InvalidConfigurationException: If there is a configuration issue.
+    """
+    if args.server:
+        return _load_from_cli_args(args)
+
+    server_sections = user_config.get_repeatable_sections(
+        UserConfiguration.SERVER
+    )
+    if len(server_sections) == 0:
+        raise InvalidConfigurationException(
+            "Missing server configuration. "
+            "Specify --server or configure a server in the user config."
+        )
+
+    section = server_sections[0]
+    domain = section.value_of(UserConfiguration.SERVER.DOMAIN)
+    if not domain:
+        raise InvalidConfigurationException(
+            "Missing server domain in user configuration."
+        )
+
+    server = ServerLocator(domain)
+    server.secure_connection = section.value_of(
+        UserConfiguration.SERVER.TRANSPORT_SECURE
+    ) or False
+    server.port = section.value_of(UserConfiguration.SERVER.PORT)
+    server.location = section.value_of(UserConfiguration.SERVER.LOCATION)
+    return server

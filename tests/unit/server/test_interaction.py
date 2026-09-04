@@ -15,7 +15,8 @@
 """Unit tests for the interaction module."""
 
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
-from raven.fathom.base import ResponseMessage, ResponseCode
+from raven.fathom.base import ResponseMessage, ResponseCode, User as BaseUser
+from raven.fathom.base.user import UserState
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.server.interaction import ServerConnectionImpl
 from raven.fathom.server.security import UserAuthenticator, UserAuthentication
@@ -89,6 +90,45 @@ class TestServerConnection(TestCase):
         method_mock = self.handler_factory.create_action_handler_for
         method_mock.assert_called_once()
         self.assertIs(method_mock.call_args.args[0], self.request)
+
+    def test_setup_user_request_is_authenticated_and_dispatched(self):
+        request = ClientRequest(Interaction.SETUP_USER)
+        request.authentication = ClientAuthentication(
+            username="test-user-1",
+            password="whatever",
+        )
+        self.authenticator.authenticate_client.return_value = (
+            UserAuthentication(self.user, is_authenticated=True)
+        )
+
+        response = self.connection.process(request)
+
+        self.assertIsInstance(response, ServerResponse)
+        self.assertEqual(response.action, request.action)
+        self.authenticator.authenticate_client.assert_called_once_with(request)
+        method_mock = self.handler_factory.create_action_handler_for
+        method_mock.assert_called_once_with(request)
+
+    def test_onboarding_user_is_blocked_from_non_setup_action(self):
+        self.request.user = BaseUser(
+            identifier="test-user-1",
+            name="The Test User 1",
+            state=UserState.ONBOARDING,
+        )
+        self.authenticator.authenticate_client.return_value = (
+            UserAuthentication(user=None, is_authenticated=False)
+        )
+
+        response = self.connection.process(self.request)
+
+        self.assertIsInstance(response, ServerResponse)
+        self.assertTrue(response.has_errors())
+        self.assertEqual(
+            response.errors[0].code,
+            ResponseCode.NOT_AUTHENTICATED,
+        )
+        self.assertIn("Invalid username or password", response.errors[0].text)
+        self.handler_factory.create_action_handler_for.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -22,7 +22,7 @@ from raven.fathom.base import ParcelEncodingException
 from raven.fathom.base import ParcelDecodingException
 from raven.fathom.base import PackageOperationException
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
-from raven.fathom.base import ClientAuthentication, Package
+from raven.fathom.base import ClientAuthentication, Package, User
 from raven.fathom.base.parcel import PARCEL_TEXT_ENCODING
 
 from tests.unit import TestCase
@@ -209,6 +209,26 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
             str(raised.exception)
         )
 
+    def test_encode_decode_managed_user_request(self):
+        request = ClientRequest(Interaction.SETUP_USER)
+        request.managed_user = User(
+            identifier="alpha",
+            name="Alpha",
+            password="secret",
+            is_admin=False,
+        )
+
+        encoded = RequestParcelJSON(request).encode()
+        decoded = RequestParcelJSON(encoded).decode()
+
+        self.assertEqual(decoded.action, Interaction.SETUP_USER)
+        self.assertIsNotNone(decoded.managed_user)
+        assert decoded.managed_user is not None
+        self.assertEqual(decoded.managed_user.identifier, "alpha")
+        self.assertEqual(decoded.managed_user.name, "Alpha")
+        self.assertFalse(decoded.managed_user.is_admin)
+        self.assertEqual(decoded.managed_user.password, "secret")
+
 
 class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
     """Unit tests for the `ResponseParcelJSON` class."""
@@ -338,6 +358,23 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
         self.assertIn(
             "Invalid type of isGranted property", str(raised.exception)
         )
+
+    def test_encode_decode_managed_users_response(self):
+        response = ServerResponse(Interaction.LIST_USERS)
+        response.managed_users = [
+            User(identifier="alpha", name="Alpha", is_admin=True),
+            User(identifier="user3", name="User 3", is_admin=False),
+        ]
+
+        encoded = ResponseParcelJSON(response).encode()
+        decoded = ResponseParcelJSON(encoded).decode()
+
+        self.assertEqual(decoded.action, Interaction.LIST_USERS)
+        self.assertIsNotNone(decoded.managed_users)
+        assert decoded.managed_users is not None
+        self.assertEqual(len(decoded.managed_users), 2)
+        self.assertTrue(decoded.managed_users[0].is_admin)
+        self.assertFalse(decoded.managed_users[1].is_admin)
 
 
 if __name__ == "__main__":

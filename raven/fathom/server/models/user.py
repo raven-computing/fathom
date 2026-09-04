@@ -14,6 +14,8 @@
 #
 """Data model to represent a user within the Fathom server."""
 
+from raven.fathom.base import UserState
+
 from raven.fathom.server.datastore.orm import Model
 from raven.fathom.server.datastore.orm import (
     CharField, ForeignKeyField, CompositeKey
@@ -34,6 +36,10 @@ class User(Model):
 
     password = CharField(
         null=True,
+    )
+
+    state = CharField(
+        default=UserState.INITIALIZED,
     )
 
 

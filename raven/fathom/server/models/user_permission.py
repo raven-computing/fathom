@@ -33,3 +33,8 @@ class UserPermission(Model):
         default=False,
         null=False,
     )
+
+    is_admin = BooleanField(
+        default=False,
+        null=False,
+    )

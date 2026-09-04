@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import Configuration
+from raven.fathom.base import User, UserState
 from raven.fathom.server.logging import Logger, LogLevel
 from raven.fathom.server.http import ServerApplication, assign
 from raven.fathom.server.http import ServerHTTP, HTTPServerStartException
@@ -29,6 +30,7 @@ from raven.fathom.server.deployment import DeploymentSite
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.config import ServerConfiguration
 from raven.fathom.server.config import ConfigurationManager
+from raven.fathom.server.user_management import UserManager
 from raven.fathom.server.updates import UpdateManager
 from raven.fathom.server.updates import FailedApplicationUpdateException
 
@@ -147,6 +149,51 @@ def _run_fathom_server_application(args: "AppArgs", config: Configuration):
     return server.status_code()
 
 
+def _run_user_command(args: "AppArgs") -> int:
+    db = DatabaseManager().get_database()
+    should_disconnect = not db.is_connected()
+    if should_disconnect:
+        db.connect()
+
+    try:
+        manager = UserManager()
+        if args.user_command == "create":
+            user = User(
+                identifier=args.user_identifier,
+                name=args.user_name,
+                is_admin=args.user_is_admin,
+                state=UserState.ONBOARDING,
+            )
+            manager.create_user(user)
+            role = "admin" if user.is_admin else "regular"
+            LOG.i(
+                "Created user '%s' (%s, %s).",
+                user.identifier, role, user.state
+            )
+            return 0
+
+        if args.user_command == "list":
+            for user in manager.list_users():
+                role = "admin" if user.is_admin else "regular"
+                LOG.i(
+                    "User: '%s'\tName: '%s'\tRole: '%s'\tState: '%s'",
+                    user.identifier, user.name, role, user.state
+                )
+            return 0
+
+        if args.user_command == "delete":
+            manager.delete_user(
+                User(identifier=args.user_identifier)
+            )
+            LOG.i("Deleted user '%s'.", args.user_identifier)
+            return 0
+
+        raise ValueError(f"Invalid user command '{args.user_command}'")
+    finally:
+        if should_disconnect and db.is_connected():
+            db.disconnect()
+
+
 def run(args: "AppArgs") -> int:
     """Runs the Fathom server application.
 
@@ -165,6 +212,9 @@ def run(args: "AppArgs") -> int:
         cm.load_configs(args)
         config = cm.get_server_config()
         _setup_application(args, config)
+        if args.command == "user":
+            return _run_user_command(args)
+
         return _run_fathom_server_application(args, config)
     except Exception as ex:  # pylint: disable=broad-exception-caught
         LOG.e("Failed to run Fathom server")

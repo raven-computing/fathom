@@ -101,6 +101,36 @@ class TestArgumentsCLI(TestCase):
         self.assertIsInstance(args, ArgumentsCLI)
         self.assertEqual(args.command, "deploy")
 
+    def test_manage_user_create_command_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "user", "create", "user2",
+            "--name", "User Two",
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "user")
+        self.assertEqual(args.manage_command, "create")
+        self.assertEqual(args.managed_user_identifier, "user2")
+        self.assertEqual(args.managed_user_name, "User Two")
+
+    def test_setup_user_command_is_recognized(self):
+        args = parse_args(["fathom", "setup", "user", "user2"])
+        self.assertEqual(args.command, "setup")
+        self.assertEqual(args.setup_subject, "user")
+        self.assertEqual(args.setup_user_identifier, "user2")
+
+    def test_manage_user_list_command_is_recognized(self):
+        args = parse_args(["fathom", "manage", "user", "list"])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "user")
+        self.assertEqual(args.manage_command, "list")
+
+    def test_manage_user_delete_command_is_recognized(self):
+        args = parse_args(["fathom", "manage", "user", "delete", "user3"])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "user")
+        self.assertEqual(args.manage_command, "delete")
+        self.assertEqual(args.managed_user_identifier, "user3")
+
     def test_combined_flags_and_arguments_are_parsed_correctly(self):
         args = parse_args(
             ["fathom", "--verbose",

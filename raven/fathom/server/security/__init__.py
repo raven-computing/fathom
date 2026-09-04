@@ -16,4 +16,5 @@
 
 from .authentication import UserAuthenticator
 from .authentication import UserAuthentication
+from .authorization import UserAuthorizer
 from .authorization import DeploymentAuthorizer

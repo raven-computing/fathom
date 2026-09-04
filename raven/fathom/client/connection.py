@@ -25,6 +25,7 @@ from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import Package
 from raven.fathom.base import DeploymentMessage
+from raven.fathom.base import User
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import FathomClientException
 
@@ -37,6 +38,10 @@ LOG = Logger.get()
 
 class ServerConnectionException(FathomClientException):
     """A failed connection or communication with the server."""
+
+
+class ServerOperationException(FathomClientException):
+    """A server-side refusal or processing failure of a client request."""
 
 
 @dataclass
@@ -176,6 +181,111 @@ class Server:
 
         return message
 
+    def create_user(self, user: User) -> User:
+        """Creates a regular application user on the server.
+
+        Args:
+            user (User): The base User object to create on the server.
+
+        Returns:
+            User: The created user as returned by the server.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to create the user.
+        """
+        request = ClientRequest(Interaction.CREATE_USER)
+        request.authentication = self._client_authentication
+        request.managed_user = user
+
+        LOG.v("Requesting remote user creation")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        users = response.managed_users
+        if users is None or len(users) == 0:
+            raise ServerConnectionException(
+                "Server response does not contain created user information"
+            )
+
+        return users[0]
+
+    def setup_user(self, user: User) -> User:
+        """Initializes an onboarding application user on the server.
+
+        Args:
+            user (User): The base User object for which to complete the
+                setup procedure.
+
+        Returns:
+            User: The initialized user as returned by the server.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to complete the user setup procedure.
+        """
+        request = ClientRequest(Interaction.SETUP_USER)
+        request.authentication = self._client_authentication
+        request.managed_user = user
+
+        LOG.v("Requesting remote user setup")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        users = response.managed_users
+        if users is None or len(users) == 0:
+            raise ServerConnectionException(
+                "Server response does not contain setup user information"
+            )
+
+        return users[0]
+
+    def list_users(self) -> list[User]:
+        """Lists application users from the server.
+
+        Returns:
+            list: A `list` of base `User` objects managed by the Fathom server.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to list the users.
+        """
+        request = ClientRequest(Interaction.LIST_USERS)
+        request.authentication = self._client_authentication
+
+        LOG.v("Requesting remote user list")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        return response.managed_users or []
+
+    def delete_user(self, identifier: str):
+        """Deletes an application user on the server.
+
+        Args:
+            identifier (str): The identifier of the user to delete.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to delete the user.
+        """
+        request = ClientRequest(Interaction.DELETE_USER)
+        request.authentication = self._client_authentication
+        request.managed_user = User(identifier=identifier)
+
+        LOG.v("Requesting remote user deletion")
+        response = self._send(request)
+        self._raise_on_errors(response)
+
     def _send(self, request):
         try:
             return ServerConnection.instance(self._location).process(request)
@@ -183,3 +293,9 @@ class Server:
             raise ServerConnectionException(
                 "Could not establish a connection to the server"
             ) from ex
+
+    def _raise_on_errors(self, response):
+        if response.has_errors():
+            raise ServerOperationException(
+                " ".join(error.text for error in response.errors)
+            )

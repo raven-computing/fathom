@@ -48,6 +48,14 @@ class AppArgs:
 
     command: str = ""
 
+    user_command: str = ""
+
+    user_identifier: str = ""
+
+    user_name: str = ""
+
+    user_is_admin: bool = False
+
     ready_event: Optional[Event] = None
 
 
@@ -123,6 +131,53 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="Perform initial setup work for the server application."
     )
 
+    user_parser = subparsers.add_parser(
+        "user",
+        help="Manage dedicated application users."
+    )
+    user_subparsers = user_parser.add_subparsers(
+        dest="user_command",
+        required=True,
+        metavar="<USER_COMMAND>",
+    )
+
+    user_create = user_subparsers.add_parser(
+        "create",
+        help="Create a user in the local Fathom datastore."
+    )
+    user_create.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user to create."
+    )
+    user_create.add_argument(
+        "--name",
+        default="",
+        metavar="<NAME>",
+        help="The human-readable display name of the user."
+    )
+    user_create.add_argument(
+        "--admin",
+        action="store_true",
+        default=False,
+        help="Create the user with administrator permissions."
+    )
+
+    user_subparsers.add_parser(
+        "list",
+        help="List users from the local Fathom datastore."
+    )
+
+    user_delete = user_subparsers.add_parser(
+        "delete",
+        help="Delete a user from the local Fathom datastore."
+    )
+    user_delete.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user to delete."
+    )
+
     args = parser.parse_args(argv[1:])
     return AppArgs(
         verbose=args.verbose,
@@ -131,5 +186,9 @@ def parse_args(argv: list[str]) -> AppArgs:
         working_directory=args.working_directory,
         create_default_config=args.create_default_config,
         command=args.command,
+        user_command=getattr(args, "user_command", ""),
+        user_identifier=getattr(args, "identifier", ""),
+        user_name=getattr(args, "name", ""),
+        user_is_admin=getattr(args, "admin", False),
         ready_event=event,
     )

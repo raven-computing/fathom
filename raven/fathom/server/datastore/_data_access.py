@@ -20,6 +20,7 @@ from typing import cast
 
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
+from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.dao import UserDAO, ProjectDAO
 from raven.fathom.server.models import User, Project, ProjectVersion
 from raven.fathom.server.models import UserProjectRel
@@ -28,6 +29,9 @@ from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.datastore.orm.query import CreateQuery, ReadQuery
 from raven.fathom.server.datastore.orm.query import UpdateQuery, DeleteQuery
+
+
+# pylint: disable=no-value-for-parameter
 
 
 class DataAccessObjectRDBMS(DataAccessObject):
@@ -45,10 +49,33 @@ class DataAccessObjectRDBMS(DataAccessObject):
 
 class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
+    def find_all(self):
+        return ReadQuery[User](
+            User.select().order_by(User.identifier.asc())
+        ).execute()
+
     def find_by_identifier(self, identifier):
         return ReadQuery[User](
             User.select().where(User.identifier == identifier)
         ).find_one()
+
+    def delete_by_identifier(self, identifier):
+        user= self.find_by_identifier(identifier)
+        if user is None:
+            raise FailedDeleteQueryException(
+                f"Cannot delete user '{identifier}': User does not exist"
+            )
+
+        DeleteQuery[AuthDeployment](
+            AuthDeployment.delete().where(AuthDeployment.user == user)
+        ).execute()
+        DeleteQuery[UserProjectRel](
+            UserProjectRel.delete().where(UserProjectRel.user == user)
+        ).execute()
+        DeleteQuery[UserPermission](
+            UserPermission.delete().where(UserPermission.user == user)
+        ).execute()
+        self.delete(user)
 
     def find_permission(self, user):
         permission = ReadQuery[UserPermission](

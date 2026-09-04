@@ -18,6 +18,8 @@ from raven.fathom.client.cli.command import Command, run
 from raven.fathom.client.cli.arguments import ArgumentsCLI
 from raven.fathom.client.cli.registry import command_with_args
 from raven.fathom.client.cli.deploy import DeployCommand
+from raven.fathom.client.cli.manage import ManageCommand
+from raven.fathom.client.cli.setup import SetupCommand
 from raven.fathom.client.cli.status import ExitStatus
 
 from tests.unit import TestCase
@@ -79,6 +81,24 @@ class TestCommandRegistry(TestCase):
         command_obj = command_with_args(args)
         self.assertIsInstance(command_obj, DeployCommand)
         self.assertEqual("sentinel", command_obj.args.user)
+
+    def test_registry_works_for_manage_command(self):
+        args = ArgumentsCLI(
+            command="manage",
+            manage_subject="user",
+            manage_command="list",
+        )
+        command_obj = command_with_args(args)
+        self.assertIsInstance(command_obj, ManageCommand)
+
+    def test_registry_works_for_setup_command(self):
+        args = ArgumentsCLI(
+            command="setup",
+            setup_subject="user",
+            setup_user_identifier="user2",
+        )
+        command_obj = command_with_args(args)
+        self.assertIsInstance(command_obj, SetupCommand)
 
     def test_registry_rejects_unknown_command_and_raises_exception(self):
         args = ArgumentsCLI(command="invalid_command")

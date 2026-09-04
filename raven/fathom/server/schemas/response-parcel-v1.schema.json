@@ -71,6 +71,24 @@
           "type": "integer"
         }
       }
+    },
+    "managedUsers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isAdmin": {
+            "type": "boolean"
+          }
+        },
+        "required": ["identifier", "name", "isAdmin"]
+      }
     }
   },
   "deploymentResult": {

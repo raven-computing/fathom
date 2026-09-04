@@ -55,6 +55,7 @@ class DataAccessMock(DataAccess):
         self.users().find_permission.return_value = UserPermission(
             user=stored_user,
             allow_overwrite=True,
+            is_admin=False,
         )
         stored_project = Project(
             identifier=valid_project.identifier,

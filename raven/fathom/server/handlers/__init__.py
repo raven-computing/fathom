@@ -25,3 +25,6 @@ for a given client request.
 
 from .handler import ActionHandler
 from .factory import HandlerFactory
+from .user_management import UserCreateHandler
+from .user_management import UserListHandler
+from .user_management import UserDeleteHandler

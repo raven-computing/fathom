@@ -17,7 +17,7 @@
 from typing import Optional, Final
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.base import User as BaseUser
+from raven.fathom.base import User as BaseUser, UserState
 from raven.fathom.base import ClientRequest
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import EntropySource
@@ -77,7 +77,7 @@ class UserAuthentication:
     @property
     def user_record(self) -> Optional[User]:
         """The identified user of an authentication request, as a `User`.
-        
+
         May be `None` if no user could be identified from a submitted request.
         """
         return self._internal_user
@@ -185,13 +185,20 @@ class UserAuthenticator:
             user_record is not None
             and user_record.password is not None
             and str(user_record.password) != ""
+            and UserState(user_record.state) in (
+                UserState.INITIALIZED, UserState.ONBOARDING
+            )
         )
 
     def _assign_password(self, user: User, hash_value: StoredPasswordHash):
         user.password = str(hash_value) # type: ignore
 
     def _set_authenticated_user(self, request: ClientRequest, user: User):
-        request.user = BaseUser(user.identifier, user.name) # type: ignore
+        request.user = BaseUser(
+            user.identifier,
+            user.name,
+            state=UserState(str(user.state)),
+        )
         assert request.authentication is not None
         request.authentication.password = "********"
 

@@ -30,6 +30,7 @@ from raven.fathom.base.deployment import ClientDeploymentIntent
 from raven.fathom.base.deployment import DeploymentAuthorization
 from raven.fathom.base.deployment import DeploymentMessage
 from raven.fathom.base.project import Project, ProjectVersion
+from raven.fathom.base.user import User, UserState
 from raven.fathom.base.package import Package, PackageOperationException
 from raven.fathom.base.typing import TypeCheck
 from raven.fathom.base.exceptions import FathomBaseException
@@ -202,6 +203,7 @@ class RequestParcelJSON(Parcel):
                 "Failed to encode package of client request"
             ) from ex
 
+        self._encode_managed_user(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -234,6 +236,7 @@ class RequestParcelJSON(Parcel):
 
         request.deployment_authorization = self._decode_deployment_auth()
         request.package = self._decode_package()
+        request.managed_user = self._decode_managed_user()
         return request
 
     def _encode_project(self, structure):
@@ -375,6 +378,43 @@ class RequestParcelJSON(Parcel):
         package.transport_format = package_format
         return package
 
+    def _encode_managed_user(self, structure):
+        assert isinstance(self._request, ClientRequest)
+        user = self._request.managed_user
+        if user is None:
+            return
+
+        user_struct: dict[str, Union[str, bool]] = {
+            "identifier": user.identifier,
+        }
+        if user.name:
+            user_struct["name"] = user.name
+
+        if user.is_admin:
+            user_struct["isAdmin"] = user.is_admin
+
+        if user.password:
+            user_struct["password"] = user.password
+
+        user_struct["state"] = str(user.state)
+
+        structure["managedUser"] = user_struct
+
+    def _decode_managed_user(self):
+        assert isinstance(self._request, dict)
+        user_struct = self._request.get("managedUser")
+        if user_struct is None:
+            return None
+
+        assert isinstance(user_struct, dict)
+        return User(
+            identifier=user_struct.get("identifier", ""),
+            name=user_struct.get("name", ""),
+            password=user_struct.get("password", ""),
+            is_admin=bool(user_struct.get("isAdmin", False)),
+            state=UserState(user_struct.get("state", UserState.INITIALIZED)),
+        )
+
     def _encode_package_data(self):
         assert isinstance(self._request, ClientRequest)
         package = self._request.package
@@ -500,6 +540,7 @@ class ResponseParcelJSON(Parcel):
         self._encode_server_info(obj)
         self._encode_deployment_authorization(obj)
         self._encode_deployment_result(obj)
+        self._encode_managed_users(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -522,6 +563,7 @@ class ResponseParcelJSON(Parcel):
         response.server_info = self._decode_server_info()
         response.deployment_authorization = self._decode_deployment_auth()
         response.deployment_message = self._decode_deployment_result()
+        response.managed_users = self._decode_managed_users()
         return response
 
     def _encode_error_messages(self, structure):
@@ -574,6 +616,19 @@ class ResponseParcelJSON(Parcel):
                 "isSuccessful": result.is_successful,
                 "message": result.message,
             }
+
+    def _encode_managed_users(self, structure):
+        assert isinstance(self._response, ServerResponse)
+        if self._response.managed_users is not None:
+            structure["managedUsers"] = [
+                {
+                    "identifier": user.identifier,
+                    "name": user.name,
+                    "isAdmin": user.is_admin,
+                    "state": str(user.state),
+                }
+                for user in self._response.managed_users
+            ]
 
     def _decode_error_messages(self):
         assert isinstance(self._response, dict)
@@ -665,6 +720,25 @@ class ResponseParcelJSON(Parcel):
         result.is_successful = res_struct.get("isSuccessful", False)
         result.message = res_struct.get("message")
         return result
+
+    def _decode_managed_users(self):
+        assert isinstance(self._response, dict)
+        user_structs = self._response.get("managedUsers")
+        if user_structs is None:
+            return None
+
+        assert isinstance(user_structs, list)
+        return [
+            User(
+                identifier=user_struct.get("identifier", ""),
+                name=user_struct.get("name", ""),
+                is_admin=bool(user_struct.get("isAdmin", False)),
+                state=UserState(
+                    user_struct.get("state", UserState.INITIALIZED)
+                ),
+            )
+            for user_struct in user_structs
+        ]
 
     def _encode_json_obj(self):
         try:

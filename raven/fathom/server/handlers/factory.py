@@ -19,13 +19,17 @@ from typing import Optional
 from raven.fathom.base import ClientRequest, Interaction
 from raven.fathom.base import SystemClock
 from raven.fathom.server.config import ConfigurationManager
-from raven.fathom.server.security import DeploymentAuthorizer
+from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
 from raven.fathom.server.deployment import DeploymentManager
+from raven.fathom.server.user_management import UserManager
 
 from .handler import ActionHandler
 from .server_info import ServerInfoHandler
 from .deployment_intent import DeploymentIntentHandler
 from .deployment_transaction import DeploymentTransactionHandler
+from .user_management import (
+    UserCreateHandler, UserSetupHandler, UserListHandler, UserDeleteHandler,
+)
 
 
 class HandlerFactory:
@@ -60,5 +64,13 @@ class HandlerFactory:
                 DeploymentAuthorizer(SystemClock()),
                 DeploymentManager(ConfigurationManager().get_server_config())
             )
+        elif client_action == Interaction.CREATE_USER:
+            handler = UserCreateHandler(UserAuthorizer(), UserManager())
+        elif client_action == Interaction.SETUP_USER:
+            handler = UserSetupHandler(UserManager())
+        elif client_action == Interaction.LIST_USERS:
+            handler = UserListHandler(UserAuthorizer(), UserManager())
+        elif client_action == Interaction.DELETE_USER:
+            handler = UserDeleteHandler(UserAuthorizer(), UserManager())
 
         return handler

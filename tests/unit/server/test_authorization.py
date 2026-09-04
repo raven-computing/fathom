@@ -20,8 +20,10 @@ from raven.fathom.base import SecretToken, ConstantClock
 from raven.fathom.base import User, Project, ProjectVersion
 from raven.fathom.base import ClientDeploymentIntent, DeploymentAuthorization
 from raven.fathom.base.testing import EntropySourceMock
-from raven.fathom.server.security import DeploymentAuthorizer
-from raven.fathom.server.models import AuthDeployment
+from raven.fathom.server.dao import IncoherentDatastoreStateException
+from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
+from raven.fathom.server.models import AuthDeployment, UserPermission
+from raven.fathom.server.models import User as UserModel
 
 from tests.unit import TestCase
 from tests.unit.server.mocks import DataAccessMock
@@ -259,6 +261,69 @@ class TestDeploymentAuthorizer(TestCase):
             auth.status,
             DeploymentAuthorization.Status.NO_PROJECT_ASSIGNED
         )
+
+
+class TestAdminAuthorizer(TestCase):
+    """Unit tests for the `AdminAuthorizer` class."""
+
+    def setUp(self):
+        super().setUp()
+        self.dao = DataAccessMock()
+        self.dao.reset()
+        self.user = User("test-user", "Test User")
+
+    def test_is_admin_returns_false_for_unknown_user(self):
+        self.dao.users().find_by_identifier.return_value = None
+
+        result = UserAuthorizer().is_administrator(self.user)
+        self.assertFalse(result)
+
+    def test_is_admin_returns_false_for_user_without_identifier(self):
+        result = UserAuthorizer().is_administrator(User("", "Test User"))
+        self.assertFalse(result)
+
+    def test_is_admin_returns_false_when_permission_record_missing(self):
+        stored_user = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        self.dao.users().find_by_identifier.return_value = stored_user
+        self.dao.users().find_permission.side_effect = (
+            IncoherentDatastoreStateException("missing permission")
+        )
+
+        result = UserAuthorizer().is_administrator(self.user)
+        self.assertFalse(result)
+
+    def test_is_admin_returns_false_for_regular_user(self):
+        stored_user = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        permission = UserPermission(
+            user=1,
+            is_admin=False,
+        )
+        self.dao.users().find_by_identifier.return_value = stored_user
+        self.dao.users().find_permission.return_value = permission
+
+        result = UserAuthorizer().is_administrator(self.user)
+        self.assertFalse(result)
+
+    def test_is_admin_returns_true_for_admin_user(self):
+        stored_user = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        permission = UserPermission(
+            user=1,
+            is_admin=True,
+        )
+        self.dao.users().find_by_identifier.return_value = stored_user
+        self.dao.users().find_permission.return_value = permission
+
+        result = UserAuthorizer().is_administrator(self.user)
+        self.assertTrue(result)
 
 
 if __name__ == "__main__":

@@ -93,6 +93,14 @@ class Interaction(StrEnum):
 
     TRANSACT_DEPLOYMENT = "deploy-transaction"
 
+    CREATE_USER = "user-create"
+
+    SETUP_USER = "user-setup"
+
+    LIST_USERS = "user-list"
+
+    DELETE_USER = "user-delete"
+
 
 @dataclass
 class ClientRequest:
@@ -110,6 +118,8 @@ class ClientRequest:
         deployment_authorization (DeploymentAuthorization): The authorization
             details for a requested and already ganted deployment, if required.
         package (Package): The package involved in a deployment, if any.
+        managed_user (User): The user to be created, set up, listed, or
+            deleted, if applicable.
     """
 
     action: Interaction = field(
@@ -146,6 +156,11 @@ class ClientRequest:
         default=None,
     )
 
+    managed_user: Optional[User] = field(
+        init=False,
+        default=None,
+    )
+
 
 class ResponseCode(IntEnum):
     """Enumerates numeric response codes of message in server responses."""
@@ -157,6 +172,8 @@ class ResponseCode(IntEnum):
     NO_PRODUCTION_USE = 5
 
     NOT_AUTHENTICATED = 6
+
+    NOT_FOUND = 7
 
     MISSING_AUTHORIZATION = 1
 
@@ -197,6 +214,8 @@ class ServerResponse:
             request.
         deployment_message (DeploymentMessage): An optional deployment message,
             detailing the result of an executed deployment.
+        managed_users (list[User]): An optional list of managed users, in
+            response to user management requests.
     """
 
     action: Interaction = field(
@@ -224,6 +243,11 @@ class ServerResponse:
     )
 
     deployment_message: Optional[DeploymentMessage] = field(
+        init=False,
+        default=None,
+    )
+
+    managed_users: Optional[list[User]] = field(
         init=False,
         default=None,
     )

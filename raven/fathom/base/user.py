@@ -15,6 +15,20 @@
 """Contains shared classes to represent application user entities."""
 
 from dataclasses import dataclass
+from enum import StrEnum
+from typing import Final
+
+
+# This should be defined by the org record on the server.
+USER_ONBOARDING_SHARED_SECRET: Final[str] = "whatever"
+
+
+class UserState(StrEnum):
+    """The lifecycle state of a dedicated application user."""
+
+    ONBOARDING = "onboarding"
+
+    INITIALIZED = "initialized"
 
 
 @dataclass
@@ -24,3 +38,9 @@ class User:
     identifier: str
 
     name: str = ""
+
+    password: str = ""
+
+    is_admin: bool = False
+
+    state: UserState = UserState.INITIALIZED

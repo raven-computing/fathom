@@ -18,10 +18,12 @@ __all__ = [
     "Command",
     "ArgumentsCLI",
     "ExitStatus",
+    "SetupCommand",
     "main",
 ]
 
 from .command import Command
 from .arguments import ArgumentsCLI
 from .status import ExitStatus
+from .setup import SetupCommand
 from .application import main

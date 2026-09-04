@@ -51,6 +51,12 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertEqual(user.name, "Test User 1")
         self.assertEqual(user.password, "123456")
 
+    def test_query_can_find_all_users(self):
+        users = self.db.users().find_all()
+        self.assertEqual(len(users), 1)
+        self.assertIsInstance(users[0], User)
+        self.assertEqual(users[0].identifier, "test-user-1")
+
     def test_query_to_find_user_with_unknown_identifier_returns_none(self):
         user = self.db.users().find_by_identifier("this-user-does-not-exist")
         self.assertIsNone(user)
@@ -63,6 +69,7 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertIsNotNone(permission)
         self.assertEqual(permission.user, user)
         self.assertTrue(permission.allow_overwrite)
+        self.assertTrue(permission.is_admin)
 
     def test_query_to_find_user_permission_for_unknown_user_raises_ex(self):
         user = User.create(

@@ -17,6 +17,8 @@
 from raven.fathom.client.cli.arguments import ArgumentsCLI
 from raven.fathom.client.cli.command import Command
 from raven.fathom.client.cli.deploy import DeployCommand
+from raven.fathom.client.cli.manage import ManageCommand
+from raven.fathom.client.cli.setup import SetupCommand
 from raven.fathom.client.logging import Logger
 
 
@@ -38,6 +40,10 @@ def command_with_args(args: ArgumentsCLI) -> Command:
     name = args.command
     if name == "deploy":
         return DeployCommand(args)
+    if name == "manage":
+        return ManageCommand(args)
+    if name == "setup":
+        return SetupCommand(args)
 
     LOG.e("Invalid command: '%s'", name)
     raise ValueError(f"Invalid command '{name}'")

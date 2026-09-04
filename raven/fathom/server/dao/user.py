@@ -25,6 +25,14 @@ class UserDAO(DataAccessObject):
     """A data access object for user-related data."""
 
     @abstractmethod
+    def find_all(self) -> list[User]:
+        """Gets all persisted user records.
+
+        Returns:
+            list[User]: All persisted users.
+        """
+
+    @abstractmethod
     def find_by_identifier(self, identifier: str) -> Optional[User]:
         """Gets the user record with the specified identifier.
 
@@ -34,6 +42,16 @@ class UserDAO(DataAccessObject):
         Returns:
             User: The `User` object with the specified identifier,
                 or `None` if no such user can be found.
+        """
+
+    @abstractmethod
+    def delete_by_identifier(self, identifier: str):
+        """Deletes the user with the given user identifier.
+
+        Also deletes all records associated with the given user.
+
+        Args:
+            identifier (str): The unique identifier of the user to delete.
         """
 
     @abstractmethod

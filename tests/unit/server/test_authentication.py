@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ClientRequest, ClientAuthentication
 from raven.fathom.base import Interaction, ProcessingException
+from raven.fathom.base.user import UserState
 from raven.fathom.base.testing import EntropySourceMock
 from raven.fathom.server.security import UserAuthenticator, UserAuthentication
 from raven.fathom.server.models import User
@@ -94,6 +95,14 @@ class TestUserAuthentication(TestCase):
         self.assertIsInstance(auth, UserAuthentication)
         self.assertFalse(auth.is_authenticated())
         self.assertIsNone(auth.user_record)
+
+    def test_onboarding_user_is_authenticated_with_matching_password(self):
+        self.user_stored.state = UserState.ONBOARDING # type: ignore
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+        auth = UserAuthenticator().authenticate_client(self.client_request)
+        self.assertIsInstance(auth, UserAuthentication)
+        self.assertTrue(auth.is_authenticated())
+        self.assertIsNotNone(auth.user_record)
 
     def test_cleartext_password_is_hashed_on_successful_authentication(self):
         self.dao.users().find_by_identifier.return_value = self.user_signup

@@ -39,6 +39,18 @@ class ArgumentsCLI:
 
     command: str = ""
 
+    manage_subject: str = ""
+
+    manage_command: str = ""
+
+    setup_subject: str = ""
+
+    managed_user_identifier: str = ""
+
+    managed_user_name: str = ""
+
+    setup_user_identifier: str = ""
+
     project_directory: str = ""
 
 
@@ -120,6 +132,80 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="The source root directory of the project to deploy."
     )
 
+    manage = subparsers.add_parser(
+        "manage",
+        help="Manage server-side Fathom resources."
+    )
+    manage_subparsers = manage.add_subparsers(
+        dest="manage_subject",
+        required=True,
+        metavar="<SUBJECT>",
+    )
+
+    manage_user = manage_subparsers.add_parser(
+        "user",
+        help="Manage dedicated application users on a Fathom server."
+    )
+    manage_user_subparsers = manage_user.add_subparsers(
+        dest="manage_command",
+        required=True,
+        metavar="<ACTION>",
+    )
+
+    manage_user_create = manage_user_subparsers.add_parser(
+        "create",
+        help="Create a regular application user on the server."
+    )
+    manage_user_create.add_argument(
+        "managed_user_identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user to create."
+    )
+    manage_user_create.add_argument(
+        "--name",
+        default="",
+        dest="managed_user_name",
+        metavar="<NAME>",
+        help="The display name of the user to create."
+    )
+
+    manage_user_subparsers.add_parser(
+        "list",
+        help="List dedicated application users on the server."
+    )
+
+    manage_user_delete = manage_user_subparsers.add_parser(
+        "delete",
+        help="Delete a dedicated application user on the server."
+    )
+    manage_user_delete.add_argument(
+        "managed_user_identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user to delete."
+    )
+
+    setup = subparsers.add_parser(
+        "setup",
+        help="Perform setup actions for the Fathom client."
+    )
+    setup_subparsers = setup.add_subparsers(
+        dest="setup_subject",
+        required=True,
+        metavar="<SUBJECT>",
+    )
+
+    setup_user = setup_subparsers.add_parser(
+        "user",
+        help="Initialize an onboarding user account on a Fathom server."
+    )
+    setup_user.add_argument(
+        "setup_user_identifier",
+        nargs="?",
+        default="",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user to initialize."
+    )
+
     args = parser.parse_args(argv[1:])
     return ArgumentsCLI(
         verbose=args.verbose,
@@ -129,5 +215,13 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         password=args.password,
         server=args.server,
         command=args.command,
-        project_directory=args.project_directory
+        manage_subject=getattr(args, "manage_subject", ""),
+        manage_command=getattr(args, "manage_command", ""),
+        setup_subject=getattr(args, "setup_subject", ""),
+        managed_user_identifier=getattr(
+            args, "managed_user_identifier", ""
+        ),
+        managed_user_name=getattr(args, "managed_user_name", ""),
+        setup_user_identifier=getattr(args, "setup_user_identifier", ""),
+        project_directory=getattr(args, "project_directory", "")
     )

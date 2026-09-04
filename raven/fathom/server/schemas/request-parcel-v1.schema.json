@@ -54,6 +54,24 @@
         }
       }
     },
+    "managedUser": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        }
+      },
+      "required": ["identifier"]
+    },
     "package": {
       "type": "object",
       "properties": {

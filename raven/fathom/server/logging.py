@@ -79,14 +79,19 @@ def _setup_server_application_logging(args):
     command = args.command
     handlers: list[logging.Handler] = []
     formatters: list[logging.Formatter] = []
-    if command == "setup":
+    ctx = ApplicationContext.instance()
+    app_mode = ctx.get_application_mode()
+    if command:
         handlers.append(LogHandlerCLI())
-        formatters.append(LogFormatterCLI())
+        formatters.append(
+            LogFormatterCLI(
+                use_colours=(app_mode == ApplicationMode.DEVELOPMENT)
+            )
+        )
     else:
         handlers.append(FathomLogHandlerFile())
         formatters.append(LogFormatterServerApp())
-        ctx = ApplicationContext.instance()
-        if ctx.get_application_mode() == ApplicationMode.DEVELOPMENT:
+        if app_mode == ApplicationMode.DEVELOPMENT:
             handlers.append(LogHandlerCLI())
             formatters.append(LogFormatterCLI(include_timestamp=True))
 

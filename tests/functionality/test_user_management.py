@@ -110,9 +110,10 @@ class TestServerUserManagementCLI(TestCase):
             ServerExitStatus.SUCCESS,
             self.server.command_exit_status
         )
-        # self.assertIn(
-        #     "Created user 'local-admin' (admin, onboarding).", stdout
-        # )
+        self.assertIn(
+            "Created user 'local-admin' (admin, onboarding).",
+            self.server.stdout
+        )
         stored_user = self.server.datastore.users().find_by_identifier(
             "local-admin"
         )
@@ -127,7 +128,11 @@ class TestServerUserManagementCLI(TestCase):
             ServerExitStatus.SUCCESS,
             self.server.command_exit_status
         )
-        # self.assertIn("local-admin\tLocal Admin\tadmin\tonboarding", stdout)
+        self.assertIn(
+            "User: 'local-admin'\tName: 'Local Admin'"
+            "\tRole: 'admin'\tState: 'onboarding'",
+            self.server.stdout
+        )
 
         self.server.execute("user", "delete", "local-admin")
 
@@ -135,7 +140,7 @@ class TestServerUserManagementCLI(TestCase):
             ServerExitStatus.SUCCESS,
             self.server.command_exit_status
         )
-        # self.assertIn("Deleted user 'local-admin'.", stdout)
+        self.assertIn("Deleted user 'local-admin'.", self.server.stdout)
         self.assertIsNone(
             self.server.datastore.users().find_by_identifier("local-admin")
         )

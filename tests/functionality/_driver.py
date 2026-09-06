@@ -147,7 +147,10 @@ class ServerDriver:
 
     def __init__(self, env: ServerEnvironment):
         self._env = env
+        self._stdout: str = ""
+        self._stderr: str = ""
         self._exit_status: Optional[int] = None
+        self._command_exit_status: Optional[int] = None
         self._proc: Optional[multiprocessing.Process] = None
 
     @property
@@ -161,9 +164,43 @@ class ServerDriver:
     def exit_status(self) -> Optional[int]:
         """The exit status of the Fathom server process.
 
+        This is the exit status of the server process itself, not of any
+        server CLI commands executed via `execute()`. It is set after the
+        server process terminates.
+
         Is `None` if the server has not yet terminated.
         """
         return self._exit_status
+
+    @property
+    def command_exit_status(self) -> Optional[int]:
+        """The exit status of the last run Fathom server CLI command.
+
+        Is `None` if no server CLI command has been executed yet.
+        """
+        return self._command_exit_status
+
+    @property
+    def stdout(self) -> str:
+        """The captured stdout output of the last server command execution.
+
+        This is the captured stdout output of the last server
+        command executed via `execute()`.
+
+        Is an empty string if `execute()` has not been called yet.
+        """
+        return self._stdout
+
+    @property
+    def stderr(self) -> str:
+        """The captured stderr output of the last server command execution.
+
+        This is the captured stderr output of the last server
+        command executed via `execute()`.
+
+        Is an empty string if `execute()` has not been called yet.
+        """
+        return self._stderr
 
     @property
     def datastore(self) -> DataAccess:
@@ -250,7 +287,32 @@ class ServerDriver:
         db_manager = DatabaseManager()
         db_manager.shutdown()
 
-    def execute(self, args: list[str]):
+    def execute(self, *args: str):
+        """Executes a Fathom server CLI command with the given arguments.
+
+        The server command runs in-process. Its stdout and stderr are captured
+        and made available via the `stdout` and `stderr` properties. The exit
+        status is available via `command_exit_status`.
+
+        Args:
+            args: The CLI arguments to pass to the server.
+        """
+        work_dir = str(self._env.get_current_working_directory())
+        exec_args = [
+            "fathom-server",
+            "--working-directory",
+            work_dir
+        ] + list(args)
+
+        stdout_buffer = io.StringIO()
+        stderr_buffer = io.StringIO()
+        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+            self._command_exit_status = int(server_main(exec_args))
+
+        self._stdout = stdout_buffer.getvalue()
+        self._stderr = stderr_buffer.getvalue()
+
+    def start(self, args: list[str]):
         """Starts the Fathom server in a child process.
 
         Blocks until the server signals that it is ready to accept
@@ -338,7 +400,7 @@ class ServerDriver:
                 within the timeout.
         """
         self.shutdown()
-        self.execute(args or [])
+        self.start(args or [])
 
     def _force_shutdown(self):
         """Forcefully terminates the server process without waiting."""

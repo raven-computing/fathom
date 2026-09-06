@@ -14,15 +14,11 @@
 #
 """Functionality tests for user management commands."""
 
-import io
-
-from contextlib import redirect_stdout, redirect_stderr
 from unittest.mock import patch
 
 from raven.fathom.base import File
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.client.config import UserConfiguration
-from raven.fathom.server.cli import main as server_main
 from raven.fathom.server.cli import ExitStatus as ServerExitStatus
 
 from tests.functionality import TestCase
@@ -104,28 +100,16 @@ class TestServerUserManagementCLI(TestCase):
 
     _AUTO_START_SERVER = False
 
-    def _execute_server_cli(self, *args: str):
-        stdout_buffer = io.StringIO()
-        stderr_buffer = io.StringIO()
-        status = None
-        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-            status = server_main([
-                "fathom-server",
-                "--working-directory",
-                str(self.get_server_directory().path),
-                *args,
-            ])
-
-        self.server.disconnect_datastore()
-        return status, stdout_buffer.getvalue(), stderr_buffer.getvalue()
-
     def test_server_cli_can_create_list_and_delete_admin_user(self):
-        status, _, _ = self._execute_server_cli(
+        self.server.execute(
             "user", "create", "local-admin",
-            "--name", "Local Admin", "--admin",
+            "--name", "Local Admin", "--admin"
         )
 
-        self.assertEqual(status, ServerExitStatus.SUCCESS)
+        self.assertEqual(
+            ServerExitStatus.SUCCESS,
+            self.server.command_exit_status
+        )
         # self.assertIn(
         #     "Created user 'local-admin' (admin, onboarding).", stdout
         # )
@@ -137,16 +121,20 @@ class TestServerUserManagementCLI(TestCase):
         permission = self.server.datastore.users().find_permission(stored_user)
         self.assertTrue(permission.is_admin)
 
-        status, _, _ = self._execute_server_cli("user", "list")
+        self.server.execute("user", "list")
 
-        self.assertEqual(status, ServerExitStatus.SUCCESS)
+        self.assertEqual(
+            ServerExitStatus.SUCCESS,
+            self.server.command_exit_status
+        )
         # self.assertIn("local-admin\tLocal Admin\tadmin\tonboarding", stdout)
 
-        status, _, _ = self._execute_server_cli(
-            "user", "delete", "local-admin"
-        )
+        self.server.execute("user", "delete", "local-admin")
 
-        self.assertEqual(status, ServerExitStatus.SUCCESS)
+        self.assertEqual(
+            ServerExitStatus.SUCCESS,
+            self.server.command_exit_status
+        )
         # self.assertIn("Deleted user 'local-admin'.", stdout)
         self.assertIsNone(
             self.server.datastore.users().find_by_identifier("local-admin")

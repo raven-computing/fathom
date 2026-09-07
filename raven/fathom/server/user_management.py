@@ -15,12 +15,12 @@
 """Management of dedicated application users."""
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.base import User as BaseUser
+from raven.fathom.base import User
 from raven.fathom.base import UserState
 from raven.fathom.base import USER_ONBOARDING_SHARED_SECRET
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedDeleteQueryException
-from raven.fathom.server.models import User
+from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.security import UserAuthenticator
 
 
@@ -32,11 +32,11 @@ class UserManager:
         self._ds = DataAccess.instance()
         self._authenticator = UserAuthenticator()
 
-    def create_user(self, user: BaseUser):
+    def create_user(self, user: User):
         """Creates a new Fathom user on the server.
 
         Args:
-            user (User): The base User object to create in the server backend.
+            user (User): The User object to create in the server backend.
 
         Raises:
             ValueError: If the given user cannot be created.
@@ -58,7 +58,7 @@ class UserManager:
                 f"initial state {UserState.ONBOARDING} in order to be created"
             )
 
-        user_record = User(
+        user_record = UserModel(
             identifier=user.identifier,
             name=user.name,
             password=USER_ONBOARDING_SHARED_SECRET,
@@ -70,11 +70,11 @@ class UserManager:
             admin_privileges=user.is_admin
         )
 
-    def setup_user(self, user: BaseUser):
+    def setup_user(self, user: User):
         """Sets the initial password for an onboarding user.
 
         Args:
-            user (User): The base User object for which
+            user (User): The User object for which
                 to complete the setup procedure.
 
         Raises:
@@ -110,17 +110,17 @@ class UserManager:
         user.is_admin = permission.is_admin
         user.state = UserState.ACTIVE
 
-    def list_users(self) -> list[BaseUser]:
+    def list_users(self) -> list[User]:
         """Lists all users registered in the server backend.
 
         Returns:
-            list: A `list` of base `User` objects managed by the Fathom server.
+            list: A `list` of `User` objects managed by the Fathom server.
         """
         result = []
         for user in self._ds.users().read_all():
             permission = self._ds.users().find_permission(user)
             result.append(
-                BaseUser(
+                User(
                     identifier=str(user.identifier),
                     name=str(user.name),
                     is_admin=bool(permission.is_admin),
@@ -130,7 +130,7 @@ class UserManager:
 
         return result
 
-    def delete_user(self, user: BaseUser):
+    def delete_user(self, user: User):
         """Deletes the Fathom user and associated records.
 
         Args:

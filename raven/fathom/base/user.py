@@ -30,6 +30,8 @@ class UserState(StrEnum):
 
     ACTIVE = "active"
 
+    INACTIVE = "inactive"
+
 
 @dataclass
 class User:

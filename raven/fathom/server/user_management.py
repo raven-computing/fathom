@@ -55,7 +55,7 @@ class UserManager:
         if user.state != UserState.ONBOARDING:
             raise ValueError(
                 f"User '{user.identifier}' must be in "
-                "initial state {UserState.ONBOARDING} in order to be created"
+                f"initial state {UserState.ONBOARDING} in order to be created"
             )
 
         user_record = User(

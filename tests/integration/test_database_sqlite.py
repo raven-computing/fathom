@@ -44,6 +44,29 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
     #                                                                         #
     ###########################################################################
 
+    def test_can_create_new_regular_user(self):
+        user = User.create(
+            identifier="test-user-2",
+            name="Test User 2",
+            password="567890",
+        )
+        self.db.users().create_new_user(user)
+        created_user = self.db.users().find_by_identifier("test-user-2")
+        self.assertIsNotNone(created_user)
+
+    def test_can_create_new_admin_user(self):
+        user = User.create(
+            identifier="super-admin-user",
+            name="Super Admin User",
+            password="567890",
+        )
+        self.db.users().create_new_user(user, admin_privileges=True)
+        created_user = self.db.users().find_by_identifier("super-admin-user")
+        self.assertIsNotNone(created_user)
+        assert created_user is not None
+        permissions = self.db.users().find_permission(created_user)
+        self.assertTrue(permissions.is_admin)
+
     def test_query_can_find_user_by_identifier(self):
         user = self.db.users().find_by_identifier("test-user-1")
         self.assertIsNotNone(user)

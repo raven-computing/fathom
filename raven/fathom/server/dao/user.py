@@ -25,6 +25,17 @@ class UserDAO(DataAccessObject[User]):
     """A data access object for user-related data."""
 
     @abstractmethod
+    def create_new_user(self, record: User, admin_privileges: bool = False):
+        """Creates a new user record.
+
+        Args:
+            record (User): The user record to create.
+            admin_privileges (bool): Whether the user should
+                have admin privileges. By default, a new user has
+                the privileges of a regular application user.
+        """
+
+    @abstractmethod
     def find_by_identifier(self, identifier: str) -> Optional[User]:
         """Gets the user record with the specified identifier.
 

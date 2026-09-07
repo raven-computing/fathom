@@ -64,6 +64,16 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
     def __init__(self):
         super().__init__(User)
 
+    def create_new_user(self, record, admin_privileges=False):
+        self.create(record)
+        self.create(
+            UserPermission(
+                user=record,
+                allow_overwrite=False,
+                is_admin=admin_privileges,
+            )
+        )
+
     def find_by_identifier(self, identifier):
         return ReadQuery[User](
             User.select().where(User.identifier == identifier)

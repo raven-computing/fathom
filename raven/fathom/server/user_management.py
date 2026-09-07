@@ -20,7 +20,7 @@ from raven.fathom.base import UserState
 from raven.fathom.base import USER_ONBOARDING_SHARED_SECRET
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedDeleteQueryException
-from raven.fathom.server.models import User, UserPermission
+from raven.fathom.server.models import User
 from raven.fathom.server.security import UserAuthenticator
 
 
@@ -65,13 +65,9 @@ class UserManager:
             state=str(UserState.ONBOARDING),
         )
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().create(user_record)
-        self._ds.data(UserPermission).create(
-            UserPermission(
-                user=user_record,
-                allow_overwrite=False,
-                is_admin=user.is_admin,
-            )
+        self._ds.users().create_new_user(
+            user_record,
+            admin_privileges=user.is_admin
         )
 
     def setup_user(self, user: BaseUser):

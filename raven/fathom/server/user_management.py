@@ -105,14 +105,14 @@ class UserManager:
             )
 
         user_record.password = password
-        user_record.state = UserState.INITIALIZED
+        user_record.state = UserState.ACTIVE
         self._authenticator.constitute_password_authentication(user_record)
         self._ds.users().update(user_record)
         permission = self._ds.users().find_permission(user_record)
         user.name = user_record.name
         user.password = "" # Evict
         user.is_admin = permission.is_admin
-        user.state = UserState.INITIALIZED
+        user.state = UserState.ACTIVE
 
     def list_users(self) -> list[BaseUser]:
         """Lists all users registered in the server backend.

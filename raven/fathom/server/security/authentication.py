@@ -186,7 +186,7 @@ class UserAuthenticator:
             and user_record.password is not None
             and str(user_record.password) != ""
             and UserState(user_record.state) in (
-                UserState.INITIALIZED, UserState.ONBOARDING
+                UserState.ACTIVE, UserState.ONBOARDING
             )
         )
 

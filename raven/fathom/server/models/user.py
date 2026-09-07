@@ -39,7 +39,7 @@ class User(Model):
     )
 
     state = CharField(
-        default=UserState.INITIALIZED,
+        default=UserState.ACTIVE,
     )
 
 

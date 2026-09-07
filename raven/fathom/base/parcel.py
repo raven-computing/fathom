@@ -412,7 +412,7 @@ class RequestParcelJSON(Parcel):
             name=user_struct.get("name", ""),
             password=user_struct.get("password", ""),
             is_admin=bool(user_struct.get("isAdmin", False)),
-            state=UserState(user_struct.get("state", UserState.INITIALIZED)),
+            state=UserState(user_struct.get("state", UserState.ACTIVE)),
         )
 
     def _encode_package_data(self):
@@ -734,7 +734,7 @@ class ResponseParcelJSON(Parcel):
                 name=user_struct.get("name", ""),
                 is_admin=bool(user_struct.get("isAdmin", False)),
                 state=UserState(
-                    user_struct.get("state", UserState.INITIALIZED)
+                    user_struct.get("state", UserState.ACTIVE)
                 ),
             )
             for user_struct in user_structs

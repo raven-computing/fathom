@@ -28,7 +28,7 @@ class UserState(StrEnum):
 
     ONBOARDING = "onboarding"
 
-    INITIALIZED = "initialized"
+    ACTIVE = "active"
 
 
 @dataclass
@@ -43,4 +43,4 @@ class User:
 
     is_admin: bool = False
 
-    state: UserState = UserState.INITIALIZED
+    state: UserState = UserState.ACTIVE

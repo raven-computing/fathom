@@ -66,7 +66,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         UserManager().setup_user(user)
 
         self.assertEqual(user.identifier, "test-user-2")
-        self.assertEqual(user.state, UserState.INITIALIZED)
+        self.assertEqual(user.state, UserState.ACTIVE)
         stored_user = self.db.users().find_by_identifier("test-user-2")
         assert stored_user is not None
         self.assertTrue(
@@ -74,7 +74,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
                 str(stored_user.password)
             )
         )
-        self.assertEqual(stored_user.state, UserState.INITIALIZED)
+        self.assertEqual(stored_user.state, UserState.ACTIVE)
 
     def test_can_create_admin_user(self):
         user = User(
@@ -106,7 +106,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         )
         self.assertTrue(users[0].is_admin)
         self.assertFalse(users[1].is_admin)
-        self.assertEqual(users[0].state, UserState.INITIALIZED)
+        self.assertEqual(users[0].state, UserState.ACTIVE)
         self.assertEqual(users[1].state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):

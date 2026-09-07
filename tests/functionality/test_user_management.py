@@ -53,7 +53,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "alpha\tAlphanet Administrator\tadmin\tinitialized"
+            "alpha\tAlphanet Administrator\tadmin\tactive"
         )
         self.assertClientStdoutContains(
             "managed-user\tManaged User\tregular\tonboarding"
@@ -71,7 +71,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "managed-user"
         )
         assert stored_user is not None
-        self.assertEqual(stored_user.state, "initialized")
+        self.assertEqual(stored_user.state, "active")
 
         self.client.execute("manage", "user", "delete", "managed-user")
 

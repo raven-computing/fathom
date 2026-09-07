@@ -245,16 +245,16 @@ class TestStagingArea(
         the given staging area and returns the corresponding
         saved `StagingAllocation` record.
         """
-        dao = DataAccessMock().projects()
+        ds = DataAccessMock()
         staging_area.create()
         project_version = ProjectVersion(
             project=1,
             version_sequence=1,
             version_identifier=project.version.identifier
         )
-        dao.find_version_by_identifier.return_value = project_version
+        ds.projects().find_version_by_identifier.return_value = project_version
         staging_area.put(project, self.packed_package)
-        allocation = dao.create.call_args.args[0]
+        allocation = ds.data(StagingAllocation).create.call_args.args[0]
         self.assertIsInstance(allocation, StagingAllocation)
         return allocation
 

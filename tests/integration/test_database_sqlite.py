@@ -52,7 +52,7 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertEqual(user.password, "123456")
 
     def test_query_can_find_all_users(self):
-        users = self.db.users().find_all()
+        users = self.db.users().read_all()
         self.assertEqual(len(users), 1)
         self.assertIsInstance(users[0], User)
         self.assertEqual(users[0].identifier, "test-user-1")
@@ -113,7 +113,7 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             project_version=project.latest_version,
             allow_overwrite=False,
         )
-        self.db.users().create(auth)
+        self.db.data(AuthDeployment).create(auth)
 
         persisted = self.db.users().find_deployment_authorization_by_token(
             "abcdef123456"
@@ -188,7 +188,7 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             project_version="1.0.0",
             allow_overwrite=True,
         )
-        self.db.users().create(auth)
+        self.db.data(AuthDeployment).create(auth)
 
         persisted = self.db.users().find_deployment_authorization_by_token(
             "unique-roundtrip-token"

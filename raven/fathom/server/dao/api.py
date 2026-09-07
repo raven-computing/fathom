@@ -19,11 +19,14 @@ objects to interact with the application's data source.
 """
 
 from abc import abstractmethod
+from typing import Type, TypeVar
 
 from raven.fathom.base import Interface
 from raven.fathom.base.decorators import inject
+from raven.fathom.server.dao.base import DataAccessObject
 from raven.fathom.server.dao.user import UserDAO
 from raven.fathom.server.dao.project import ProjectDAO
+from raven.fathom.server.datastore.orm.model import Model
 from raven.fathom.server.exceptions import FathomServerException
 
 
@@ -60,9 +63,25 @@ class IncoherentDatastoreStateException(DatastoreException):
     """
 
 
+M = TypeVar("M", bound=Model)
+
+
 @inject
 class DataAccess(Interface):
     """Application API for data access."""
+
+    @abstractmethod
+    def data(self, model: Type[M]) -> DataAccessObject[M]:
+        """Obtains a generic data access object0.
+
+        Args:
+            model: The class of the data model to access,
+                as a type of model `M`.
+
+        Returns:
+            DataAccessObject[M]: A DAO to handle generic data access
+                of model `M`.
+        """
 
     @abstractmethod
     def users(self) -> UserDAO:

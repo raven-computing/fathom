@@ -240,7 +240,7 @@ class DeploymentAuthorizer:
             project_version=intent.project.version.identifier,
             allow_overwrite=intent.overwrite_existing,
         )
-        self._ds.users().create(auth)
+        self._ds.data(AuthDeployment).create(auth)
         return self._create_deployment_auth_from_stored(auth)
 
     def _get_user_from_intent(

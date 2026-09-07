@@ -22,6 +22,10 @@ from raven.fathom.server.models import UserPermission
 from tests.unit.mocks import Mock
 
 
+class DataMock(Mock):
+    """Mock object for generic data requests."""
+
+
 class UserDAOMock(Mock):
     """Mock object for the `UserDAO`."""
 
@@ -33,9 +37,14 @@ class ProjectDAOMock(Mock):
 class DataAccessMock(DataAccess):
     """Implementation of the `DataAccess` interface for testing purposes."""
 
+    DATA_MOCK = DataMock()
+
     USER_DAO_MOCK = UserDAOMock()
 
     PROJECT_DAO_MOCK = ProjectDAOMock()
+
+    def data(self, model):
+        return DataAccessMock.DATA_MOCK
 
     def users(self):
         return DataAccessMock.USER_DAO_MOCK
@@ -71,5 +80,6 @@ class DataAccessMock(DataAccess):
     @staticmethod
     def reset():
         """Resets the state of the mock data.UserDAOMock"""
+        DataAccessMock.DATA_MOCK  = DataMock()
         DataAccessMock.USER_DAO_MOCK  = UserDAOMock()
         DataAccessMock.PROJECT_DAO_MOCK = ProjectDAOMock()

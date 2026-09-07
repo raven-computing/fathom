@@ -21,16 +21,8 @@ from raven.fathom.server.dao.base import DataAccessObject
 from raven.fathom.server.models import User, UserPermission, AuthDeployment
 
 
-class UserDAO(DataAccessObject):
+class UserDAO(DataAccessObject[User]):
     """A data access object for user-related data."""
-
-    @abstractmethod
-    def find_all(self) -> list[User]:
-        """Gets all persisted user records.
-
-        Returns:
-            list[User]: All persisted users.
-        """
 
     @abstractmethod
     def find_by_identifier(self, identifier: str) -> Optional[User]:

@@ -66,7 +66,7 @@ class UserManager:
         )
         self._authenticator.constitute_password_authentication(user_record)
         self._ds.users().create(user_record)
-        self._ds.users().create(
+        self._ds.data(UserPermission).create(
             UserPermission(
                 user=user_record,
                 allow_overwrite=False,
@@ -121,7 +121,7 @@ class UserManager:
             list: A `list` of base `User` objects managed by the Fathom server.
         """
         result = []
-        for user in self._ds.users().find_all():
+        for user in self._ds.users().read_all():
             permission = self._ds.users().find_permission(user)
             result.append(
                 BaseUser(

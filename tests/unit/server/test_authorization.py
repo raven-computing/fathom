@@ -58,7 +58,7 @@ class TestDeploymentAuthorizer(TestCase):
 
     def get_stored_deployment_authorization(self):
         """Obtains the last stored `AuthDeployment` record."""
-        mock_method = self.dao.users().create
+        mock_method = self.dao.data(AuthDeployment).create
         mock_method.assert_called_once()
         deployment_authorization = mock_method.call_args.args[0]
         self.assertIsInstance(deployment_authorization, AuthDeployment)

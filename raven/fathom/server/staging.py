@@ -451,7 +451,7 @@ class StagingArea:
                 "Cannot save staging allocation: Project record not found"
             )
 
-        project_dao.create(
+        self._ds.data(StagingAllocation).create(
             StagingAllocation(
                 project_version=project_version,
                 path=str(staging_spot.relative_path),

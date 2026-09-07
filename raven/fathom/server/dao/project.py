@@ -22,7 +22,7 @@ from raven.fathom.server.models import Project, ProjectVersion
 from raven.fathom.server.models import User, StagingAllocation
 
 
-class ProjectDAO(DataAccessObject):
+class ProjectDAO(DataAccessObject[Project]):
     """A data access object for project-related data."""
 
     @abstractmethod

@@ -16,7 +16,7 @@
 using query builders from the peewee ORM.
 """
 
-from typing import cast
+from typing import cast, Type, TypeVar
 
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
@@ -27,18 +27,30 @@ from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import AuthDeployment
+from raven.fathom.server.datastore.orm.model import Model
 from raven.fathom.server.datastore.orm.query import CreateQuery, ReadQuery
 from raven.fathom.server.datastore.orm.query import UpdateQuery, DeleteQuery
 
 
 # pylint: disable=no-value-for-parameter
 
+M = TypeVar("M", bound=Model)
 
-class DataAccessObjectRDBMS(DataAccessObject):
+
+class DataAccessObjectRDBMS(DataAccessObject[M]):
     """Implementation of the `DataAccessObject` ABC for RDBMS persistence."""
+
+    def __init__(self, model: Type[Model]):
+        super().__init__()
+        self._model = model
 
     def create(self, record):
         CreateQuery(record).execute()
+
+    def read_all(self):
+        return ReadQuery[M](
+            self._model.select().order_by(self._model.id.asc()) # type: ignore
+        ).execute()
 
     def update(self, record):
         UpdateQuery(record).execute()
@@ -49,10 +61,8 @@ class DataAccessObjectRDBMS(DataAccessObject):
 
 class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
-    def find_all(self):
-        return ReadQuery[User](
-            User.select().order_by(User.identifier.asc())
-        ).execute()
+    def __init__(self):
+        super().__init__(User)
 
     def find_by_identifier(self, identifier):
         return ReadQuery[User](
@@ -97,6 +107,9 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
 
 class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
+
+    def __init__(self):
+        super().__init__(Project)
 
     def find_by_identifier(self, identifier):
         return ReadQuery[Project](
@@ -160,6 +173,9 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
 
 class DataAccessRDBMS(DataAccess):
     """Implementation of the `DataAccess` interface for RDBMS persistence."""
+
+    def data(self, model):
+        return DataAccessObjectRDBMS[Model](model)
 
     def users(self):
         return _UserDAOImpl()

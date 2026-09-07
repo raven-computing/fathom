@@ -15,41 +15,53 @@
 """General Data Access Object (DAO) API."""
 
 from abc import ABC, abstractmethod
+from typing import TypeVar, Generic
 
 from raven.fathom.server.datastore.orm.model import Model
 
 
-class DataAccessObject(ABC):
+M = TypeVar("M", bound=Model)
+
+
+class DataAccessObject(ABC, Generic[M]):
     """The abstract base class for a Data Access Object (DAO)."""
 
     @abstractmethod
-    def create(self, record: Model):
+    def create(self, record: M):
         """Creates a record.
 
         Args:
-            record (Model): The record to be created.
+            record (M): The record of model `M` to be created.
 
         Raises:
             FailedCreateQueryException: If the record could not be created.
         """
 
     @abstractmethod
-    def update(self, record: Model):
+    def read_all(self) -> list[M]:
+        """Gets all persisted records of model `M`.
+
+        Returns:
+            list[M]: A list of all persisted records of model `M`.
+        """
+
+    @abstractmethod
+    def update(self, record: M):
         """Updates a record.
 
         Args:
-            record (Model): The record to be updated.
+            record (M): The record of model `M` to be updated.
 
         Raises:
             FailedUpdateQueryException: If the record could not be updated.
         """
 
     @abstractmethod
-    def delete(self, record: Model):
+    def delete(self, record: M):
         """Deletes a record.
 
         Args:
-            record (Model): The record to be deleted.
+            record (M): The record of model `M` to be deleted.
 
         Raises:
             FailedDeleteQueryException: If the record could not be deleted.

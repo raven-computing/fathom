@@ -72,7 +72,7 @@ class DataAccess(Interface):
 
     @abstractmethod
     def data(self, model: Type[M]) -> DataAccessObject[M]:
-        """Obtains a generic data access object0.
+        """Obtains a generic data access object.
 
         Args:
             model: The class of the data model to access,

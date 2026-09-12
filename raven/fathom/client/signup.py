@@ -87,8 +87,7 @@ class UserSignupRequest:
             )
 
         http_request.set_json_body({
-            "identifier": self._user.identifier,
-            "password": self._user.password,
+            "set_password": self._user.password,
         })
         http_response = http_request.send()
         response_body = http_response.get_body_json()

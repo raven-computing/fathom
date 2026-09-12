@@ -51,8 +51,8 @@ class SignupController:
 
             request_body = cherrypy.request.json
             user = User(
-                identifier=request_body.get("identifier"),
-                password=request_body.get("password"),
+                identifier=client_authentication.username,
+                password=request_body.get("set_password"),
                 state=UserState.ONBOARDING,
             )
             UserManager().sign_up_user(user)

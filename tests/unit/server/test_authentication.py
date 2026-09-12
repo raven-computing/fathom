@@ -96,12 +96,12 @@ class TestUserAuthentication(TestCase):
         self.assertFalse(auth.is_authenticated())
         self.assertIsNone(auth.user_record)
 
-    def test_onboarding_user_is_authenticated_with_matching_password(self):
+    def test_onboarding_user_is_not_authenticated_with_matching_password(self):
         self.user_stored.state = UserState.ONBOARDING # type: ignore
         self.dao.users().find_by_identifier.return_value = self.user_stored
         auth = UserAuthenticator().authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
-        self.assertTrue(auth.is_authenticated())
+        self.assertFalse(auth.is_authenticated())
         self.assertIsNotNone(auth.user_record)
 
     def test_cleartext_password_is_hashed_on_successful_authentication(self):

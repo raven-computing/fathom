@@ -62,13 +62,13 @@ class SetupCommand(Command):
             LOG.e("Shared secret is required.")
             return ExitStatus.FAILURE
 
-        password = prompt.read("New password: ", secret=True)
-        if not password:
+        new_password = prompt.read("New password: ", secret=True)
+        if not new_password:
             LOG.e("Password must not be empty.")
             return ExitStatus.FAILURE
 
         confirmation = prompt.read("Confirm password: ", secret=True)
-        if password != confirmation:
+        if new_password != confirmation:
             LOG.e("Password confirmation does not match.")
             return ExitStatus.FAILURE
 
@@ -82,6 +82,6 @@ class SetupCommand(Command):
                 password=shared_secret,
             ),
         )
-        server.setup_user(User(identifier=identifier, password=password))
+        server.sign_up_user(User(identifier=identifier, password=new_password))
         LOG.i("Initialized user '%s'", identifier)
         return ExitStatus.SUCCESS

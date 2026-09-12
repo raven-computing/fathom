@@ -63,7 +63,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         )
         UserManager().create_user(user)
         user.password = "secret-password"
-        UserManager().setup_user(user)
+        UserManager().sign_up_user(user)
 
         self.assertEqual(user.identifier, "test-user-2")
         self.assertEqual(user.state, UserState.ACTIVE)

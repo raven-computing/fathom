@@ -95,8 +95,6 @@ class Interaction(StrEnum):
 
     CREATE_USER = "user-create"
 
-    SETUP_USER = "user-setup"
-
     LIST_USERS = "user-list"
 
     DELETE_USER = "user-delete"

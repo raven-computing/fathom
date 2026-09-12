@@ -17,7 +17,7 @@
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, User, UserState
 from raven.fathom.server.handlers.user_management import (
-    UserCreateHandler, UserSetupHandler, UserListHandler, UserDeleteHandler,
+    UserCreateHandler, UserListHandler, UserDeleteHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.user_management import UserManager
@@ -79,24 +79,6 @@ class TestUserManagementHandlers(TestCase):
         self.manager.create_user.assert_called_once_with(
             expected_user
         )
-
-    def test_setup_handler_initializes_user(self):
-        self.manager.setup_user.return_value = User(
-            identifier="someone",
-            name="Someone",
-        )
-        request = ClientRequest(Interaction.SETUP_USER)
-        request.managed_user = User(identifier="someone", password="secret")
-        response = ServerResponse(Interaction.SETUP_USER)
-
-        UserSetupHandler(self.manager).handle(request, response)
-
-        self.assertFalse(response.has_errors())
-        expected_user = User(
-            identifier="someone",
-            password="secret",
-        )
-        self.manager.setup_user.assert_called_once_with(expected_user)
 
     def test_list_handler_returns_managed_users(self):
         self.admin_authorizer.is_administrator.return_value = True

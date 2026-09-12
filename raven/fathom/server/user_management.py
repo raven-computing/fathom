@@ -70,7 +70,7 @@ class UserManager:
             admin_privileges=user.is_admin
         )
 
-    def setup_user(self, user: User):
+    def sign_up_user(self, user: User):
         """Sets the initial password for an onboarding user.
 
         Args:

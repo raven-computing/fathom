@@ -33,6 +33,7 @@ from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ServerResponse
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
+from raven.fathom.base import ClientAuthentication
 from raven.fathom.base.http import HTTP_HEADER_CLIENT_AUTHENTICATION
 from raven.fathom.base.http import ClientAuthenticationHeader
 from raven.fathom.base.http import HTTPDecodeException
@@ -75,6 +76,37 @@ def expose(methods: Union[MethodHTTP, list[MethodHTTP]]):
     return decorator
 
 
+def decode_client_auth_header() -> ClientAuthentication:
+    """Decodes the client authentication header from the currently
+    serving HTTP request.
+
+    Returns:
+        ClientAuthentication: The authentication credentials submitted
+            by a client in the underlying request header.
+
+    Raises:
+        HTTPError: If an HTTP error response should be submitted.
+        HTTPDecodeException: If the submitted HTTP header is malformed.
+    """
+    request = cherrypy.serving.request
+    auth_header = request.headers.get(HTTP_HEADER_CLIENT_AUTHENTICATION)
+    if not auth_header:
+        raise cherrypy.HTTPError(
+            401, "Unauthenticated request"
+        )
+
+    redacted_auth_val = "*****REDACTED*****"
+    request.headers[HTTP_HEADER_CLIENT_AUTHENTICATION] = redacted_auth_val
+    auth_header_lower = HTTP_HEADER_CLIENT_AUTHENTICATION.lower()
+    for i, item in enumerate(request.header_list):
+        name, _ = item
+        if name.lower() == auth_header_lower:
+            request.header_list[i] = (name, redacted_auth_val)
+            break
+
+    return ClientAuthenticationHeader(auth_header).decode()
+
+
 class _RequestProcessorHTTP(cherrypy.Tool):
     """CherryPy Tool to deserialize a HTTP client request
     into a `ClientRequest` object.
@@ -90,43 +122,27 @@ class _RequestProcessorHTTP(cherrypy.Tool):
 
     def _process(self):
         request = cherrypy.serving.request
-        auth_header = request.headers.get(HTTP_HEADER_CLIENT_AUTHENTICATION)
-        if not auth_header:
-            raise cherrypy.HTTPError(
-                401, "Unauthenticated request"
-            )
-
-        redacted_auth_val = "*****REDACTED*****"
-        request.headers[HTTP_HEADER_CLIENT_AUTHENTICATION] = redacted_auth_val
-        auth_header_lower = HTTP_HEADER_CLIENT_AUTHENTICATION.lower()
-        for i, item in enumerate(request.header_list):
-            name, _ = item
-            if name.lower() == auth_header_lower:
-                request.header_list[i] = (name, redacted_auth_val)
-                break
-
-        content_type = request.headers.get("Content-Type", "")
-        if content_type != _INTERACTION_CONTENT_TYPE:
-            raise cherrypy.HTTPError(
-                415, "Expected an entity of content type application/json"
-            )
-
-        body = request.body
-        if body is None:
-            raise cherrypy.HTTPError(
-                400,
-                "Bad request: No request body specified"
-            )
-
-        data = body.read()
         try:
+            client_authentication = decode_client_auth_header()
+            content_type = request.headers.get("Content-Type", "")
+            if content_type != _INTERACTION_CONTENT_TYPE:
+                raise cherrypy.HTTPError(
+                    415, "Expected an entity of content type application/json"
+                )
+
+            body = request.body
+            if body is None:
+                raise cherrypy.HTTPError(
+                    400,
+                    "Bad request: No request body specified"
+                )
+
+            data = body.read()
             client_request = RequestParcelJSON(
                 data,
                 ParcelValidatorJSON(SchemaLoaderJSON.for_request_schema())
             ).decode()
-            client_request.authentication = ClientAuthenticationHeader(
-                auth_header
-            ).decode()
+            client_request.authentication = client_authentication
         except ParcelDecodingException:
             raise cherrypy.HTTPError(
                 400, "Bad request: Expected a valid JSON entity"
@@ -213,4 +229,5 @@ cherrypy.tools.fathom_response = _ResponseProcessorHTTP()
 # Expose tools
 fathom_client_request = cherrypy.tools.fathom_request # type: ignore
 fathom_server_response = cherrypy.tools.fathom_response # type: ignore
+input_json = cherrypy.tools.json_in # type: ignore
 output_json = cherrypy.tools.json_out # type: ignore

@@ -117,7 +117,7 @@ class UserSetupHandler(ActionHandler):
             return
 
         try:
-            self._manager.setup_user(user)
+            self._manager.sign_up_user(user)
         except ValueError as ex:
             response.add_error(
                 ResponseMessage(

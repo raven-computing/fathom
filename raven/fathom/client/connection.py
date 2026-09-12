@@ -27,6 +27,7 @@ from raven.fathom.base import Package
 from raven.fathom.base import DeploymentMessage
 from raven.fathom.base import User
 from raven.fathom.client.logging import Logger
+from raven.fathom.client.signup import UserSignupRequest
 from raven.fathom.client.exceptions import FathomClientException
 
 if TYPE_CHECKING:
@@ -212,15 +213,12 @@ class Server:
 
         return users[0]
 
-    def setup_user(self, user: User) -> User:
+    def sign_up_user(self, user: User):
         """Initializes an onboarding application user on the server.
 
         Args:
             user (User): The base User object for which to complete the
                 setup procedure.
-
-        Returns:
-            User: The initialized user as returned by the server.
 
         Raises:
             ServerConnectionException: If a connection to the server cannot
@@ -229,20 +227,23 @@ class Server:
             ServerOperationException: If the server refuses or fails
                 to complete the user setup procedure.
         """
-        request = ClientRequest(Interaction.SETUP_USER)
-        request.authentication = self._client_authentication
-        request.managed_user = user
-
-        LOG.v("Requesting remote user setup")
-        response = self._send(request)
-        self._raise_on_errors(response)
-        users = response.managed_users
-        if users is None or len(users) == 0:
+        if self._client_authentication is None:
             raise ServerConnectionException(
-                "Server response does not contain setup user information"
+                "Authentication must be provided "
+                "when signing up a new user"
             )
 
-        return users[0]
+        request = UserSignupRequest(
+            self._location,
+            self._client_authentication,
+            user
+        )
+        LOG.v("Requesting remote user setup")
+        response = request.send()
+        if response != "OK":
+            raise ServerConnectionException(
+                "Server response is not OK"
+            )
 
     def list_users(self) -> list[User]:
         """Lists application users from the server.

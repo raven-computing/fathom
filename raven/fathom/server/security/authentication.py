@@ -34,13 +34,8 @@ PASSWORD_ENCODING: Final = "UTF-8"
 PASSWORD_SALT_LENGTH: Final = 16
 
 
-def _check_client_auth_types(request: ClientRequest):
+def _check_auth_types(auth: ClientAuthentication):
     """Safety check for username-password-combination in a made request."""
-    TypeCheck.require_arg(request, ClientRequest)
-    auth = request.authentication
-    if auth is None:
-        raise ProcessingException("Client has no authentication set")
-
     TypeCheck.require(auth, ClientAuthentication)
     TypeCheck.require(auth.username, str)
     TypeCheck.require(auth.password, str)
@@ -53,6 +48,16 @@ def _check_client_auth_types(request: ClientRequest):
         raise ProcessingException(
             "Client authentication password must not be empty"
         )
+
+
+def _check_client_auth_types(request: ClientRequest):
+    """Safety check for a made client request."""
+    TypeCheck.require_arg(request, ClientRequest)
+    auth = request.authentication
+    if auth is None:
+        raise ProcessingException("Client has no authentication set")
+
+    _check_auth_types(auth)
 
 
 def _check_user_record_types(user: User):
@@ -124,6 +129,36 @@ class UserAuthenticator:
             )
         )
 
+    def authenticate_signup_request(
+        self,
+        authentication: ClientAuthentication
+    ) -> UserAuthentication:
+        """Authenticates the given request to sign up a new user.
+
+        Args:
+            authentication (ClientAuthentication): The client authentication
+                information used in the signup request.
+
+        Returns:
+            UserAuthentication: The authentication result. Never `None`.
+
+        Raises:
+            ProcessingException: If the given authentication is invalid.
+        """
+        _check_auth_types(authentication)
+        user = self._ds.users().find_by_identifier(authentication.username)
+        is_authenticated = False
+        if self._onboarding_user_record_has_password_set(user):
+            assert user is not None
+            user = self._validate_user_authentication_by(
+                user,
+                authentication.username,
+                authentication.password
+            )
+            is_authenticated = user is not None
+
+        return UserAuthentication(user, is_authenticated)
+
     def authenticate_client(
         self,
         request: ClientRequest
@@ -145,39 +180,47 @@ class UserAuthenticator:
         """
         _check_client_auth_types(request)
         assert request.authentication is not None
-        user = self._validate_user_authentication_by(
-            request.authentication.username,
-            request.authentication.password
+        user = self._ds.users().find_by_identifier(
+            request.authentication.username
         )
-        is_authenticated = user is not None
+        is_authenticated = False
+        if self._active_user_record_has_password_set(user):
+            assert user is not None
+            user = self._validate_user_authentication_by(
+                user,
+                request.authentication.username,
+                request.authentication.password
+            )
+            is_authenticated = user is not None
+
         if is_authenticated:
-            self._set_authenticated_user(request, user)
+            assert user is not None
+            self._set_authenticated_client(request, user)
 
         return UserAuthentication(user, is_authenticated)
 
     def _validate_user_authentication_by(
         self,
+        user: User,
         username: str,
         password: str
     ) -> Optional[User]:
-        user = self._ds.users().find_by_identifier(username)
-        if self._user_record_has_password_set(user):
-            assert user is not None
-            if not StoredPasswordHash.is_stored_representation(
-                str(user.password)
-            ):
-                self.constitute_password_authentication(user)
-                self._ds.users().update(user)
+        assert user is not None
+        if not StoredPasswordHash.is_stored_representation(
+            str(user.password)
+        ):
+            self.constitute_password_authentication(user)
+            self._ds.users().update(user)
 
-            stored = StoredPasswordHash.from_compact_string(
-                user.password # type: ignore
-            )
-            if PasswordValidation.validate_equality(password, stored):
-                return user
+        stored = StoredPasswordHash.from_compact_string(
+            user.password # type: ignore
+        )
+        if PasswordValidation.validate_equality(password, stored):
+            return user
 
         return None
 
-    def _user_record_has_password_set(
+    def _active_user_record_has_password_set(
         self,
         user_record: Optional[User]
     ) -> bool:
@@ -185,15 +228,24 @@ class UserAuthenticator:
             user_record is not None
             and user_record.password is not None
             and str(user_record.password) != ""
-            and UserState(user_record.state) in (
-                UserState.ACTIVE, UserState.ONBOARDING
-            )
+            and UserState(user_record.state) == UserState.ACTIVE
+        )
+
+    def _onboarding_user_record_has_password_set(
+        self,
+        user_record: Optional[User]
+    ) -> bool:
+        return (
+            user_record is not None
+            and user_record.password is not None
+            and str(user_record.password) != ""
+            and UserState(user_record.state) == UserState.ONBOARDING
         )
 
     def _assign_password(self, user: User, hash_value: StoredPasswordHash):
         user.password = str(hash_value) # type: ignore
 
-    def _set_authenticated_user(self, request: ClientRequest, user: User):
+    def _set_authenticated_client(self, request: ClientRequest, user: User):
         request.user = BaseUser(
             user.identifier,
             user.name,

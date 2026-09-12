@@ -28,7 +28,7 @@ from .server_info import ServerInfoHandler
 from .deployment_intent import DeploymentIntentHandler
 from .deployment_transaction import DeploymentTransactionHandler
 from .user_management import (
-    UserCreateHandler, UserSetupHandler, UserListHandler, UserDeleteHandler,
+    UserCreateHandler, UserListHandler, UserDeleteHandler,
 )
 
 
@@ -66,8 +66,6 @@ class HandlerFactory:
             )
         elif client_action == Interaction.CREATE_USER:
             handler = UserCreateHandler(UserAuthorizer(), UserManager())
-        elif client_action == Interaction.SETUP_USER:
-            handler = UserSetupHandler(UserManager())
         elif client_action == Interaction.LIST_USERS:
             handler = UserListHandler(UserAuthorizer(), UserManager())
         elif client_action == Interaction.DELETE_USER:

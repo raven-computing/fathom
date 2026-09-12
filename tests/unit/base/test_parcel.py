@@ -210,7 +210,7 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
         )
 
     def test_encode_decode_managed_user_request(self):
-        request = ClientRequest(Interaction.SETUP_USER)
+        request = ClientRequest(Interaction.CREATE_USER)
         request.managed_user = User(
             identifier="alpha",
             name="Alpha",
@@ -221,7 +221,7 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
         encoded = RequestParcelJSON(request).encode()
         decoded = RequestParcelJSON(encoded).decode()
 
-        self.assertEqual(decoded.action, Interaction.SETUP_USER)
+        self.assertEqual(decoded.action, Interaction.CREATE_USER)
         self.assertIsNotNone(decoded.managed_user)
         assert decoded.managed_user is not None
         self.assertEqual(decoded.managed_user.identifier, "alpha")

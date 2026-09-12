@@ -24,6 +24,7 @@ from raven.fathom.server.http import ServerApplication, assign
 from raven.fathom.server.http import ServerHTTP, HTTPServerStartException
 from raven.fathom.server.defaults import SERVER_ROOT_PATH_V1
 from raven.fathom.server.controllers import PublicController
+from raven.fathom.server.controllers import SignupController
 from raven.fathom.server.controllers import InteractionController
 from raven.fathom.server.staging import StagingArea
 from raven.fathom.server.deployment import DeploymentSite
@@ -47,6 +48,7 @@ class FathomServer(ServerApplication):
     def __init__(self):
         super().__init__()
         self.public = PublicController()
+        self.user = SignupController()
         self.interact = InteractionController()
 
     def root_path(self):

@@ -18,4 +18,5 @@ A web controller handles incoming HTTP requests and returns HTTP responses.
 """
 
 from .public import PublicController
+from .signup import SignupController
 from .interaction import InteractionController

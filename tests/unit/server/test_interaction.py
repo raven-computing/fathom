@@ -91,24 +91,6 @@ class TestServerConnection(TestCase):
         method_mock.assert_called_once()
         self.assertIs(method_mock.call_args.args[0], self.request)
 
-    def test_setup_user_request_is_authenticated_and_dispatched(self):
-        request = ClientRequest(Interaction.SETUP_USER)
-        request.authentication = ClientAuthentication(
-            username="test-user-1",
-            password="whatever",
-        )
-        self.authenticator.authenticate_client.return_value = (
-            UserAuthentication(self.user, is_authenticated=True)
-        )
-
-        response = self.connection.process(request)
-
-        self.assertIsInstance(response, ServerResponse)
-        self.assertEqual(response.action, request.action)
-        self.authenticator.authenticate_client.assert_called_once_with(request)
-        method_mock = self.handler_factory.create_action_handler_for
-        method_mock.assert_called_once_with(request)
-
     def test_onboarding_user_is_blocked_from_non_setup_action(self):
         self.request.user = BaseUser(
             identifier="test-user-1",

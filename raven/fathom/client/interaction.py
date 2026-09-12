@@ -15,17 +15,14 @@
 """Client-specific implementations for client-server-interactions."""
 
 from raven.fathom.base import ServerConnection
-from raven.fathom.base import URL, URLAuthority
 from raven.fathom.base import TransmissionException
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
-from raven.fathom.base import ClientAuthenticationHeader
 from raven.fathom.base import HTTPEncodeException
-from raven.fathom.base import RequestHTTP, MethodHTTP
+from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ConnectionException
-from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
-from raven.fathom.client.locator import ServerLocator
-from raven.fathom.client.version import Version
+from raven.fathom.client.http import RequestHTTP
+from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 
 
 class ServerConnectionHTTP(ServerConnection):
@@ -42,16 +39,8 @@ class ServerConnectionHTTP(ServerConnection):
             location (ServerLocator): The location of the server to connect to.
         """
         super().__init__()
-        url = URL()
-        url.scheme = "https" if location.secure_connection else "http"
-        url.authority = URLAuthority(
-            hostname=location.domain,
-            port=location.port
-        )
-        if location.location is not None:
-            url.path = location.location
-
-        url.path += "/fathom/v1/interact/call"
+        url = server_locator_to_url(location)
+        url.path += "/interact/call"
         self._server_url = url
 
     def process(self, request):
@@ -76,16 +65,9 @@ class ServerConnectionHTTP(ServerConnection):
 
     def _send_http(self, request):
         http_request = RequestHTTP(MethodHTTP.POST, self._server_url)
-        http_request.set_header(
-            "User-Agent",
-            f"Fathom-client/{Version.current()}"
-        )
         authentication = request.authentication
         if authentication is not None:
-            http_request.set_header(
-                HTTP_HEADER_CLIENT_AUTHENTICATION,
-                ClientAuthenticationHeader(authentication).encode()
-            )
+            http_request.set_authentication(authentication)
 
         parcel = RequestParcelJSON(request)
         http_request.set_body(parcel.encode())

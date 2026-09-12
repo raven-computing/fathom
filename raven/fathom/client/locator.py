@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING, Optional
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import Configuration
-from raven.fathom.base import URL
+from raven.fathom.base import URL, URLAuthority
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import InvalidConfigurationException
@@ -126,6 +126,29 @@ class ServerLocator:
 
     def __repr__(self):
         return str(self)
+
+
+def server_locator_to_url(locator: ServerLocator) -> URL:
+    """Obtains a concrete URL from the specified server locator object.
+
+    Args:
+        locator (ServerLocator): The server locator for which to get a URL.
+
+    Returns:
+        URL: A `URL` object to access the server pointed to
+            by the specified `ServerLocator` object.
+    """
+    url = URL()
+    url.scheme = "https" if locator.secure_connection else "http"
+    url.authority = URLAuthority(
+        hostname=locator.domain,
+        port=locator.port
+    )
+    if locator.location is not None:
+        url.path = locator.location
+
+    url.path += "/fathom/v1"
+    return url
 
 
 def _load_from_cli_args(args: "ArgumentsCLI") -> ServerLocator:

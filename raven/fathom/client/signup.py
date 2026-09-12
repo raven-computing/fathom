@@ -16,12 +16,9 @@
 
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import User
-from raven.fathom.base import URL, URLAuthority
-from raven.fathom.base import ClientAuthenticationHeader
-from raven.fathom.base import RequestHTTP, MethodHTTP
-from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
-from raven.fathom.client.locator import ServerLocator
-from raven.fathom.client.version import Version
+from raven.fathom.base import MethodHTTP
+from raven.fathom.client.http import RequestHTTP
+from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 
 
 class UserSignupRequest:
@@ -63,28 +60,12 @@ class UserSignupRequest:
             HTTPEncodeException: If there is an error encoding the
                 HTTP request.
         """
-        url = URL()
-        url.scheme = "https" if self._location.secure_connection else "http"
-        url.authority = URLAuthority(
-            hostname=self._location.domain,
-            port=self._location.port
-        )
-        if self._location.location is not None:
-            url.path = self._location.location
-
-        url.path += "/fathom/v1/user/signup"
-        server_url = url
+        server_url = server_locator_to_url(self._location)
+        server_url.path += "/user/signup"
         http_request = RequestHTTP(MethodHTTP.POST, server_url)
-        http_request.set_header(
-            "User-Agent",
-            f"Fathom-client/{Version.current()}"
-        )
         authentication = self._auth
         if authentication is not None:
-            http_request.set_header(
-                HTTP_HEADER_CLIENT_AUTHENTICATION,
-                ClientAuthenticationHeader(authentication).encode()
-            )
+            http_request.set_authentication(authentication)
 
         http_request.set_json_body({
             "set_password": self._user.password,

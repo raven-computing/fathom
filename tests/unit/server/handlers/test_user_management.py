@@ -38,7 +38,7 @@ class TestUserManagementHandlers(TestCase):
     def test_create_handler_rejects_non_admin(self):
         self.admin_authorizer.is_administrator.return_value = False
         request = ClientRequest(Interaction.CREATE_USER)
-        request.user = self.request_user
+        request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.CREATE_USER)
 
         UserCreateHandler(self.admin_authorizer, self.manager).handle(
@@ -59,8 +59,8 @@ class TestUserManagementHandlers(TestCase):
             is_admin=False,
         )
         request = ClientRequest(Interaction.CREATE_USER)
-        request.user = self.request_user
-        request.managed_user = User(identifier="someone", name="Some User")
+        request.authenticated_user = self.request_user
+        request.user = User(identifier="someone", name="Some User")
         response = ServerResponse(Interaction.CREATE_USER)
 
         UserCreateHandler(self.admin_authorizer, self.manager).handle(
@@ -68,8 +68,8 @@ class TestUserManagementHandlers(TestCase):
         )
 
         self.assertFalse(response.has_errors())
-        assert response.managed_users is not None
-        self.assertEqual(len(response.managed_users), 1)
+        assert response.users is not None
+        self.assertEqual(len(response.users), 1)
         expected_user = User(
             identifier="someone",
             name="Some User",
@@ -80,13 +80,13 @@ class TestUserManagementHandlers(TestCase):
             expected_user
         )
 
-    def test_list_handler_returns_managed_users(self):
+    def test_list_handler_returns_users(self):
         self.admin_authorizer.is_administrator.return_value = True
         self.manager.list_users.return_value = [
             User(identifier="alpha", name="Alpha", is_admin=True),
         ]
         request = ClientRequest(Interaction.LIST_USERS)
-        request.user = self.request_user
+        request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.LIST_USERS)
 
         UserListHandler(self.admin_authorizer, self.manager).handle(
@@ -95,7 +95,7 @@ class TestUserManagementHandlers(TestCase):
 
         self.assertFalse(response.has_errors())
         self.assertEqual(
-            response.managed_users,
+            response.users,
             self.manager.list_users.return_value,
         )
 
@@ -105,8 +105,8 @@ class TestUserManagementHandlers(TestCase):
             "User 'bla' does not exist"
         )
         request = ClientRequest(Interaction.DELETE_USER)
-        request.user = self.request_user
-        request.managed_user = User(identifier="bla")
+        request.authenticated_user = self.request_user
+        request.user = User(identifier="bla")
         response = ServerResponse(Interaction.DELETE_USER)
 
         UserDeleteHandler(self.admin_authorizer, self.manager).handle(

@@ -27,7 +27,7 @@ def _deny_unless_admin(
     request: ClientRequest,
     response: ServerResponse,
 ) -> bool:
-    user = request.user
+    user = request.authenticated_user
     if user is not None and authorizer.is_administrator(user):
         return False
 
@@ -51,7 +51,7 @@ class ProjectCreateHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        project = request.managed_project
+        project = request.project
         if project is None or not project.identifier:
             response.add_error(
                 ResponseMessage(
@@ -72,7 +72,7 @@ class ProjectCreateHandler(ActionHandler):
             )
             return
 
-        response.managed_projects = [project]
+        response.projects = [project]
 
 
 class ProjectListHandler(ActionHandler):
@@ -86,7 +86,7 @@ class ProjectListHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        response.managed_projects = self._manager.list_projects()
+        response.projects = self._manager.list_projects()
 
 
 class ProjectDeleteHandler(ActionHandler):
@@ -100,7 +100,7 @@ class ProjectDeleteHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        project = request.managed_project
+        project = request.project
         if project is None or not project.identifier:
             response.add_error(
                 ResponseMessage(

@@ -28,7 +28,7 @@ def _deny_unless_admin(
     request: ClientRequest,
     response: ServerResponse,
 ) -> bool:
-    user = request.user
+    user = request.authenticated_user
     if user is not None and authorizer.is_administrator(user):
         return False
 
@@ -52,7 +52,7 @@ class UserCreateHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        user = request.managed_user
+        user = request.user
         if user is None or not user.identifier:
             response.add_error(
                 ResponseMessage(
@@ -87,7 +87,7 @@ class UserCreateHandler(ActionHandler):
             )
             return
 
-        response.managed_users = [user]
+        response.users = [user]
 
 
 class UserSetupHandler(ActionHandler):
@@ -97,7 +97,7 @@ class UserSetupHandler(ActionHandler):
         self._manager = manager
 
     def handle(self, request: ClientRequest, response: ServerResponse):
-        user = request.managed_user
+        user = request.user
         if user is None or not user.identifier:
             response.add_error(
                 ResponseMessage(
@@ -127,7 +127,7 @@ class UserSetupHandler(ActionHandler):
             )
             return
 
-        response.managed_users = [user]
+        response.users = [user]
 
 
 class UserListHandler(ActionHandler):
@@ -141,7 +141,7 @@ class UserListHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        response.managed_users = self._manager.list_users()
+        response.users = self._manager.list_users()
 
 
 class UserDeleteHandler(ActionHandler):
@@ -155,7 +155,7 @@ class UserDeleteHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        user = request.managed_user
+        user = request.user
         if user is None or not user.identifier:
             response.add_error(
                 ResponseMessage(

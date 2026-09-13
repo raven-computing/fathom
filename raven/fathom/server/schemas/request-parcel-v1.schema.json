@@ -8,6 +8,27 @@
     "action": {
       "type": "string"
     },
+    "user": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "isAdmin": {
+          "type": "boolean"
+        },
+        "state": {
+          "type": "string"
+        }
+      },
+      "required": ["identifier"]
+    },
     "project": {
       "type": "object",
       "properties": {
@@ -53,39 +74,6 @@
           "type": "string"
         }
       }
-    },
-    "managedUser": {
-      "type": "object",
-      "properties": {
-        "identifier": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "password": {
-          "type": "string"
-        },
-        "isAdmin": {
-          "type": "boolean"
-        }
-      },
-      "required": ["identifier"]
-    },
-    "managedProject": {
-      "type": "object",
-      "properties": {
-        "identifier": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "description": {
-          "type": "string"
-        }
-      },
-      "required": ["identifier"]
     },
     "package": {
       "type": "object",

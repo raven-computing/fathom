@@ -193,6 +193,7 @@ class RequestParcelJSON(Parcel):
         obj = {
             "action": str(self._request.action.value),
         }
+        self._encode_user(obj)
         self._encode_project(obj)
         self._encode_intent(obj)
         self._encode_deployment_authorization(obj)
@@ -202,9 +203,6 @@ class RequestParcelJSON(Parcel):
             raise ParcelEncodingException(
                 "Failed to encode package of client request"
             ) from ex
-
-        self._encode_managed_user(obj)
-        self._encode_managed_project(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -230,6 +228,7 @@ class RequestParcelJSON(Parcel):
                 f"Invalid client request action encountered: {error}"
             ) from None
 
+        request.user = self._decode_user()
         request.project = self._decode_project()
         request.deployment_intent = self._decode_intent()
         if isinstance(request.deployment_intent, ClientDeploymentIntent):
@@ -237,9 +236,44 @@ class RequestParcelJSON(Parcel):
 
         request.deployment_authorization = self._decode_deployment_auth()
         request.package = self._decode_package()
-        request.managed_user = self._decode_managed_user()
-        request.managed_project = self._decode_managed_project()
         return request
+
+    def _encode_user(self, structure):
+        assert isinstance(self._request, ClientRequest)
+        user = self._request.user
+        if user is None:
+            return
+
+        user_struct: dict[str, Union[str, bool]] = {
+            "identifier": user.identifier,
+        }
+        if user.name:
+            user_struct["name"] = user.name
+
+        if user.is_admin:
+            user_struct["isAdmin"] = user.is_admin
+
+        if user.password:
+            user_struct["password"] = user.password
+
+        user_struct["state"] = str(user.state)
+
+        structure["user"] = user_struct
+
+    def _decode_user(self):
+        assert isinstance(self._request, dict)
+        user_struct = self._request.get("user")
+        if user_struct is None:
+            return None
+
+        assert isinstance(user_struct, dict)
+        return User(
+            identifier=user_struct.get("identifier", ""),
+            name=user_struct.get("name", ""),
+            password=user_struct.get("password", ""),
+            is_admin=bool(user_struct.get("isAdmin", False)),
+            state=UserState(user_struct.get("state", UserState.ACTIVE)),
+        )
 
     def _encode_project(self, structure):
         assert isinstance(self._request, ClientRequest)
@@ -380,73 +414,6 @@ class RequestParcelJSON(Parcel):
         package.transport_format = package_format
         return package
 
-    def _encode_managed_user(self, structure):
-        assert isinstance(self._request, ClientRequest)
-        user = self._request.managed_user
-        if user is None:
-            return
-
-        user_struct: dict[str, Union[str, bool]] = {
-            "identifier": user.identifier,
-        }
-        if user.name:
-            user_struct["name"] = user.name
-
-        if user.is_admin:
-            user_struct["isAdmin"] = user.is_admin
-
-        if user.password:
-            user_struct["password"] = user.password
-
-        user_struct["state"] = str(user.state)
-
-        structure["managedUser"] = user_struct
-
-    def _decode_managed_user(self):
-        assert isinstance(self._request, dict)
-        user_struct = self._request.get("managedUser")
-        if user_struct is None:
-            return None
-
-        assert isinstance(user_struct, dict)
-        return User(
-            identifier=user_struct.get("identifier", ""),
-            name=user_struct.get("name", ""),
-            password=user_struct.get("password", ""),
-            is_admin=bool(user_struct.get("isAdmin", False)),
-            state=UserState(user_struct.get("state", UserState.ACTIVE)),
-        )
-
-    def _encode_managed_project(self, structure):
-        assert isinstance(self._request, ClientRequest)
-        project = self._request.managed_project
-        if project is None:
-            return
-
-        project_struct: dict[str, str] = {
-            "identifier": project.identifier,
-        }
-        if project.name:
-            project_struct["name"] = project.name
-
-        if project.description:
-            project_struct["description"] = project.description
-
-        structure["managedProject"] = project_struct
-
-    def _decode_managed_project(self):
-        assert isinstance(self._request, dict)
-        project_struct = self._request.get("managedProject")
-        if project_struct is None:
-            return None
-
-        assert isinstance(project_struct, dict)
-        return Project(
-            identifier=project_struct.get("identifier", ""),
-            name=project_struct.get("name", ""),
-            description=project_struct.get("description", ""),
-        )
-
     def _encode_package_data(self):
         assert isinstance(self._request, ClientRequest)
         package = self._request.package
@@ -572,8 +539,8 @@ class ResponseParcelJSON(Parcel):
         self._encode_server_info(obj)
         self._encode_deployment_authorization(obj)
         self._encode_deployment_result(obj)
-        self._encode_managed_users(obj)
-        self._encode_managed_projects(obj)
+        self._encode_users(obj)
+        self._encode_projects(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -596,8 +563,8 @@ class ResponseParcelJSON(Parcel):
         response.server_info = self._decode_server_info()
         response.deployment_authorization = self._decode_deployment_auth()
         response.deployment_message = self._decode_deployment_result()
-        response.managed_users = self._decode_managed_users()
-        response.managed_projects = self._decode_managed_projects()
+        response.users = self._decode_users()
+        response.projects = self._decode_projects()
         return response
 
     def _encode_error_messages(self, structure):
@@ -651,27 +618,27 @@ class ResponseParcelJSON(Parcel):
                 "message": result.message,
             }
 
-    def _encode_managed_users(self, structure):
+    def _encode_users(self, structure):
         assert isinstance(self._response, ServerResponse)
-        if self._response.managed_users is not None:
-            structure["managedUsers"] = [
+        if self._response.users is not None:
+            structure["users"] = [
                 {
                     "identifier": user.identifier,
                     "name": user.name,
                     "isAdmin": user.is_admin,
                     "state": str(user.state),
                 }
-                for user in self._response.managed_users
+                for user in self._response.users
             ]
 
-    def _encode_managed_projects(self, structure):
+    def _encode_projects(self, structure):
         assert isinstance(self._response, ServerResponse)
-        if self._response.managed_projects is not None:
-            structure["managedProjects"] = [{
+        if self._response.projects is not None:
+            structure["projects"] = [{
                     "identifier": project.identifier,
                     "name": project.name,
                     "description": project.description,
-                } for project in self._response.managed_projects
+                } for project in self._response.projects
             ]
 
     def _decode_error_messages(self):
@@ -765,9 +732,9 @@ class ResponseParcelJSON(Parcel):
         result.message = res_struct.get("message")
         return result
 
-    def _decode_managed_users(self):
+    def _decode_users(self):
         assert isinstance(self._response, dict)
-        user_structs = self._response.get("managedUsers")
+        user_structs = self._response.get("users")
         if user_structs is None:
             return None
 
@@ -784,9 +751,9 @@ class ResponseParcelJSON(Parcel):
             for user_struct in user_structs
         ]
 
-    def _decode_managed_projects(self):
+    def _decode_projects(self):
         assert isinstance(self._response, dict)
-        project_structs = self._response.get("managedProjects")
+        project_structs = self._response.get("projects")
         if project_structs is None:
             return None
 

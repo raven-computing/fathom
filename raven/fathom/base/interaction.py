@@ -114,7 +114,9 @@ class ClientRequest:
         action (Interaction): The action requested by the client.
         authentication (ClientAuthentication): The authentication details of
             the client, if any.
-        user (User): The user context of the request, if applicable.
+        authenticated_user (User): The authenticated user context of the
+            request, if applicable. Used internally by the server.
+        user (User): The user payload of the request, if applicable.
         project (Project): The optional project context for the request,
             if applicable.
         deployment_intent (ClientDeploymentIntent): The optional deployment
@@ -122,10 +124,6 @@ class ClientRequest:
         deployment_authorization (DeploymentAuthorization): The authorization
             details for a requested and already ganted deployment, if required.
         package (Package): The package involved in a deployment, if any.
-        managed_user (User): The user to be created, set up, listed, or
-            deleted, if applicable.
-        managed_project (Project): The project to be created, listed, or
-            deleted, if applicable.
     """
 
     action: Interaction = field(
@@ -133,6 +131,11 @@ class ClientRequest:
     )
 
     authentication: Optional[ClientAuthentication] = field(
+        init=False,
+        default=None,
+    )
+
+    authenticated_user: Optional[User] = field(
         init=False,
         default=None,
     )
@@ -158,16 +161,6 @@ class ClientRequest:
     )
 
     package: Optional[Package] = field(
-        init=False,
-        default=None,
-    )
-
-    managed_user: Optional[User] = field(
-        init=False,
-        default=None,
-    )
-
-    managed_project: Optional[Project] = field(
         init=False,
         default=None,
     )
@@ -227,10 +220,10 @@ class ServerResponse:
             request.
         deployment_message (DeploymentMessage): An optional deployment message,
             detailing the result of an executed deployment.
-        managed_users (list[User]): An optional list of managed users, in
-            response to user management requests.
-        managed_projects (list[Project]): An optional list of managed
-            projects, in response to project management requests.
+        users (list[User]): An optional list of users, in response to user
+            management requests.
+        projects (list[Project]): An optional list of projects, in response
+            to project management requests.
     """
 
     action: Interaction = field(
@@ -262,12 +255,12 @@ class ServerResponse:
         default=None,
     )
 
-    managed_users: Optional[list[User]] = field(
+    users: Optional[list[User]] = field(
         init=False,
         default=None,
     )
 
-    managed_projects: Optional[list[Project]] = field(
+    projects: Optional[list[Project]] = field(
         init=False,
         default=None,
     )

@@ -55,10 +55,10 @@ class ManageCommand(Command):
         if self.args.manage_subject == "user":
             if self.args.manage_command == "create":
                 user = User(
-                    identifier=self.args.managed_user_identifier,
+                    identifier=self.args.user_identifier,
                     name=(
-                        self.args.managed_user_name
-                        or self.args.managed_user_identifier
+                        self.args.user_name
+                        or self.args.user_identifier
                     ),
                 )
                 created = server.create_user(user)
@@ -80,8 +80,8 @@ class ManageCommand(Command):
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == "delete":
-                server.delete_user(self.args.managed_user_identifier)
-                LOG.i("Deleted user '%s'", self.args.managed_user_identifier)
+                server.delete_user(self.args.user_identifier)
+                LOG.i("Deleted user '%s'", self.args.user_identifier)
                 return ExitStatus.SUCCESS
 
             raise ValueError(
@@ -91,12 +91,12 @@ class ManageCommand(Command):
         if self.args.manage_subject == "project":
             if self.args.manage_command == "create":
                 project = Project(
-                    identifier=self.args.managed_project_identifier,
+                    identifier=self.args.project_identifier,
                     name=(
-                        self.args.managed_project_name
-                        or self.args.managed_project_identifier
+                        self.args.project_name
+                        or self.args.project_identifier
                     ),
-                    description=self.args.managed_project_description,
+                    description=self.args.project_description,
                 )
                 created = server.create_project(project)
                 LOG.i("Created project '%s'", created.identifier)
@@ -114,10 +114,10 @@ class ManageCommand(Command):
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == "delete":
-                server.delete_project(self.args.managed_project_identifier)
+                server.delete_project(self.args.project_identifier)
                 LOG.i(
                     "Deleted project '%s'",
-                    self.args.managed_project_identifier,
+                    self.args.project_identifier,
                 )
                 return ExitStatus.SUCCESS
 

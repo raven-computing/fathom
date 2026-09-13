@@ -48,15 +48,15 @@ class ArgumentsCLI:
 
     setup_subject: str = ""
 
-    managed_user_identifier: str = ""
+    user_identifier: str = ""
 
-    managed_user_name: str = ""
+    user_name: str = ""
 
-    managed_project_identifier: str = ""
+    project_identifier: str = ""
 
-    managed_project_name: str = ""
+    project_name: str = ""
 
-    managed_project_description: str = ""
+    project_description: str = ""
 
     setup_user_identifier: str = ""
 
@@ -166,14 +166,14 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="Create a regular application user on the server."
     )
     manage_user_create.add_argument(
-        "managed_user_identifier",
+        "user_identifier",
         metavar="<IDENTIFIER>",
         help="The unique identifier of the user to create."
     )
     manage_user_create.add_argument(
         "--name",
         default="",
-        dest="managed_user_name",
+        dest="user_name",
         metavar="<NAME>",
         help="The display name of the user to create."
     )
@@ -188,7 +188,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="Delete a dedicated application user on the server."
     )
     manage_user_delete.add_argument(
-        "managed_user_identifier",
+        "user_identifier",
         metavar="<IDENTIFIER>",
         help="The unique identifier of the user to delete."
     )
@@ -208,21 +208,21 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="Create a deployable project on the server."
     )
     manage_project_create.add_argument(
-        "managed_project_identifier",
+        "project_identifier",
         metavar="<IDENTIFIER>",
         help="The unique identifier of the project to create."
     )
     manage_project_create.add_argument(
         "--name",
         default="",
-        dest="managed_project_name",
+        dest="project_name",
         metavar="<NAME>",
         help="The display name of the project to create."
     )
     manage_project_create.add_argument(
         "--description",
         default="",
-        dest="managed_project_description",
+        dest="project_description",
         metavar="<DESCRIPTION>",
         help="The description of the project to create."
     )
@@ -237,7 +237,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="Delete a deployable project on the server."
     )
     manage_project_delete.add_argument(
-        "managed_project_identifier",
+        "project_identifier",
         metavar="<IDENTIFIER>",
         help="The unique identifier of the project to delete."
     )
@@ -276,17 +276,11 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         manage_subject=getattr(args, "manage_subject", ""),
         manage_command=getattr(args, "manage_command", ""),
         setup_subject=getattr(args, "setup_subject", ""),
-        managed_user_identifier=getattr(
-            args, "managed_user_identifier", ""
-        ),
-        managed_user_name=getattr(args, "managed_user_name", ""),
-        managed_project_identifier=getattr(
-            args, "managed_project_identifier", ""
-        ),
-        managed_project_name=getattr(args, "managed_project_name", ""),
-        managed_project_description=getattr(
-            args, "managed_project_description", ""
-        ),
+        user_identifier=getattr(args, "user_identifier", ""),
+        user_name=getattr(args, "user_name", ""),
+        project_identifier=getattr(args, "project_identifier", ""),
+        project_name=getattr(args, "project_name", ""),
+        project_description=getattr(args, "project_description", ""),
         setup_user_identifier=getattr(args, "setup_user_identifier", ""),
         project_directory=getattr(args, "project_directory", "")
     )

@@ -72,7 +72,7 @@
         }
       }
     },
-    "managedUsers": {
+    "users": {
       "type": "array",
       "items": {
         "type": "object",
@@ -90,7 +90,7 @@
         "required": ["identifier", "name", "isAdmin"]
       }
     },
-    "managedProjects": {
+    "projects": {
       "type": "array",
       "items": {
         "type": "object",

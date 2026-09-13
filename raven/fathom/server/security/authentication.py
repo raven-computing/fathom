@@ -246,7 +246,7 @@ class UserAuthenticator:
         user.password = str(hash_value) # type: ignore
 
     def _set_authenticated_client(self, request: ClientRequest, user: User):
-        request.user = BaseUser(
+        request.authenticated_user = BaseUser(
             user.identifier,
             user.name,
             state=UserState(str(user.state)),

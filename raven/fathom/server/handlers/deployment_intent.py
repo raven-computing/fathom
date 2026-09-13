@@ -40,7 +40,7 @@ class DeploymentIntentHandler(ActionHandler):
             )
             return
 
-        intent.user = request.user
+        intent.user = request.authenticated_user
         intent.project = request.project
         if not self._project_info_is_set(intent):
             response.add_error(

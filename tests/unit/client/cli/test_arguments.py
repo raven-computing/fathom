@@ -109,8 +109,8 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.command, "manage")
         self.assertEqual(args.manage_subject, "user")
         self.assertEqual(args.manage_command, "create")
-        self.assertEqual(args.managed_user_identifier, "user2")
-        self.assertEqual(args.managed_user_name, "User Two")
+        self.assertEqual(args.user_identifier, "user2")
+        self.assertEqual(args.user_name, "User Two")
 
     def test_setup_user_command_is_recognized(self):
         args = parse_args(["fathom", "setup", "user", "user2"])
@@ -129,7 +129,7 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.command, "manage")
         self.assertEqual(args.manage_subject, "user")
         self.assertEqual(args.manage_command, "delete")
-        self.assertEqual(args.managed_user_identifier, "user3")
+        self.assertEqual(args.user_identifier, "user3")
 
     def test_manage_project_create_command_is_recognized(self):
         args = parse_args([
@@ -140,10 +140,10 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.command, "manage")
         self.assertEqual(args.manage_subject, "project")
         self.assertEqual(args.manage_command, "create")
-        self.assertEqual(args.managed_project_identifier, "proj2")
-        self.assertEqual(args.managed_project_name, "Project Two")
+        self.assertEqual(args.project_identifier, "proj2")
+        self.assertEqual(args.project_name, "Project Two")
         self.assertEqual(
-            args.managed_project_description,
+            args.project_description,
             "Project description"
         )
 
@@ -160,7 +160,7 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.command, "manage")
         self.assertEqual(args.manage_subject, "project")
         self.assertEqual(args.manage_command, "delete")
-        self.assertEqual(args.managed_project_identifier, "proj3")
+        self.assertEqual(args.project_identifier, "proj3")
 
     def test_combined_flags_and_arguments_are_parsed_correctly(self):
         args = parse_args(

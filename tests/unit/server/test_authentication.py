@@ -114,7 +114,7 @@ class TestUserAuthentication(TestCase):
             "Password should be hashed after successful authentication"
         )
 
-    def test_client_authentication_is_exchanged_to_user_obj_on_success(self):
+    def test_client_auth_is_exchanged_to_authenticated_user_on_success(self):
         self.dao.users().find_by_identifier.return_value = self.user_signup
         auth = UserAuthenticator().authenticate_client(self.client_request)
         self.assertTrue(auth.is_authenticated())
@@ -129,13 +129,13 @@ class TestUserAuthentication(TestCase):
             "Authentication password should be redacted after "
             "successful authentication"
         )
-        assert self.client_request.user is not None
+        assert self.client_request.authenticated_user is not None
         self.assertEqual(
-            self.client_request.user.identifier,
+            self.client_request.authenticated_user.identifier,
             self.user_signup.identifier
         )
         self.assertEqual(
-            self.client_request.user.name,
+            self.client_request.authenticated_user.name,
             self.user_signup.name
         )
 

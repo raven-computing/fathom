@@ -92,7 +92,7 @@ class TestServerConnection(TestCase):
         self.assertIs(method_mock.call_args.args[0], self.request)
 
     def test_onboarding_user_is_blocked_from_non_setup_action(self):
-        self.request.user = BaseUser(
+        self.request.authenticated_user = BaseUser(
             identifier="test-user-1",
             name="The Test User 1",
             state=UserState.ONBOARDING,

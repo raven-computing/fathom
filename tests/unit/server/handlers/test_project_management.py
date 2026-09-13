@@ -38,7 +38,7 @@ class TestProjectManagementHandlers(TestCase):
     def test_create_handler_rejects_non_admin(self):
         self.admin_authorizer.is_administrator.return_value = False
         request = ClientRequest(Interaction.CREATE_PROJECT)
-        request.user = self.request_user
+        request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.CREATE_PROJECT)
 
         ProjectCreateHandler(self.admin_authorizer, self.manager).handle(
@@ -54,8 +54,8 @@ class TestProjectManagementHandlers(TestCase):
     def test_create_handler_creates_project(self):
         self.admin_authorizer.is_administrator.return_value = True
         request = ClientRequest(Interaction.CREATE_PROJECT)
-        request.user = self.request_user
-        request.managed_project = Project(
+        request.authenticated_user = self.request_user
+        request.project = Project(
             identifier="proj-one",
             name="Project One",
             description="Project One Description",
@@ -67,8 +67,8 @@ class TestProjectManagementHandlers(TestCase):
         )
 
         self.assertFalse(response.has_errors())
-        assert response.managed_projects is not None
-        self.assertEqual(len(response.managed_projects), 1)
+        assert response.projects is not None
+        self.assertEqual(len(response.projects), 1)
         self.manager.create_project.assert_called_once_with(
             Project(
                 identifier="proj-one",
@@ -77,13 +77,13 @@ class TestProjectManagementHandlers(TestCase):
             )
         )
 
-    def test_list_handler_returns_managed_projects(self):
+    def test_list_handler_returns_projects(self):
         self.admin_authorizer.is_administrator.return_value = True
         self.manager.list_projects.return_value = [
             Project(identifier="proj-one", name="Project One"),
         ]
         request = ClientRequest(Interaction.LIST_PROJECTS)
-        request.user = self.request_user
+        request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.LIST_PROJECTS)
 
         ProjectListHandler(self.admin_authorizer, self.manager).handle(
@@ -92,7 +92,7 @@ class TestProjectManagementHandlers(TestCase):
 
         self.assertFalse(response.has_errors())
         self.assertEqual(
-            response.managed_projects,
+            response.projects,
             self.manager.list_projects.return_value,
         )
 
@@ -102,8 +102,8 @@ class TestProjectManagementHandlers(TestCase):
             "Project 'proj-one' does not exist"
         )
         request = ClientRequest(Interaction.DELETE_PROJECT)
-        request.user = self.request_user
-        request.managed_project = Project(identifier="proj-one")
+        request.authenticated_user = self.request_user
+        request.project = Project(identifier="proj-one")
         response = ServerResponse(Interaction.DELETE_PROJECT)
 
         ProjectDeleteHandler(self.admin_authorizer, self.manager).handle(

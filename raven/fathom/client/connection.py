@@ -201,12 +201,12 @@ class Server:
         """
         request = ClientRequest(Interaction.CREATE_USER)
         request.authentication = self._client_authentication
-        request.managed_user = user
+        request.user = user
 
         LOG.v("Requesting remote user creation")
         response = self._send(request)
         self._raise_on_errors(response)
-        users = response.managed_users
+        users = response.users
         if users is None or len(users) == 0:
             raise ServerConnectionException(
                 "Server response does not contain created user information"
@@ -265,7 +265,7 @@ class Server:
         LOG.v("Requesting remote user list")
         response = self._send(request)
         self._raise_on_errors(response)
-        return response.managed_users or []
+        return response.users or []
 
     def delete_user(self, identifier: str):
         """Deletes an application user on the server.
@@ -282,7 +282,7 @@ class Server:
         """
         request = ClientRequest(Interaction.DELETE_USER)
         request.authentication = self._client_authentication
-        request.managed_user = User(identifier=identifier)
+        request.user = User(identifier=identifier)
 
         LOG.v("Requesting remote user deletion")
         response = self._send(request)
@@ -306,12 +306,12 @@ class Server:
         """
         request = ClientRequest(Interaction.CREATE_PROJECT)
         request.authentication = self._client_authentication
-        request.managed_project = project
+        request.project = project
 
         LOG.v("Requesting remote project creation")
         response = self._send(request)
         self._raise_on_errors(response)
-        projects = response.managed_projects
+        projects = response.projects
         if projects is None or len(projects) == 0:
             raise ServerConnectionException(
                 "Server response does not contain created project information"
@@ -339,7 +339,7 @@ class Server:
         LOG.v("Requesting remote project list")
         response = self._send(request)
         self._raise_on_errors(response)
-        return response.managed_projects or []
+        return response.projects or []
 
     def delete_project(self, identifier: str):
         """Deletes a project on the server.
@@ -356,7 +356,7 @@ class Server:
         """
         request = ClientRequest(Interaction.DELETE_PROJECT)
         request.authentication = self._client_authentication
-        request.managed_project = Project(identifier=identifier)
+        request.project = Project(identifier=identifier)
 
         LOG.v("Requesting remote project deletion")
         response = self._send(request)

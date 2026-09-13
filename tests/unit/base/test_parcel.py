@@ -210,9 +210,9 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
             str(raised.exception)
         )
 
-    def test_encode_decode_managed_user_request(self):
+    def test_encode_decode_user_request(self):
         request = ClientRequest(Interaction.CREATE_USER)
-        request.managed_user = User(
+        request.user = User(
             identifier="alpha",
             name="Alpha",
             password="secret",
@@ -223,16 +223,16 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
         decoded = RequestParcelJSON(encoded).decode()
 
         self.assertEqual(decoded.action, Interaction.CREATE_USER)
-        self.assertIsNotNone(decoded.managed_user)
-        assert decoded.managed_user is not None
-        self.assertEqual(decoded.managed_user.identifier, "alpha")
-        self.assertEqual(decoded.managed_user.name, "Alpha")
-        self.assertFalse(decoded.managed_user.is_admin)
-        self.assertEqual(decoded.managed_user.password, "secret")
+        self.assertIsNotNone(decoded.user)
+        assert decoded.user is not None
+        self.assertEqual(decoded.user.identifier, "alpha")
+        self.assertEqual(decoded.user.name, "Alpha")
+        self.assertFalse(decoded.user.is_admin)
+        self.assertEqual(decoded.user.password, "secret")
 
-    def test_encode_decode_managed_project_request(self):
+    def test_encode_decode_project_request(self):
         request = ClientRequest(Interaction.CREATE_PROJECT)
-        request.managed_project = Project(
+        request.project = Project(
             identifier="alpha-project",
             name="Alpha Project",
             description="Project Alpha",
@@ -242,11 +242,11 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
         decoded = RequestParcelJSON(encoded).decode()
 
         self.assertEqual(decoded.action, Interaction.CREATE_PROJECT)
-        self.assertIsNotNone(decoded.managed_project)
-        assert decoded.managed_project is not None
-        self.assertEqual(decoded.managed_project.identifier, "alpha-project")
-        self.assertEqual(decoded.managed_project.name, "Alpha Project")
-        self.assertEqual(decoded.managed_project.description, "Project Alpha")
+        self.assertIsNotNone(decoded.project)
+        assert decoded.project is not None
+        self.assertEqual(decoded.project.identifier, "alpha-project")
+        self.assertEqual(decoded.project.name, "Alpha Project")
+        self.assertEqual(decoded.project.description, "Project Alpha")
 
 
 class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
@@ -378,9 +378,9 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
             "Invalid type of isGranted property", str(raised.exception)
         )
 
-    def test_encode_decode_managed_users_response(self):
+    def test_encode_decode_users_response(self):
         response = ServerResponse(Interaction.LIST_USERS)
-        response.managed_users = [
+        response.users = [
             User(identifier="alpha", name="Alpha", is_admin=True),
             User(identifier="user3", name="User 3", is_admin=False),
         ]
@@ -389,15 +389,15 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
         decoded = ResponseParcelJSON(encoded).decode()
 
         self.assertEqual(decoded.action, Interaction.LIST_USERS)
-        self.assertIsNotNone(decoded.managed_users)
-        assert decoded.managed_users is not None
-        self.assertEqual(len(decoded.managed_users), 2)
-        self.assertTrue(decoded.managed_users[0].is_admin)
-        self.assertFalse(decoded.managed_users[1].is_admin)
+        self.assertIsNotNone(decoded.users)
+        assert decoded.users is not None
+        self.assertEqual(len(decoded.users), 2)
+        self.assertTrue(decoded.users[0].is_admin)
+        self.assertFalse(decoded.users[1].is_admin)
 
-    def test_encode_decode_managed_projects_response(self):
+    def test_encode_decode_projects_response(self):
         response = ServerResponse(Interaction.LIST_PROJECTS)
-        response.managed_projects = [
+        response.projects = [
             Project(
                 identifier="alpha-project",
                 name="Alpha Project",
@@ -414,14 +414,14 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
         decoded = ResponseParcelJSON(encoded).decode()
 
         self.assertEqual(decoded.action, Interaction.LIST_PROJECTS)
-        self.assertIsNotNone(decoded.managed_projects)
-        assert decoded.managed_projects is not None
-        self.assertEqual(len(decoded.managed_projects), 2)
+        self.assertIsNotNone(decoded.projects)
+        assert decoded.projects is not None
+        self.assertEqual(len(decoded.projects), 2)
         self.assertEqual(
-            decoded.managed_projects[0].identifier, "alpha-project"
+            decoded.projects[0].identifier, "alpha-project"
         )
         self.assertEqual(
-            decoded.managed_projects[1].description, "Project Beta"
+            decoded.projects[1].description, "Project Beta"
         )
 
 

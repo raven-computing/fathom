@@ -23,6 +23,7 @@ from raven.fathom.base import ParcelDecodingException
 from raven.fathom.base import PackageOperationException
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ClientAuthentication, Package, User
+from raven.fathom.base import Project
 from raven.fathom.base.parcel import PARCEL_TEXT_ENCODING
 
 from tests.unit import TestCase
@@ -229,6 +230,24 @@ class TestRequestParcelJSON(TestCase, ClientServerInteractionFixture):
         self.assertFalse(decoded.managed_user.is_admin)
         self.assertEqual(decoded.managed_user.password, "secret")
 
+    def test_encode_decode_managed_project_request(self):
+        request = ClientRequest(Interaction.CREATE_PROJECT)
+        request.managed_project = Project(
+            identifier="alpha-project",
+            name="Alpha Project",
+            description="Project Alpha",
+        )
+
+        encoded = RequestParcelJSON(request).encode()
+        decoded = RequestParcelJSON(encoded).decode()
+
+        self.assertEqual(decoded.action, Interaction.CREATE_PROJECT)
+        self.assertIsNotNone(decoded.managed_project)
+        assert decoded.managed_project is not None
+        self.assertEqual(decoded.managed_project.identifier, "alpha-project")
+        self.assertEqual(decoded.managed_project.name, "Alpha Project")
+        self.assertEqual(decoded.managed_project.description, "Project Alpha")
+
 
 class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
     """Unit tests for the `ResponseParcelJSON` class."""
@@ -375,6 +394,35 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
         self.assertEqual(len(decoded.managed_users), 2)
         self.assertTrue(decoded.managed_users[0].is_admin)
         self.assertFalse(decoded.managed_users[1].is_admin)
+
+    def test_encode_decode_managed_projects_response(self):
+        response = ServerResponse(Interaction.LIST_PROJECTS)
+        response.managed_projects = [
+            Project(
+                identifier="alpha-project",
+                name="Alpha Project",
+                description="Project Alpha",
+            ),
+            Project(
+                identifier="beta-project",
+                name="Beta Project",
+                description="Project Beta",
+            ),
+        ]
+
+        encoded = ResponseParcelJSON(response).encode()
+        decoded = ResponseParcelJSON(encoded).decode()
+
+        self.assertEqual(decoded.action, Interaction.LIST_PROJECTS)
+        self.assertIsNotNone(decoded.managed_projects)
+        assert decoded.managed_projects is not None
+        self.assertEqual(len(decoded.managed_projects), 2)
+        self.assertEqual(
+            decoded.managed_projects[0].identifier, "alpha-project"
+        )
+        self.assertEqual(
+            decoded.managed_projects[1].description, "Project Beta"
+        )
 
 
 if __name__ == "__main__":

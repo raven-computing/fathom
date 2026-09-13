@@ -50,11 +50,19 @@ class AppArgs:
 
     user_command: str = ""
 
+    project_command: str = ""
+
     user_identifier: str = ""
 
     user_name: str = ""
 
     user_is_admin: bool = False
+
+    project_identifier: str = ""
+
+    project_name: str = ""
+
+    project_description: str = ""
 
     ready_event: Optional[Event] = None
 
@@ -178,6 +186,53 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="The unique identifier of the user to delete."
     )
 
+    project_parser = subparsers.add_parser(
+        "project",
+        help="Manage deployable projects."
+    )
+    project_subparsers = project_parser.add_subparsers(
+        dest="project_command",
+        required=True,
+        metavar="<PROJECT_COMMAND>",
+    )
+
+    project_create = project_subparsers.add_parser(
+        "create",
+        help="Create a project in the local Fathom datastore."
+    )
+    project_create.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the project to create."
+    )
+    project_create.add_argument(
+        "--name",
+        default="",
+        metavar="<NAME>",
+        help="The human-readable display name of the project."
+    )
+    project_create.add_argument(
+        "--description",
+        default="",
+        metavar="<DESCRIPTION>",
+        help="The human-readable description of the project."
+    )
+
+    project_subparsers.add_parser(
+        "list",
+        help="List projects from the local Fathom datastore."
+    )
+
+    project_delete = project_subparsers.add_parser(
+        "delete",
+        help="Delete a project from the local Fathom datastore."
+    )
+    project_delete.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the project to delete."
+    )
+
     args = parser.parse_args(argv[1:])
     return AppArgs(
         verbose=args.verbose,
@@ -187,8 +242,12 @@ def parse_args(argv: list[str]) -> AppArgs:
         create_default_config=args.create_default_config,
         command=args.command,
         user_command=getattr(args, "user_command", ""),
+        project_command=getattr(args, "project_command", ""),
         user_identifier=getattr(args, "identifier", ""),
         user_name=getattr(args, "name", ""),
         user_is_admin=getattr(args, "admin", False),
+        project_identifier=getattr(args, "identifier", ""),
+        project_name=getattr(args, "name", ""),
+        project_description=getattr(args, "description", ""),
         ready_event=event,
     )

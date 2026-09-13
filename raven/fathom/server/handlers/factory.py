@@ -22,6 +22,7 @@ from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
 from raven.fathom.server.deployment import DeploymentManager
 from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.project_management import ProjectManager
 
 from .handler import ActionHandler
 from .server_info import ServerInfoHandler
@@ -29,6 +30,9 @@ from .deployment_intent import DeploymentIntentHandler
 from .deployment_transaction import DeploymentTransactionHandler
 from .user_management import (
     UserCreateHandler, UserListHandler, UserDeleteHandler,
+)
+from .project_management import (
+    ProjectCreateHandler, ProjectListHandler, ProjectDeleteHandler,
 )
 
 
@@ -70,5 +74,11 @@ class HandlerFactory:
             handler = UserListHandler(UserAuthorizer(), UserManager())
         elif client_action == Interaction.DELETE_USER:
             handler = UserDeleteHandler(UserAuthorizer(), UserManager())
+        elif client_action == Interaction.CREATE_PROJECT:
+            handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())
+        elif client_action == Interaction.LIST_PROJECTS:
+            handler = ProjectListHandler(UserAuthorizer(), ProjectManager())
+        elif client_action == Interaction.DELETE_PROJECT:
+            handler = ProjectDeleteHandler(UserAuthorizer(), ProjectManager())
 
         return handler

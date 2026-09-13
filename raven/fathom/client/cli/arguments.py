@@ -21,6 +21,9 @@ from dataclasses import dataclass
 from raven.fathom.base.decorators import noexcept
 
 
+# pylint: disable=too-many-locals
+
+
 @dataclass(frozen=True)
 class ArgumentsCLI:
     """Holds the parsed command line arguments provided by a CLI user."""
@@ -48,6 +51,12 @@ class ArgumentsCLI:
     managed_user_identifier: str = ""
 
     managed_user_name: str = ""
+
+    managed_project_identifier: str = ""
+
+    managed_project_name: str = ""
+
+    managed_project_description: str = ""
 
     setup_user_identifier: str = ""
 
@@ -184,6 +193,55 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="The unique identifier of the user to delete."
     )
 
+    manage_project = manage_subparsers.add_parser(
+        "project",
+        help="Manage deployable projects on a Fathom server."
+    )
+    manage_project_subparsers = manage_project.add_subparsers(
+        dest="manage_command",
+        required=True,
+        metavar="<ACTION>",
+    )
+
+    manage_project_create = manage_project_subparsers.add_parser(
+        "create",
+        help="Create a deployable project on the server."
+    )
+    manage_project_create.add_argument(
+        "managed_project_identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the project to create."
+    )
+    manage_project_create.add_argument(
+        "--name",
+        default="",
+        dest="managed_project_name",
+        metavar="<NAME>",
+        help="The display name of the project to create."
+    )
+    manage_project_create.add_argument(
+        "--description",
+        default="",
+        dest="managed_project_description",
+        metavar="<DESCRIPTION>",
+        help="The description of the project to create."
+    )
+
+    manage_project_subparsers.add_parser(
+        "list",
+        help="List deployable projects on the server."
+    )
+
+    manage_project_delete = manage_project_subparsers.add_parser(
+        "delete",
+        help="Delete a deployable project on the server."
+    )
+    manage_project_delete.add_argument(
+        "managed_project_identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the project to delete."
+    )
+
     setup = subparsers.add_parser(
         "setup",
         help="Perform setup actions for the Fathom client."
@@ -222,6 +280,13 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
             args, "managed_user_identifier", ""
         ),
         managed_user_name=getattr(args, "managed_user_name", ""),
+        managed_project_identifier=getattr(
+            args, "managed_project_identifier", ""
+        ),
+        managed_project_name=getattr(args, "managed_project_name", ""),
+        managed_project_description=getattr(
+            args, "managed_project_description", ""
+        ),
         setup_user_identifier=getattr(args, "setup_user_identifier", ""),
         project_directory=getattr(args, "project_directory", "")
     )

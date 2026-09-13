@@ -89,6 +89,24 @@
         },
         "required": ["identifier", "name", "isAdmin"]
       }
+    },
+    "managedProjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": ["identifier", "name", "description"]
+      }
     }
   },
   "deploymentResult": {

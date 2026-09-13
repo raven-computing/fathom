@@ -63,6 +63,35 @@ class TestServerArgumentsCLI(TestCase):
         self.assertEqual(args.user_command, "delete")
         self.assertEqual(args.user_identifier, "alpha")
 
+    def test_project_create_arguments_are_parsed(self):
+        args = parse_args([
+            "fathom-server", "project", "create", "alpha-project",
+            "--name", "Alpha Project",
+            "--description", "Primary project",
+        ])
+
+        self.assertEqual(args.command, "project")
+        self.assertEqual(args.project_command, "create")
+        self.assertEqual(args.project_identifier, "alpha-project")
+        self.assertEqual(args.project_name, "Alpha Project")
+        self.assertEqual(args.project_description, "Primary project")
+
+    def test_project_list_command_is_parsed(self):
+        args = parse_args(["fathom-server", "project", "list"])
+
+        self.assertEqual(args.command, "project")
+        self.assertEqual(args.project_command, "list")
+        self.assertEqual(args.project_identifier, "")
+
+    def test_project_delete_command_is_parsed(self):
+        args = parse_args([
+            "fathom-server", "project", "delete", "alpha-project"
+        ])
+
+        self.assertEqual(args.command, "project")
+        self.assertEqual(args.project_command, "delete")
+        self.assertEqual(args.project_identifier, "alpha-project")
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

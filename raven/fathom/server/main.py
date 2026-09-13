@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import Configuration
+from raven.fathom.base import Project
 from raven.fathom.base import User, UserState
 from raven.fathom.server.logging import Logger, LogLevel
 from raven.fathom.server.http import ServerApplication, assign
@@ -32,6 +33,7 @@ from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.config import ServerConfiguration
 from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.project_management import ProjectManager
 from raven.fathom.server.updates import UpdateManager
 from raven.fathom.server.updates import FailedApplicationUpdateException
 
@@ -196,6 +198,47 @@ def _run_user_command(args: "AppArgs") -> int:
             db.disconnect()
 
 
+def _run_project_command(args: "AppArgs") -> int:
+    db = DatabaseManager().get_database()
+    should_disconnect = not db.is_connected()
+    if should_disconnect:
+        db.connect()
+
+    try:
+        manager = ProjectManager()
+        if args.project_command == "create":
+            project = Project(
+                identifier=args.project_identifier,
+                name=args.project_name,
+                description=args.project_description,
+            )
+            manager.create_project(project)
+            LOG.i("Created project '%s'.", project.identifier)
+            return 0
+
+        if args.project_command == "list":
+            for project in manager.list_projects():
+                LOG.i(
+                    "Project: '%s'\tName: '%s'\tDescription: '%s'",
+                    project.identifier,
+                    project.name,
+                    project.description,
+                )
+            return 0
+
+        if args.project_command == "delete":
+            manager.delete_project(
+                Project(identifier=args.project_identifier)
+            )
+            LOG.i("Deleted project '%s'.", args.project_identifier)
+            return 0
+
+        raise ValueError(f"Invalid project command '{args.project_command}'")
+    finally:
+        if should_disconnect and db.is_connected():
+            db.disconnect()
+
+
 def run(args: "AppArgs") -> int:
     """Runs the Fathom server application.
 
@@ -216,6 +259,8 @@ def run(args: "AppArgs") -> int:
         _setup_application(args, config)
         if args.command == "user":
             return _run_user_command(args)
+        if args.command == "project":
+            return _run_project_command(args)
 
         return _run_fathom_server_application(args, config)
     except Exception as ex:  # pylint: disable=broad-exception-caught

@@ -131,6 +131,37 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.manage_command, "delete")
         self.assertEqual(args.managed_user_identifier, "user3")
 
+    def test_manage_project_create_command_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "project", "create", "proj2",
+            "--name", "Project Two",
+            "--description", "Project description",
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "project")
+        self.assertEqual(args.manage_command, "create")
+        self.assertEqual(args.managed_project_identifier, "proj2")
+        self.assertEqual(args.managed_project_name, "Project Two")
+        self.assertEqual(
+            args.managed_project_description,
+            "Project description"
+        )
+
+    def test_manage_project_list_command_is_recognized(self):
+        args = parse_args(["fathom", "manage", "project", "list"])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "project")
+        self.assertEqual(args.manage_command, "list")
+
+    def test_manage_project_delete_command_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "project", "delete", "proj3"
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "project")
+        self.assertEqual(args.manage_command, "delete")
+        self.assertEqual(args.managed_project_identifier, "proj3")
+
     def test_combined_flags_and_arguments_are_parsed_correctly(self):
         args = parse_args(
             ["fathom", "--verbose",

@@ -15,6 +15,7 @@
 """CLI command handling for server-side management operations."""
 
 from raven.fathom.base import User
+from raven.fathom.base import Project
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.connection import Server
 from raven.fathom.client.connection import (
@@ -44,11 +45,6 @@ class ManageCommand(Command):
             return ExitStatus.FAILURE
 
     def _manage(self):
-        if self.args.manage_subject != "user":
-            raise ValueError(
-                f"Invalid manage subject '{self.args.manage_subject}'"
-            )
-
         config = ConfigurationManager()
         user_config = config.get_user_config()
         server = Server(
@@ -56,37 +52,75 @@ class ManageCommand(Command):
             load_client_authentication(self.args, user_config),
         )
 
-        if self.args.manage_command == "create":
-            user = User(
-                identifier=self.args.managed_user_identifier,
-                name=(
-                    self.args.managed_user_name
-                    or self.args.managed_user_identifier
-                ),
-            )
-            created = server.create_user(user)
-            LOG.i("Created user '%s'", created.identifier)
-            return ExitStatus.SUCCESS
-
-        if self.args.manage_command == "list":
-            users = server.list_users()
-            for user in users:
-                role = "admin" if user.is_admin else "regular"
-                LOG.i("Fathom users:")
-                LOG.i(
-                    " | %s\t%s\t%s\t%s",
-                    user.identifier,
-                    user.name,
-                    role,
-                    user.state
+        if self.args.manage_subject == "user":
+            if self.args.manage_command == "create":
+                user = User(
+                    identifier=self.args.managed_user_identifier,
+                    name=(
+                        self.args.managed_user_name
+                        or self.args.managed_user_identifier
+                    ),
                 )
-            return ExitStatus.SUCCESS
+                created = server.create_user(user)
+                LOG.i("Created user '%s'", created.identifier)
+                return ExitStatus.SUCCESS
 
-        if self.args.manage_command == "delete":
-            server.delete_user(self.args.managed_user_identifier)
-            LOG.i("Deleted user '%s'", self.args.managed_user_identifier)
-            return ExitStatus.SUCCESS
+            if self.args.manage_command == "list":
+                users = server.list_users()
+                for user in users:
+                    role = "admin" if user.is_admin else "regular"
+                    LOG.i("Fathom users:")
+                    LOG.i(
+                        " | %s\t%s\t%s\t%s",
+                        user.identifier,
+                        user.name,
+                        role,
+                        user.state
+                    )
+                return ExitStatus.SUCCESS
+
+            if self.args.manage_command == "delete":
+                server.delete_user(self.args.managed_user_identifier)
+                LOG.i("Deleted user '%s'", self.args.managed_user_identifier)
+                return ExitStatus.SUCCESS
+
+            raise ValueError(
+                f"Invalid manage command '{self.args.manage_command}'"
+            )
+
+        if self.args.manage_subject == "project":
+            if self.args.manage_command == "create":
+                project = Project(
+                    identifier=self.args.managed_project_identifier,
+                    name=(
+                        self.args.managed_project_name
+                        or self.args.managed_project_identifier
+                    ),
+                    description=self.args.managed_project_description,
+                )
+                created = server.create_project(project)
+                LOG.i("Created project '%s'", created.identifier)
+                return ExitStatus.SUCCESS
+
+            if self.args.manage_command == "list":
+                LOG.i("Fathom projects:")
+                for project in server.list_projects():
+                    LOG.i(
+                        " | %s\t%s\t%s",
+                        project.identifier,
+                        project.name,
+                        project.description,
+                    )
+                return ExitStatus.SUCCESS
+
+            if self.args.manage_command == "delete":
+                server.delete_project(self.args.managed_project_identifier)
+                LOG.i(
+                    "Deleted project '%s'",
+                    self.args.managed_project_identifier,
+                )
+                return ExitStatus.SUCCESS
 
         raise ValueError(
-            f"Invalid manage command '{self.args.manage_command}'"
+            f"Invalid manage subject '{self.args.manage_subject}'"
         )

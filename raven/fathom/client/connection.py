@@ -26,6 +26,7 @@ from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import Package
 from raven.fathom.base import DeploymentMessage
 from raven.fathom.base import User
+from raven.fathom.base import Project
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.signup import UserSignupRequest
 from raven.fathom.client.exceptions import FathomClientException
@@ -284,6 +285,80 @@ class Server:
         request.managed_user = User(identifier=identifier)
 
         LOG.v("Requesting remote user deletion")
+        response = self._send(request)
+        self._raise_on_errors(response)
+
+    def create_project(self, project: Project) -> Project:
+        """Creates a project on the server.
+
+        Args:
+            project (Project): The project to create on the server.
+
+        Returns:
+            Project: The created project as returned by the server.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to create the project.
+        """
+        request = ClientRequest(Interaction.CREATE_PROJECT)
+        request.authentication = self._client_authentication
+        request.managed_project = project
+
+        LOG.v("Requesting remote project creation")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        projects = response.managed_projects
+        if projects is None or len(projects) == 0:
+            raise ServerConnectionException(
+                "Server response does not contain created project information"
+            )
+
+        return projects[0]
+
+    def list_projects(self) -> list[Project]:
+        """Lists projects from the server.
+
+        Returns:
+            list: A `list` of base `Project` objects managed by the
+                Fathom server.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to list the projects.
+        """
+        request = ClientRequest(Interaction.LIST_PROJECTS)
+        request.authentication = self._client_authentication
+
+        LOG.v("Requesting remote project list")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        return response.managed_projects or []
+
+    def delete_project(self, identifier: str):
+        """Deletes a project on the server.
+
+        Args:
+            identifier (str): The identifier of the project to delete.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to delete the project.
+        """
+        request = ClientRequest(Interaction.DELETE_PROJECT)
+        request.authentication = self._client_authentication
+        request.managed_project = Project(identifier=identifier)
+
+        LOG.v("Requesting remote project deletion")
         response = self._send(request)
         self._raise_on_errors(response)
 

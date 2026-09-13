@@ -204,6 +204,7 @@ class RequestParcelJSON(Parcel):
             ) from ex
 
         self._encode_managed_user(obj)
+        self._encode_managed_project(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -237,6 +238,7 @@ class RequestParcelJSON(Parcel):
         request.deployment_authorization = self._decode_deployment_auth()
         request.package = self._decode_package()
         request.managed_user = self._decode_managed_user()
+        request.managed_project = self._decode_managed_project()
         return request
 
     def _encode_project(self, structure):
@@ -415,6 +417,36 @@ class RequestParcelJSON(Parcel):
             state=UserState(user_struct.get("state", UserState.ACTIVE)),
         )
 
+    def _encode_managed_project(self, structure):
+        assert isinstance(self._request, ClientRequest)
+        project = self._request.managed_project
+        if project is None:
+            return
+
+        project_struct: dict[str, str] = {
+            "identifier": project.identifier,
+        }
+        if project.name:
+            project_struct["name"] = project.name
+
+        if project.description:
+            project_struct["description"] = project.description
+
+        structure["managedProject"] = project_struct
+
+    def _decode_managed_project(self):
+        assert isinstance(self._request, dict)
+        project_struct = self._request.get("managedProject")
+        if project_struct is None:
+            return None
+
+        assert isinstance(project_struct, dict)
+        return Project(
+            identifier=project_struct.get("identifier", ""),
+            name=project_struct.get("name", ""),
+            description=project_struct.get("description", ""),
+        )
+
     def _encode_package_data(self):
         assert isinstance(self._request, ClientRequest)
         package = self._request.package
@@ -541,6 +573,7 @@ class ResponseParcelJSON(Parcel):
         self._encode_deployment_authorization(obj)
         self._encode_deployment_result(obj)
         self._encode_managed_users(obj)
+        self._encode_managed_projects(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -564,6 +597,7 @@ class ResponseParcelJSON(Parcel):
         response.deployment_authorization = self._decode_deployment_auth()
         response.deployment_message = self._decode_deployment_result()
         response.managed_users = self._decode_managed_users()
+        response.managed_projects = self._decode_managed_projects()
         return response
 
     def _encode_error_messages(self, structure):
@@ -628,6 +662,16 @@ class ResponseParcelJSON(Parcel):
                     "state": str(user.state),
                 }
                 for user in self._response.managed_users
+            ]
+
+    def _encode_managed_projects(self, structure):
+        assert isinstance(self._response, ServerResponse)
+        if self._response.managed_projects is not None:
+            structure["managedProjects"] = [{
+                    "identifier": project.identifier,
+                    "name": project.name,
+                    "description": project.description,
+                } for project in self._response.managed_projects
             ]
 
     def _decode_error_messages(self):
@@ -738,6 +782,21 @@ class ResponseParcelJSON(Parcel):
                 ),
             )
             for user_struct in user_structs
+        ]
+
+    def _decode_managed_projects(self):
+        assert isinstance(self._response, dict)
+        project_structs = self._response.get("managedProjects")
+        if project_structs is None:
+            return None
+
+        assert isinstance(project_structs, list)
+        return [
+            Project(
+                identifier=project_struct.get("identifier", ""),
+                name=project_struct.get("name", ""),
+                description=project_struct.get("description", ""),
+            ) for project_struct in project_structs
         ]
 
     def _encode_json_obj(self):

@@ -72,6 +72,21 @@
       },
       "required": ["identifier"]
     },
+    "managedProject": {
+      "type": "object",
+      "properties": {
+        "identifier": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": ["identifier"]
+    },
     "package": {
       "type": "object",
       "properties": {

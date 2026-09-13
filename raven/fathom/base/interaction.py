@@ -99,6 +99,12 @@ class Interaction(StrEnum):
 
     DELETE_USER = "user-delete"
 
+    CREATE_PROJECT = "project-create"
+
+    LIST_PROJECTS = "project-list"
+
+    DELETE_PROJECT = "project-delete"
+
 
 @dataclass
 class ClientRequest:
@@ -117,6 +123,8 @@ class ClientRequest:
             details for a requested and already ganted deployment, if required.
         package (Package): The package involved in a deployment, if any.
         managed_user (User): The user to be created, set up, listed, or
+            deleted, if applicable.
+        managed_project (Project): The project to be created, listed, or
             deleted, if applicable.
     """
 
@@ -155,6 +163,11 @@ class ClientRequest:
     )
 
     managed_user: Optional[User] = field(
+        init=False,
+        default=None,
+    )
+
+    managed_project: Optional[Project] = field(
         init=False,
         default=None,
     )
@@ -216,6 +229,8 @@ class ServerResponse:
             detailing the result of an executed deployment.
         managed_users (list[User]): An optional list of managed users, in
             response to user management requests.
+        managed_projects (list[Project]): An optional list of managed
+            projects, in response to project management requests.
     """
 
     action: Interaction = field(
@@ -248,6 +263,11 @@ class ServerResponse:
     )
 
     managed_users: Optional[list[User]] = field(
+        init=False,
+        default=None,
+    )
+
+    managed_projects: Optional[list[Project]] = field(
         init=False,
         default=None,
     )

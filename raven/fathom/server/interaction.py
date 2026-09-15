@@ -14,7 +14,7 @@
 #
 """Server-specific implementations for client-server-interactions."""
 
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.base import Interaction
 from raven.fathom.base import ServerResponse, DeploymentAuthorization
 from raven.fathom.base import ProcessingException
@@ -23,7 +23,7 @@ from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.handlers import HandlerFactory
 
 
-class ServerConnectionImpl(ServerConnection):
+class ServerConnectionImpl(ServerInteraction):
     """Server implementation of the `ServerConnection` interface.
 
     Enforces client authentication. Dispatches incoming client requests

@@ -17,7 +17,7 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.base import Interaction
 from raven.fathom.base import ClientRequest, ClientAuthentication
 from raven.fathom.base import TransmissionException
@@ -364,7 +364,7 @@ class Server:
 
     def _send(self, request):
         try:
-            return ServerConnection.instance(self._location).process(request)
+            return ServerInteraction.instance(self._location).process(request)
         except TransmissionException as ex:
             raise ServerConnectionException(
                 "Could not establish a connection to the server"

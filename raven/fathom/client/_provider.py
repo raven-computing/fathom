@@ -16,7 +16,7 @@
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import AbstractProvider, DirectImplementation
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.client.interaction import ServerConnectionHTTP
 from raven.fathom.client.locator import ServerLocator
 
@@ -28,7 +28,7 @@ class ServerConnImpl(DirectImplementation):
 
     _ERR_HINT = (
         f"The concrete class {ServerConnectionHTTP} which implements "
-        f"the requested interface {ServerConnection} requires that "
+        f"the requested interface {ServerInteraction} requires that "
         "the location of the server to connect to is specified as a "
         f"positional argument of type {ServerLocator}"
     )
@@ -52,4 +52,4 @@ class ClientProvider(AbstractProvider):
     """Client-specific `Provider` implementation."""
 
     def initialize_bindings(self):
-        self.bind(ServerConnection, ServerConnImpl(ServerConnectionHTTP))
+        self.bind(ServerInteraction, ServerConnImpl(ServerConnectionHTTP))

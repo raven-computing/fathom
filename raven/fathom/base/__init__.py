@@ -91,7 +91,7 @@ from .http import HTTPEncodeException
 from .http import HTTPDecodeException
 from .http import ClientAuthenticationHeader
 from .http import HTTP_HEADER_CLIENT_AUTHENTICATION
-from .interaction import ServerConnection
+from .interaction import ServerInteraction
 from .interaction import Interaction
 from .interaction import ClientRequest
 from .interaction import ServerResponse

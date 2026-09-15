@@ -302,7 +302,7 @@ class ServerResponse:
 
 
 @inject
-class ServerConnection(Interface):
+class ServerInteraction(Interface):
     """Interface for a single client-request server-response interaction."""
 
     @abstractmethod

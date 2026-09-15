@@ -14,7 +14,7 @@
 #
 """Client-specific implementations for client-server-interactions."""
 
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.base import TransmissionException
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
@@ -25,7 +25,7 @@ from raven.fathom.client.http import RequestHTTP
 from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 
 
-class ServerConnectionHTTP(ServerConnection):
+class ServerConnectionHTTP(ServerInteraction):
     """Client implementation of the `ServerConnection` interface.
 
     This implementation uses HTTP-based network connections

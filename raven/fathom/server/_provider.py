@@ -15,7 +15,7 @@
 """Implementation of `Provider` for the server package."""
 
 from raven.fathom.base import AbstractProvider, DirectImplementation
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.server.interaction import ServerConnectionImpl
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
@@ -35,6 +35,6 @@ class ServerProvider(AbstractProvider):
 
     def initialize_bindings(self):
         self.bind_export(
-            ServerConnection, ServerConnectionBinding(ServerConnectionImpl)
+            ServerInteraction, ServerConnectionBinding(ServerConnectionImpl)
         )
         self.bind_export(DataAccess, DataAccessRDBMS)

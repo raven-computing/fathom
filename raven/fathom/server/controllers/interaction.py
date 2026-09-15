@@ -15,7 +15,7 @@
 """HTTP-server client-server-interaction web controller."""
 
 from raven.fathom.base import MethodHTTP
-from raven.fathom.base import ServerConnection
+from raven.fathom.base import ServerInteraction
 from raven.fathom.base import ResponseMessage
 from raven.fathom.base import ProcessingException
 from raven.fathom.base import ClientRequest, ServerResponse
@@ -38,7 +38,7 @@ class InteractionController:
     def call(self, request: ClientRequest) -> ServerResponse:
         """Controller method to handle a client interaction."""
         try:
-            return ServerConnection.instance().process(request)
+            return ServerInteraction.instance().process(request)
         except ProcessingException as ex:
             LOG.e(ex)
             response = ServerResponse(action=request.action)

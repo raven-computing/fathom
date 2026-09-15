@@ -58,17 +58,18 @@ class Command(ABC):
         """
 
 
-def run(command: Command) -> ExitStatus:
+def run(command: Command | None) -> ExitStatus:
     """Runs the given Command.
 
     Args:
-        command: The concrete `Command` to run.
+        command: The concrete `Command` to run, or `None` if no command
+            was specified on the command-line.
 
     Returns:
         ExitStatus: The exit status of the command, convertible to an `int`.
     """
     if command is None:
-        LOG.e("No command provided")
+        LOG.e("No command specified")
         return ExitStatus.NO_COMMAND_PROVIDED
 
     try:

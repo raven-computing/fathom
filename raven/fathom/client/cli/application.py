@@ -25,9 +25,18 @@ from raven.fathom.client.context import determine_client_application_mode
 from raven.fathom.client.context import determine_client_working_directory
 from raven.fathom.client.config import UserConfiguration, ConfigurationManager
 from raven.fathom.client.cli.arguments import ArgumentsCLI, parse_args
+from raven.fathom.client.cli.utils import show_version
 from raven.fathom.client.cli.command import run
 from raven.fathom.client.cli.registry import command_with_args
 from raven.fathom.client.cli.status import ExitStatus
+
+
+def _check_version(args: ArgumentsCLI) -> ExitStatus | None:
+    if args.version:
+        ok = show_version(args.version_short)
+        return ExitStatus.SUCCESS if ok else ExitStatus.INTERNAL_ERROR
+
+    return None
 
 
 def _setup_client(args: ArgumentsCLI):
@@ -59,6 +68,9 @@ def main(argv: Optional[list[str]] = None) -> ExitStatus:
     ctx = ApplicationContext.create_instance()
     with ctx.initialize(app_mode, working_directory):
         try:
+            if (status := _check_version(args)) is not None:
+                return status
+
             _setup_client(args)
             return run(command_with_args(args))
         except Exception as ex:  # pylint: disable=broad-exception-caught

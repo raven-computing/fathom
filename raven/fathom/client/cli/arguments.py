@@ -19,6 +19,7 @@ import argparse
 from dataclasses import dataclass
 
 from raven.fathom.base.decorators import noexcept
+from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 
 
 # pylint: disable=too-many-locals
@@ -33,6 +34,10 @@ class ArgumentsCLI:
     debug: bool = False
 
     quiet: bool = False
+
+    version: bool = False
+
+    version_short: bool = False
 
     user: str = ""
 
@@ -63,6 +68,15 @@ class ArgumentsCLI:
     project_directory: str = ""
 
 
+class _VersionOptAction(argparse.Action):
+    def __init__(self, option_strings, dest, **kwargs):
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        namespace.version = True
+        namespace.version_short = option_string == "-#"
+
+
 @noexcept
 def parse_args(argv: list[str]) -> ArgumentsCLI:
     """Parses the arguments passed to the Fathom client program.
@@ -76,16 +90,11 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     """
     parser = argparse.ArgumentParser(
         allow_abbrev=False,
-        prog="fathom",
-        description="Interact with a Fathom server.",
-        epilog="Copyright (C) 2026 Raven Computing",
-    )
-
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        default=ArgumentsCLI.verbose,
-        help="Turn on verbose output."
+        add_help=False,
+        prog=APPLICATION_PROJECT_ID,
+        description=f"Interact with a {APPLICATION_NAME} server.",
+        usage='%(prog)s [options] <COMMAND> ...',
+        epilog="[This version of the Fathom client is a Beta build]",
     )
 
     parser.add_argument(
@@ -94,38 +103,47 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         default=ArgumentsCLI.debug,
         help="Turn on debug logging."
     )
-
+    parser.add_argument(
+        "--password",
+        action="store",
+        default=ArgumentsCLI.password,
+        help="The password to use for authentication. If this option is used, "
+             "the application will not prompt the user to enter a password on "
+             "the command-line. If you intend to use this option in a "
+             "non-development environment, it is recommended that you "
+             "instruct your shell to not store the entered command in its "
+             "history so that the password is not exposed. Consider passing "
+             "the password via the FATHOM_CLIENT_PASSWORD environment "
+             "variable instead."
+    )
     parser.add_argument(
         "--quiet",
         action="store_true",
         default=ArgumentsCLI.quiet,
         help="Turn off all output except errors."
     )
-
+    parser.add_argument(
+        "--server",
+        action="store",
+        default=ArgumentsCLI.server,
+        help=f"The URL of the {APPLICATION_NAME} server to connect to."
+    )
     parser.add_argument(
         "--user",
         action="store",
         default=ArgumentsCLI.user,
         help="The username to use for authentication."
     )
-
     parser.add_argument(
-        "--password",
-        action="store",
-        default=ArgumentsCLI.password,
-        help="The password to use for authentication."
-    )
-
-    parser.add_argument(
-        "--server",
-        action="store",
-        default=ArgumentsCLI.server,
-        help="The URL of the Fathom server to connect to."
+        "--verbose",
+        action="store_true",
+        default=ArgumentsCLI.verbose,
+        help="Turn on verbose output."
     )
 
     subparsers = parser.add_subparsers(
         dest="command",
-        required=True,
+        required=False,  # Missing command arg is handled by app code
         metavar="<COMMAND>",
     )
 
@@ -138,12 +156,12 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         "--project-directory",
         action="store",
         default=ArgumentsCLI.project_directory,
-        help="The source root directory of the project to deploy."
+        help="The path to the source root directory of the project to deploy."
     )
 
     manage = subparsers.add_parser(
         "manage",
-        help="Manage server-side Fathom resources."
+        help=f"Manage server-side {APPLICATION_NAME} resources."
     )
     manage_subparsers = manage.add_subparsers(
         dest="manage_subject",
@@ -153,7 +171,8 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_user = manage_subparsers.add_parser(
         "user",
-        help="Manage dedicated application users on a Fathom server."
+        help="Manage dedicated application users "
+            f"on a {APPLICATION_NAME} server."
     )
     manage_user_subparsers = manage_user.add_subparsers(
         dest="manage_command",
@@ -195,7 +214,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_project = manage_subparsers.add_parser(
         "project",
-        help="Manage deployable projects on a Fathom server."
+        help=f"Manage deployable projects on a {APPLICATION_NAME} server."
     )
     manage_project_subparsers = manage_project.add_subparsers(
         dest="manage_command",
@@ -244,7 +263,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     setup = subparsers.add_parser(
         "setup",
-        help="Perform setup actions for the Fathom client."
+        help=f"Perform setup actions for the {APPLICATION_NAME} client."
     )
     setup_subparsers = setup.add_subparsers(
         dest="setup_subject",
@@ -254,7 +273,8 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     setup_user = setup_subparsers.add_parser(
         "user",
-        help="Initialize an onboarding user account on a Fathom server."
+        help="Initialize an onboarding user account "
+            f"on a {APPLICATION_NAME} server."
     )
     setup_user.add_argument(
         "setup_user_identifier",
@@ -263,12 +283,28 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         metavar="<IDENTIFIER>",
         help="The unique identifier of the user to initialize."
     )
+    parser.add_argument(
+        "-#",
+        "--version",
+        action=_VersionOptAction,
+        default=ArgumentsCLI.version,
+        help="Show program version information and then exit.",
+    )
+    parser.add_argument(
+        "-?",
+        "--help",
+        action="help",
+        default=argparse.SUPPRESS,
+        help="Show this help message and then exit.",
+    )
 
     args = parser.parse_args(argv[1:])
     return ArgumentsCLI(
         verbose=args.verbose,
         debug=args.debug,
         quiet=args.quiet,
+        version=bool(getattr(args, "version", "")),
+        version_short=bool(getattr(args, "version_short", "")),
         user=args.user,
         password=args.password,
         server=args.server,

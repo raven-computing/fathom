@@ -79,6 +79,8 @@ class TestCommandRegistry(TestCase):
     def test_registry_works_for_known_command(self):
         args = ArgumentsCLI(command="deploy", user="sentinel")
         command_obj = command_with_args(args)
+        self.assertIsNotNone(command_obj)
+        assert command_obj is not None
         self.assertIsInstance(command_obj, DeployCommand)
         self.assertEqual("sentinel", command_obj.args.user)
 

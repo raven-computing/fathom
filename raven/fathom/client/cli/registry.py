@@ -25,19 +25,23 @@ from raven.fathom.client.logging import Logger
 LOG = Logger.get()
 
 
-def command_with_args(args: ArgumentsCLI) -> Command:
+def command_with_args(args: ArgumentsCLI) -> Command | None:
     """Creates a concrete Command from parsed CLI arguments.
 
     Args:
-        args: An `ArgumentsCLI` object.
+        args (ArgumentsCLI): The parsed command-line arguments.
 
     Returns:
-        A concrete `Command` instance that can be executed.
+        Command: A concrete `Command` instance that can be executed.
+            Returns `None` if no command was specified in the given arguments.
 
     Raises:
         ValueError: If the command name is invalid.
     """
     name = args.command
+    if not name:
+        return None
+
     if name == "deploy":
         return DeployCommand(args)
     if name == "manage":

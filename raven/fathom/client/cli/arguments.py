@@ -68,7 +68,14 @@ class ArgumentsCLI:
     project_directory: str = ""
 
 
+class _HelpFormatter(argparse.HelpFormatter):
+
+    def _format_action(self, action):
+        return super()._format_action(action) + "\n"
+
+
 class _VersionOptAction(argparse.Action):
+
     def __init__(self, option_strings, dest, **kwargs):
         super().__init__(option_strings, dest, nargs=0, **kwargs)
 
@@ -95,6 +102,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         description=f"Interact with a {APPLICATION_NAME} server.",
         usage='%(prog)s [options] <COMMAND> ...',
         epilog="[This version of the Fathom client is a Beta build]",
+        formatter_class=_HelpFormatter,
     )
 
     parser.add_argument(
@@ -126,13 +134,18 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         "--server",
         action="store",
         default=ArgumentsCLI.server,
-        help=f"The URL of the {APPLICATION_NAME} server to connect to."
+        help=f"The URL of the {APPLICATION_NAME} server to connect to. "
+             "For example, to connect to a local server running on port 8080, "
+             "use 'http://localhost:8080' as the option value."
     )
     parser.add_argument(
         "--user",
         action="store",
         default=ArgumentsCLI.user,
-        help="The username to use for authentication."
+        help="The username identifier to use for authentication. Using this "
+             "option you can override the username that would otherwise be "
+             "derived from a user configuration file "
+             "or the FATHOM_CLIENT_USERNAME environment variable."
     )
     parser.add_argument(
         "--verbose",
@@ -151,17 +164,20 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         "deploy",
         help="Deploy project documentation resources."
     )
-
     deploy.add_argument(
         "--project-directory",
         action="store",
         default=ArgumentsCLI.project_directory,
-        help="The path to the source root directory of the project to deploy."
+        help="The path to the source root directory of the project to deploy. "
+             "A relative path is interpreted relative to the "
+             "current working directory."
     )
 
     manage = subparsers.add_parser(
         "manage",
-        help=f"Manage server-side {APPLICATION_NAME} resources."
+        help=f"Manage a {APPLICATION_NAME} server remotely. "
+             "Usage of this command requires the user to "
+             "have administrative privileges."
     )
     manage_subparsers = manage.add_subparsers(
         dest="manage_subject",
@@ -199,7 +215,8 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_user_subparsers.add_parser(
         "list",
-        help="List dedicated application users on the server."
+        help="List all dedicated application users that are registered "
+             "on the server."
     )
 
     manage_user_delete = manage_user_subparsers.add_parser(
@@ -214,7 +231,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_project = manage_subparsers.add_parser(
         "project",
-        help=f"Manage deployable projects on a {APPLICATION_NAME} server."
+        help=f"Manage registered projects on a {APPLICATION_NAME} server."
     )
     manage_project_subparsers = manage_project.add_subparsers(
         dest="manage_command",
@@ -224,7 +241,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_project_create = manage_project_subparsers.add_parser(
         "create",
-        help="Create a deployable project on the server."
+        help="Register one of your projects by creating it on the server."
     )
     manage_project_create.add_argument(
         "project_identifier",
@@ -248,12 +265,12 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     manage_project_subparsers.add_parser(
         "list",
-        help="List deployable projects on the server."
+        help="List all projects that are registered on the server."
     )
 
     manage_project_delete = manage_project_subparsers.add_parser(
         "delete",
-        help="Delete a deployable project on the server."
+        help="Delete a registered project on the server."
     )
     manage_project_delete.add_argument(
         "project_identifier",
@@ -263,7 +280,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     setup = subparsers.add_parser(
         "setup",
-        help=f"Perform setup actions for the {APPLICATION_NAME} client."
+        help="Perform a setup action."
     )
     setup_subparsers = setup.add_subparsers(
         dest="setup_subject",
@@ -273,16 +290,18 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
 
     setup_user = setup_subparsers.add_parser(
         "user",
-        help="Initialize an onboarding user account "
-            f"on a {APPLICATION_NAME} server."
+        help="Performs a sign-up action for a user that was previously "
+             "created by an administrator and is currently "
+             "in the onboarding state."
     )
     setup_user.add_argument(
         "setup_user_identifier",
         nargs="?",
         default="",
         metavar="<IDENTIFIER>",
-        help="The unique identifier of the user to initialize."
+        help="The unique identifier of the user to sign up."
     )
+
     parser.add_argument(
         "-#",
         "--version",

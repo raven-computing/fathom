@@ -25,7 +25,7 @@ from raven.fathom.client.http import RequestHTTP
 from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 
 
-class ServerConnectionHTTP(ServerInteraction):
+class ServerInteractionHTTP(ServerInteraction):
     """Client implementation of the `ServerInteraction` interface.
 
     This implementation uses HTTP-based network connections
@@ -33,7 +33,7 @@ class ServerConnectionHTTP(ServerInteraction):
     """
 
     def __init__(self, location: ServerLocator):
-        """Initializes a new `ServerConnectionHTTP` instance.
+        """Initializes a new `ServerInteractionHTTP` instance.
 
         Args:
             location (ServerLocator): The location of the server to connect to.

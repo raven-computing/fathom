@@ -16,15 +16,15 @@
 
 from raven.fathom.base import AbstractProvider, DirectImplementation
 from raven.fathom.base import ServerInteraction
-from raven.fathom.server.interaction import ServerConnectionImpl
+from raven.fathom.server.interaction import ServerInteractionImpl
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.handlers import HandlerFactory
 
 
-class ServerConnectionBinding(DirectImplementation):
-    """Injects dependencies into the `ServerConnectionImpl` initializer."""
+class ServerInteractionBinding(DirectImplementation):
+    """Injects dependencies into the `ServerInteractionImpl` initializer."""
 
     def forward_arguments(self, *args, **kwargs):
         return UserAuthenticator(), HandlerFactory()
@@ -35,6 +35,6 @@ class ServerProvider(AbstractProvider):
 
     def initialize_bindings(self):
         self.bind_export(
-            ServerInteraction, ServerConnectionBinding(ServerConnectionImpl)
+            ServerInteraction, ServerInteractionBinding(ServerInteractionImpl)
         )
         self.bind_export(DataAccess, DataAccessRDBMS)

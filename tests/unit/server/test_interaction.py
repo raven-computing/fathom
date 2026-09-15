@@ -18,7 +18,7 @@ from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseMessage, ResponseCode, User as BaseUser
 from raven.fathom.base.user import UserState
 from raven.fathom.base import ClientAuthentication
-from raven.fathom.server.interaction import ServerConnectionImpl
+from raven.fathom.server.interaction import ServerInteractionImpl
 from raven.fathom.server.security import UserAuthenticator, UserAuthentication
 from raven.fathom.server.models import User
 from raven.fathom.server.handlers import HandlerFactory
@@ -40,7 +40,7 @@ class TestServerConnection(TestCase):
         )
         self.authenticator = Mock(spec_set=UserAuthenticator)
         self.handler_factory = Mock(spec_set=HandlerFactory)
-        self.connection = ServerConnectionImpl(
+        self.connection = ServerInteractionImpl(
             self.authenticator,
             self.handler_factory
         )

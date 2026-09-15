@@ -23,7 +23,7 @@ from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.handlers import HandlerFactory
 
 
-class ServerConnectionImpl(ServerInteraction):
+class ServerInteractionImpl(ServerInteraction):
     """Server implementation of the `ServerInteraction` interface.
 
     Enforces client authentication. Dispatches incoming client requests

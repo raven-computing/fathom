@@ -39,7 +39,7 @@ from raven.fathom.base import FILE_RESIZE_TO_CURRENT_POSITION
 
 from tests.unit import TestCase
 
-# pylint: disable=C2801,C0103
+# pylint: disable=unnecessary-dunder-call,invalid-name
 
 
 class VFSTestCase(TestCase):
@@ -3683,7 +3683,7 @@ class TestVirtualFileSystem(VFSTestCase):
     def test_equal_operator_with_wrong_argument_type_raises_exception(self):
         file = File(self.create_path("test-file"))
         with self.assertRaises(TypeError) as raised:
-            # pylint: disable=W0104
+            # pylint: disable=pointless-statement
             file == b"test-file" # type: ignore
 
         self.assertIn(
@@ -3709,7 +3709,7 @@ class TestVirtualFileSystem(VFSTestCase):
     def test_not_equal_operator_with_wrong_argument_type_raises_ex(self):
         file = File(self.create_path("test-file"))
         with self.assertRaises(TypeError) as raised:
-            # pylint: disable=W0104
+            # pylint: disable=pointless-statement
             file != b"test-file" # type: ignore
 
         self.assertIn(
@@ -3798,7 +3798,7 @@ class TestVirtualFileSystem(VFSTestCase):
         self.assertFalse(file.is_open())
         file.open()
         self.assertTrue(file.is_open())
-        # pylint: disable=C2801
+        # pylint: disable=unnecessary-dunder-call
         file.__del__()
         self.assertFalse(file.is_open())
 

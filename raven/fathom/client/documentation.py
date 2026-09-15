@@ -345,7 +345,7 @@ class DocumentationResource:
             directory (DocsDir): The directory to add.
         """
         TypeCheck.require_arg(directory, DocsDir)
-        # pylint: disable=W0212
+        # pylint: disable=protected-access
         fileset = directory._get_fileset()
         if not self.ignore_name_collisions:
             collisions = self._files & fileset

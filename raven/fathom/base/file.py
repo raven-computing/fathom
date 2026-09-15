@@ -3186,7 +3186,7 @@ class TemporaryFile(File):
     def _finalize_temp(instance):
         """Finalizer for `TemporaryFile` objects."""
         try:
-            # pylint: disable=W0212
+            # pylint: disable=protected-access
             instance._destroy()
         except FileIOException:
             pass

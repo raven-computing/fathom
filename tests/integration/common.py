@@ -14,7 +14,7 @@
 #
 """Common integration test facilities."""
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 
 import os
 import string
@@ -45,7 +45,7 @@ def skipIfNotZlibAvailable(reason=None):
         return wrapped
 
     try:
-        # pylint: disable=C0415,W0611
+        # pylint: disable=import-outside-toplevel,unused-import
         import zlib
     except ImportError:
         return skip(reason or "")
@@ -65,7 +65,7 @@ def skipIfNotBz2Available(reason=None):
         return wrapped
 
     try:
-        # pylint: disable=C0415,W0611
+        # pylint: disable=import-outside-toplevel,unused-import
         import bz2
     except ImportError:
         return skip(reason or "")
@@ -85,7 +85,7 @@ def skipIfNotLzmaAvailable(reason=None):
         return wrapped
 
     try:
-        # pylint: disable=C0415,W0611
+        # pylint: disable=import-outside-toplevel,unused-import
         import lzma
     except ImportError:
         return skip(reason or "")

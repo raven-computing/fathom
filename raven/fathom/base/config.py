@@ -704,7 +704,7 @@ class ConfigurationSection:
             ConfigurationSection: A copy of this configuration section.
         """
         section = ConfigurationSection(self._key, self._sequence_number)
-        # pylint: disable=W0212
+        # pylint: disable=protected-access
         section._configs = self._configs.copy()
         return section
 

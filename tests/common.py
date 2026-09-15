@@ -14,7 +14,7 @@
 #
 """Common test code."""
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 
 from unittest import skip
 

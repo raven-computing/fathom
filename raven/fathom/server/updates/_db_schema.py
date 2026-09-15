@@ -19,7 +19,7 @@ a peewee `Database` object as its only argument and performs the necessary
 schema changes on that database.
 """
 
-# pylint: disable=W0401,W0611,W0614
+# pylint: disable=wildcard-import,unused-import,unused-wildcard-import
 
 from typing import TypeAlias, Callable, Any
 

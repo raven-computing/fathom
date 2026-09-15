@@ -40,7 +40,6 @@ def _filter_is_directory(file: File):
 def _filter_is_symlink(file: File):
     return file.is_symbolic_link()
 
-# pylint: disable=W0613
 def _filter_is_any_file_type(file: File):
     return True
 

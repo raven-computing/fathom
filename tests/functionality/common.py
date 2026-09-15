@@ -32,7 +32,7 @@ Typical usage::
             self.assertClientSuccess()
 """
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 
 import os
 
@@ -129,9 +129,9 @@ class TestCase(FathomTestCase):
         if self._server is not None:
             self._server.shutdown()
             self._server.disconnect_datastore()
-            self._server = None # pylint: disable=W0201
+            self._server = None # pylint: disable=attribute-defined-outside-init
 
-        _SingletonAllocator._singleton_purge() # pylint: disable=W0212
+        _SingletonAllocator._singleton_purge() # pylint: disable=protected-access
 
     @property
     def server(self) -> ServerDriver:

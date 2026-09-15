@@ -14,7 +14,7 @@
 #
 """Integration tests for the HTTP client implementation."""
 
-# pylint: disable=C0116,C0103
+# pylint: disable=missing-function-docstring,invalid-name
 
 import json
 import threading
@@ -39,7 +39,7 @@ from tests.integration import TestCase
 class _LocalHTTPRequestHandler(BaseHTTPRequestHandler):
     """A minimal HTTP request handler used by the local test server."""
 
-    def log_message(self, format, *args): # pylint: disable=W0622
+    def log_message(self, format, *args): # pylint: disable=redefined-builtin
         # Suppress default request logging to keep test output clean.
         pass
 

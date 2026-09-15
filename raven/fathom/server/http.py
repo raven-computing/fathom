@@ -314,7 +314,7 @@ def assign(server: ServerHTTP) -> ServerHTTP:
     Returns:
         ServerHTTP: The server instance that was assigned.
     """
-    # pylint: disable=W0603
+    # pylint: disable=global-statement
     global _SERVER_HTTP
     _SERVER_HTTP = server
     return server

@@ -19,10 +19,9 @@ import peewee as orm_impl
 from raven.fathom.server.datastore._proxy import get_orm_proxy
 from raven.fathom.server.datastore.orm.field import FieldChecker
 
-# pylint: disable=C0115
-
 
 class _BaseModel(orm_impl.Model):
+    # pylint: disable=missing-class-docstring
     class Meta:
         database = get_orm_proxy()
         legacy_table_names = False

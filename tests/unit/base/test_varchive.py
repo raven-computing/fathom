@@ -20,7 +20,7 @@ from raven.fathom.base import File
 
 from tests.unit import TestCase
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 
 
 class TestJsonArchiveFileIO(TestCase):

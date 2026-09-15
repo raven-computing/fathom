@@ -64,7 +64,7 @@ else:
 
 def delete(obj):
     """Calls `__del__()` of the given object."""
-    obj.__del__() # pylint: disable=C2801
+    obj.__del__() # pylint: disable=unnecessary-dunder-call
 
 
 class TestFileSystem(FileSystemIntegrationTestCase):
@@ -3020,7 +3020,7 @@ class TestFileSystem(FileSystemIntegrationTestCase):
     def test_can_determine_if_file_is_hidden_on_windows(self):
         path_visible = self.create_file("test-file-visible")
         path_hidden = self.create_file("test-file-hidden")
-        # pylint: disable=E0606
+        # pylint: disable=possibly-used-before-assignment
         _WIN32_SYS.SetFileAttributesW(str(path_hidden), 0x2)
         file_visible = File(path_visible)
         file_hidden = File(path_hidden)
@@ -3688,7 +3688,7 @@ class TestFileSystem(FileSystemIntegrationTestCase):
     def test_equal_operator_with_wrong_argument_type_raises_exception(self):
         file = File(self.create_path("test-file"))
         with self.assertRaises(TypeError) as raised:
-            # pylint: disable=W0104
+            # pylint: disable=pointless-statement
             file == b"test-file" # type: ignore
 
         self.assertIn(
@@ -3714,7 +3714,7 @@ class TestFileSystem(FileSystemIntegrationTestCase):
     def test_not_equal_operator_with_wrong_argument_type_raises_ex(self):
         file = File(self.create_path("test-file"))
         with self.assertRaises(TypeError) as raised:
-            # pylint: disable=W0104
+            # pylint: disable=pointless-statement
             file != b"test-file" # type: ignore
 
         self.assertIn(
@@ -3801,7 +3801,7 @@ class TestFileSystem(FileSystemIntegrationTestCase):
         self.assertFalse(file.is_open())
         file.open()
         self.assertTrue(file.is_open())
-        # pylint: disable=C2801
+        # pylint: disable=unnecessary-dunder-call
         file.__del__()
         self.assertFalse(file.is_open())
 

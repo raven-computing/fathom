@@ -104,7 +104,7 @@ def _setup_server_application_logging(args):
 
 
 def _setup_server_cherrypy_logging(args):
-    # pylint: disable=W0212
+    # pylint: disable=protected-access
     logger = cherrypy._cplogging.LogManager
     logger.time = lambda self: datetime.now().strftime(
         FATHOM_LOG_FORMAT_TIMESTAMP
@@ -168,7 +168,7 @@ class LogFormatterServerApp(logging.Formatter):
         }
 
     def _create_log_level_formatter(self, symbol, msg_format):
-        # pylint: disable=C0209
+        # pylint: disable=consider-using-f-string
         format_str = "{timestamp} [{level}] {msg_format}".format(
             timestamp="%(asctime)s",
             level=symbol,

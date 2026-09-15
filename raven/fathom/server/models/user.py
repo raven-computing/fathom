@@ -22,7 +22,7 @@ from raven.fathom.server.datastore.orm import (
 )
 from raven.fathom.server.models.project import Project
 
-# pylint: disable=C0115
+# pylint: disable=missing-class-docstring
 
 
 class User(Model):

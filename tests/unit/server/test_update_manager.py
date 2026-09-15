@@ -25,7 +25,7 @@ from raven.fathom.server.updates.manager import (
 from tests.unit import TestCase
 from tests.unit.mocks import Mock
 
-# pylint: disable=W0212
+# pylint: disable=protected-access
 
 
 def v(major: int, minor: int, patch_num: int):

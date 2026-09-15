@@ -21,14 +21,14 @@ a response object, modeled by the `ServerResponse` data class. The response may
 contain errors or warnings, which are represented by the `ResponseMessage`
 data class.
 
-This module also declares the `ServerConnection` interface, which abstracts the
+This module also declares the `ServerInteraction` interface, which abstracts the
 process of sending and receiving requests and responses between Fathom clients
 and servers. A simple request-response mechanism is used. A client sends a
 request and waits for the response of the server. In practice, an interaction
 between a client and a server will most likely be carried out over a network
 connection using the HTTP protocol. However, this is an implementation detail.
 It is only specified as a component interface, that both the client and server
-component must implement the `ServerConnection` interface class and that when
+component must implement the `ServerInteraction` interface class and that when
 the client code calls the `process()` method, the server will have its method
 implementation called with an equivalent request object as provided by the
 client. In the same manner, the response returned by the `process()` method of
@@ -66,7 +66,7 @@ class TransmissionException(InteractionException):
     the network. Semantically, an interaction never took place because the
     transmission of that interaction did not succeed.
 
-    Is primarily used by the `ServerConnection` interface.
+    Is primarily used by the `ServerInteraction` interface.
     """
 
 
@@ -80,7 +80,7 @@ class ProcessingException(InteractionException):
     because the request was successfully transmitted to the server, but the
     server failed to fully process it.
 
-    Is primarily used by the `ServerConnection` interface.
+    Is primarily used by the `ServerInteraction` interface.
     """
 
 

@@ -26,7 +26,7 @@ from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 
 
 class ServerConnectionHTTP(ServerInteraction):
-    """Client implementation of the `ServerConnection` interface.
+    """Client implementation of the `ServerInteraction` interface.
 
     This implementation uses HTTP-based network connections
     to communicate with a server.

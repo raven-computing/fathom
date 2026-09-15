@@ -24,7 +24,7 @@ from raven.fathom.server.handlers import HandlerFactory
 
 
 class ServerConnectionImpl(ServerInteraction):
-    """Server implementation of the `ServerConnection` interface.
+    """Server implementation of the `ServerInteraction` interface.
 
     Enforces client authentication. Dispatches incoming client requests
     to the corresponding handlers.

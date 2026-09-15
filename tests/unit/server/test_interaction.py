@@ -29,7 +29,7 @@ from tests.unit.mocks import Mock
 
 class TestServerConnection(TestCase):
     """Unit tests for the server-side implementation of
-    the `ServerConnection` interface.
+    the `ServerInteraction` interface.
     """
 
     def setUp(self):

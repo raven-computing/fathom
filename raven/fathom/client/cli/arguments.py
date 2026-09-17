@@ -14,10 +14,9 @@
 #
 """Command line argument handling."""
 
-import argparse
-
 from dataclasses import dataclass
 
+from raven.fathom.base import ArgumentParser
 from raven.fathom.base.decorators import noexcept
 from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 
@@ -68,53 +67,6 @@ class ArgumentsCLI:
     project_directory: str = ""
 
 
-class _HelpFormatter(argparse.HelpFormatter):
-
-    def _format_action(self, action):
-        return super()._format_action(action) + "\n"
-
-    def add_arguments(self, actions):
-        regular_actions = []
-        help_actions = []
-        for action in actions:
-            options = action.option_strings
-            if "-?" in options or "--help" in options:
-                help_actions.append(action)
-            else:
-                regular_actions.append(action)
-
-        super().add_arguments(regular_actions + help_actions)
-
-
-class _VersionOptAction(argparse.Action):
-
-    def __init__(self, option_strings, dest, **kwargs):
-        super().__init__(option_strings, dest, nargs=0, **kwargs)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        namespace.version = True
-        namespace.version_short = option_string == "-#"
-
-
-class _ArgumentParser(argparse.ArgumentParser):
-
-    def __init__(self, *args, **kwargs):
-        add_custom_help = kwargs.pop("add_help", True)
-        kwargs["add_help"] = False # Disable builtin help
-        if "formatter_class" not in kwargs:
-            kwargs["formatter_class"] = _HelpFormatter
-
-        super().__init__(*args, **kwargs)
-
-        if add_custom_help:
-            self.add_argument(
-                "-?",
-                "--help",
-                action="help",
-                help="Show this help message and then exit.",
-            )
-
-
 @noexcept
 def parse_args(argv: list[str]) -> ArgumentsCLI:
     """Parses the arguments passed to the Fathom client program.
@@ -126,13 +78,12 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         ArgumentsCLI: The processed command line arguments,
             as an `ArgumentsCLI` object.
     """
-    parser = _ArgumentParser(
+    parser = ArgumentParser(
         allow_abbrev=False,
         prog=APPLICATION_PROJECT_ID,
         description=f"Interact with a {APPLICATION_NAME} server.",
         usage='%(prog)s [options] <COMMAND> ...',
         epilog="[This version of the Fathom client is a Beta build]",
-        formatter_class=_HelpFormatter,
     )
 
     parser.add_argument(
@@ -332,13 +283,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="The unique identifier of the user to sign up."
     )
 
-    parser.add_argument(
-        "-#",
-        "--version",
-        action=_VersionOptAction,
-        default=ArgumentsCLI.version,
-        help="Show program version information and then exit.",
-    )
+    parser.add_version_argument()
 
     args = parser.parse_args(argv[1:])
     return ArgumentsCLI(

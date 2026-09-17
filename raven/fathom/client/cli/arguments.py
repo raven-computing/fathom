@@ -73,6 +73,18 @@ class _HelpFormatter(argparse.HelpFormatter):
     def _format_action(self, action):
         return super()._format_action(action) + "\n"
 
+    def add_arguments(self, actions):
+        regular_actions = []
+        help_actions = []
+        for action in actions:
+            options = action.option_strings
+            if "-?" in options or "--help" in options:
+                help_actions.append(action)
+            else:
+                regular_actions.append(action)
+
+        super().add_arguments(regular_actions + help_actions)
+
 
 class _VersionOptAction(argparse.Action):
 
@@ -82,6 +94,25 @@ class _VersionOptAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         namespace.version = True
         namespace.version_short = option_string == "-#"
+
+
+class _ArgumentParser(argparse.ArgumentParser):
+
+    def __init__(self, *args, **kwargs):
+        add_custom_help = kwargs.pop("add_help", True)
+        kwargs["add_help"] = False # Disable builtin help
+        if "formatter_class" not in kwargs:
+            kwargs["formatter_class"] = _HelpFormatter
+
+        super().__init__(*args, **kwargs)
+
+        if add_custom_help:
+            self.add_argument(
+                "-?",
+                "--help",
+                action="help",
+                help="Show this help message and then exit.",
+            )
 
 
 @noexcept
@@ -95,9 +126,8 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         ArgumentsCLI: The processed command line arguments,
             as an `ArgumentsCLI` object.
     """
-    parser = argparse.ArgumentParser(
+    parser = _ArgumentParser(
         allow_abbrev=False,
-        add_help=False,
         prog=APPLICATION_PROJECT_ID,
         description=f"Interact with a {APPLICATION_NAME} server.",
         usage='%(prog)s [options] <COMMAND> ...',
@@ -308,13 +338,6 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         action=_VersionOptAction,
         default=ArgumentsCLI.version,
         help="Show program version information and then exit.",
-    )
-    parser.add_argument(
-        "-?",
-        "--help",
-        action="help",
-        default=argparse.SUPPRESS,
-        help="Show this help message and then exit.",
     )
 
     args = parser.parse_args(argv[1:])

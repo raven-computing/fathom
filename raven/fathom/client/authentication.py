@@ -14,6 +14,8 @@
 #
 """Implements a function to retrieve client authentication details."""
 
+from typing import Final
+
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import SystemEnvironment, InputPrompt
 from raven.fathom.base import Configuration
@@ -24,9 +26,9 @@ from raven.fathom.client.cli.arguments import ArgumentsCLI
 
 LOG = Logger.get()
 
-ENVIRONMENT_VARIABLE_USER_NAME = "FATHOM_CLIENT_USERNAME"
+ENVIRONMENT_VARIABLE_USER_NAME: Final = "FATHOM_CLIENT_USERNAME"
 
-ENVIRONMENT_VARIABLE_USER_PASSWORD = "FATHOM_CLIENT_PASSWORD"
+ENVIRONMENT_VARIABLE_USER_PASSWORD: Final = "FATHOM_CLIENT_PASSWORD"
 
 
 def _set_client_authentication(auth, username, password):

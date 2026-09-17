@@ -26,8 +26,17 @@ from raven.fathom.server.logging import shutdown_loggers
 from raven.fathom.server.context import determine_server_application_mode
 from raven.fathom.server.context import determine_server_working_directory
 from raven.fathom.server.cli.arguments import parse_args
+from raven.fathom.server.cli.utils import show_version
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.main import run
+
+
+def _check_version(args) -> ExitStatus | None:
+    if args.version:
+        ok = show_version(args.version_short)
+        return ExitStatus.SUCCESS if ok else ExitStatus.INTERNAL_ERROR
+
+    return None
 
 
 def main(argv: Optional[list[str]] = None) -> ExitStatus:
@@ -67,6 +76,9 @@ def main(argv: Optional[list[str]] = None) -> ExitStatus:
     app_ctx = ApplicationContext.create_instance()
     with app_ctx.initialize(app_mode, work_dir):
         try:
+            if (status := _check_version(args)) is not None:
+                return status
+
             setup_server_logging(args)
             return ExitStatus(run(args))
         except Exception as ex:  # pylint: disable=broad-exception-caught

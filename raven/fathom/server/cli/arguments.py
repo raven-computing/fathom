@@ -20,6 +20,8 @@ from dataclasses import dataclass
 from typing import Optional
 from multiprocessing.synchronize import Event
 
+from raven.fathom.base import ArgumentParser
+from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
 
 
@@ -39,6 +41,10 @@ class AppArgs:
     verbose: bool = False
 
     debug: bool = False
+
+    version: bool = False
+
+    version_short: bool = False
 
     port: Optional[int] = None
 
@@ -82,42 +88,12 @@ def parse_args(argv: list[str]) -> AppArgs:
         event = last_arg
         argv = argv[:-1]
 
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParser(
         allow_abbrev=False,
-        prog="fathom-server",
-        description="The Fathom server application.",
-        epilog="Copyright (C) 2026 Raven Computing",
-    )
-
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        default=AppArgs.verbose,
-        help="Turn on verbose logging."
-    )
-
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        default=AppArgs.debug,
-        help="Turn on debug logging."
-    )
-
-    parser.add_argument(
-        "--port",
-        metavar="<PORT>",
-        type=port_type,
-        default=None, # Need to be able to check if specified or not by user
-        help="The port number on which the server will listen. "
-            f"The default port is {DEFAULT_SERVER_PORT}."
-    )
-
-    parser.add_argument(
-        "--working-directory",
-        metavar="<PATH>",
-        default=AppArgs.working_directory,
-        help="The absolute path to the directory of the server application "
-             "where server-specific files are located."
+        prog=f"{APPLICATION_PROJECT_ID}-server",
+        description=f"The {APPLICATION_NAME} server application.",
+        usage='%(prog)s [options] <COMMAND> ...',
+        epilog="[This version of the Fathom server is a Beta build]",
     )
 
     parser.add_argument(
@@ -127,13 +103,39 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="Create the server configuration file with default values "
              "if the file does not alreday exist at startup."
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        default=AppArgs.debug,
+        help="Turn on debug logging."
+    )
+    parser.add_argument(
+        "--port",
+        metavar="<PORT>",
+        type=port_type,
+        default=None, # Need to be able to check if specified or not by user
+        help="The port number on which the server will listen. "
+            f"The default port is {DEFAULT_SERVER_PORT}."
+    )
+    parser.add_argument(
+        "--verbose",
+        action="store_true",
+        default=AppArgs.verbose,
+        help="Turn on verbose logging."
+    )
+    parser.add_argument(
+        "--working-directory",
+        metavar="<PATH>",
+        default=AppArgs.working_directory,
+        help="The absolute path to the directory of the server application "
+             "where server-specific files are located."
+    )
 
     subparsers = parser.add_subparsers(
         dest="command",
         required=False,
         metavar="<COMMAND>",
     )
-
     subparsers.add_parser(
         "setup",
         help="Perform initial setup work for the server application."
@@ -151,7 +153,7 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     user_create = user_subparsers.add_parser(
         "create",
-        help="Create a user in the local Fathom datastore."
+        help=f"Create a user in the local {APPLICATION_NAME} datastore."
     )
     user_create.add_argument(
         "identifier",
@@ -173,12 +175,12 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     user_subparsers.add_parser(
         "list",
-        help="List users from the local Fathom datastore."
+        help=f"List users from the local {APPLICATION_NAME} datastore."
     )
 
     user_delete = user_subparsers.add_parser(
         "delete",
-        help="Delete a user from the local Fathom datastore."
+        help=f"Delete a user from the local {APPLICATION_NAME} datastore."
     )
     user_delete.add_argument(
         "identifier",
@@ -198,7 +200,7 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     project_create = project_subparsers.add_parser(
         "create",
-        help="Create a project in the local Fathom datastore."
+        help=f"Create a project in the local {APPLICATION_NAME} datastore."
     )
     project_create.add_argument(
         "identifier",
@@ -220,12 +222,12 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     project_subparsers.add_parser(
         "list",
-        help="List projects from the local Fathom datastore."
+        help=f"List projects from the local {APPLICATION_NAME} datastore."
     )
 
     project_delete = project_subparsers.add_parser(
         "delete",
-        help="Delete a project from the local Fathom datastore."
+        help=f"Delete a project from the local {APPLICATION_NAME} datastore."
     )
     project_delete.add_argument(
         "identifier",
@@ -233,10 +235,14 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="The unique identifier of the project to delete."
     )
 
+    parser.add_version_argument()
+
     args = parser.parse_args(argv[1:])
     return AppArgs(
         verbose=args.verbose,
         debug=args.debug,
+        version=bool(getattr(args, "version", "")),
+        version_short=bool(getattr(args, "version_short", "")),
         port=args.port,
         working_directory=args.working_directory,
         create_default_config=args.create_default_config,

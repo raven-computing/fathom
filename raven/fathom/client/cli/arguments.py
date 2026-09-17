@@ -82,7 +82,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         allow_abbrev=False,
         prog=APPLICATION_PROJECT_ID,
         description=f"Interact with a {APPLICATION_NAME} server.",
-        usage='%(prog)s [options] <COMMAND> ...',
+        usage="%(prog)s [options] <COMMAND> ...",
         epilog="[This version of the Fathom client is a Beta build]",
     )
 

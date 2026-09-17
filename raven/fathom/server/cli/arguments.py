@@ -91,8 +91,9 @@ def parse_args(argv: list[str]) -> AppArgs:
     parser = ArgumentParser(
         allow_abbrev=False,
         prog=f"{APPLICATION_PROJECT_ID}-server",
-        description=f"The {APPLICATION_NAME} server application.",
-        usage='%(prog)s [options] <COMMAND> ...',
+        description=f"Setup and manage the {APPLICATION_NAME} server "
+                     "application and its resources.",
+        usage="%(prog)s [options] <COMMAND> ...",
         epilog="[This version of the Fathom server is a Beta build]",
     )
 
@@ -101,7 +102,7 @@ def parse_args(argv: list[str]) -> AppArgs:
         action="store_true",
         default=AppArgs.create_default_config,
         help="Create the server configuration file with default values "
-             "if the file does not alreday exist at startup."
+             "if the file does not already exist at startup."
     )
     parser.add_argument(
         "--debug",
@@ -138,12 +139,15 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
     subparsers.add_parser(
         "setup",
-        help="Perform initial setup work for the server application."
+        help="Perform initial setup work for the server application. "
+             "This should be done once after installation. "
+             "This step is interactive."
     )
 
     user_parser = subparsers.add_parser(
         "user",
-        help="Manage dedicated application users."
+        help="Manage dedicated application users. This command requires you "
+             "to authenticate and have administrative privileges."
     )
     user_subparsers = user_parser.add_subparsers(
         dest="user_command",
@@ -153,7 +157,8 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     user_create = user_subparsers.add_parser(
         "create",
-        help=f"Create a user in the local {APPLICATION_NAME} datastore."
+        help=f"Create a {APPLICATION_NAME} user that a client can use "
+             "to connect to this server."
     )
     user_create.add_argument(
         "identifier",
@@ -175,12 +180,13 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     user_subparsers.add_parser(
         "list",
-        help=f"List users from the local {APPLICATION_NAME} datastore."
+        help="List all users that are mananged "
+            f"by this {APPLICATION_NAME} server."
     )
 
     user_delete = user_subparsers.add_parser(
         "delete",
-        help=f"Delete a user from the local {APPLICATION_NAME} datastore."
+        help=f"Delete a user from this {APPLICATION_NAME} server."
     )
     user_delete.add_argument(
         "identifier",
@@ -200,7 +206,8 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     project_create = project_subparsers.add_parser(
         "create",
-        help=f"Create a project in the local {APPLICATION_NAME} datastore."
+        help="Create a project that is managed "
+            f"by this {APPLICATION_NAME} server."
     )
     project_create.add_argument(
         "identifier",
@@ -222,12 +229,13 @@ def parse_args(argv: list[str]) -> AppArgs:
 
     project_subparsers.add_parser(
         "list",
-        help=f"List projects from the local {APPLICATION_NAME} datastore."
+        help="List all projects that are managed "
+            f"by this {APPLICATION_NAME} server."
     )
 
     project_delete = project_subparsers.add_parser(
         "delete",
-        help=f"Delete a project from the local {APPLICATION_NAME} datastore."
+        help=f"Delete a project from this {APPLICATION_NAME} server."
     )
     project_delete.add_argument(
         "identifier",

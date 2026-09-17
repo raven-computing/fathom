@@ -37,28 +37,30 @@ positional arguments:
   <COMMAND>
     deploy             Deploy project documentation resources.
 
-    manage             Manage a Fathom server remotely. Usage of this command requires the user to have administrative
-                       privileges.
+    manage             Manage a Fathom server remotely. Usage of this command requires the user to
+                       have administrative privileges.
 
     setup              Perform a setup action.
 
 options:
   --debug              Turn on debug logging.
 
-  --password PASSWORD  The password to use for authentication. If this option is used, the application will not prompt the
-                       user to enter a password on the command-line. If you intend to use this option in a non-development
-                       environment, it is recommended that you instruct your shell to not store the entered command in its
-                       history so that the password is not exposed. Consider passing the password via the
-                       FATHOM_CLIENT_PASSWORD environment variable instead.
+  --password PASSWORD  The password to use for authentication. If this option is used, the
+                       application will not prompt the user to enter a password on the command-line.
+                       If you intend to use this option in a non-development environment, it is
+                       recommended that you instruct your shell to not store the entered command in
+                       its history so that the password is not exposed. Consider passing the
+                       password via the FATHOM_CLIENT_PASSWORD environment variable instead.
 
   --quiet              Turn off all output except errors.
 
-  --server SERVER      The URL of the Fathom server to connect to. For example, to connect to a local server running on port
-                       8080, use 'http://localhost:8080' as the option value.
+  --server SERVER      The URL of the Fathom server to connect to. For example, to connect to a
+                       local server running on port 8080, use 'http://localhost:8080' as the option
+                       value.
 
-  --user USER          The username identifier to use for authentication. Using this option you can override the username
-                       that would otherwise be derived from a user configuration file or the FATHOM_CLIENT_USERNAME
-                       environment variable.
+  --user USER          The username identifier to use for authentication. Using this option you can
+                       override the username that would otherwise be derived from a user
+                       configuration file or the FATHOM_CLIENT_USERNAME environment variable.
 
   --verbose            Turn on verbose output.
 
@@ -77,18 +79,18 @@ Setup and manage the Fathom server application and its resources.
 
 positional arguments:
   <COMMAND>
-    setup               Perform initial setup work for the server application. This should be done once after installation.
-                        This step is interactive.
+    setup               Perform initial setup work for the server application. This should be done
+                        once after installation. This step is interactive.
 
-    user                Manage dedicated application users. This command requires you to authenticate and have
-                        administrative privileges.
+    user                Manage dedicated application users. This command requires you to
+                        authenticate and have administrative privileges.
 
     project             Manage deployable projects.
 
 options:
   --create-default-config
-                        Create the server configuration file with default values if the file does not already exist at
-                        startup.
+                        Create the server configuration file with default values if the file does
+                        not already exist at startup.
 
   --debug               Turn on debug logging.
 
@@ -97,8 +99,8 @@ options:
   --verbose             Turn on verbose logging.
 
   --working-directory <PATH>
-                        The absolute path to the directory of the server application where server-specific files are
-                        located.
+                        The absolute path to the directory of the server application where server-
+                        specific files are located.
 
   -#, --version         Show program version information and then exit.
 

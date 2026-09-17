@@ -19,7 +19,13 @@ argument handling in both the Fathom client and server.
 import argparse
 
 
+_HELP_OUTPUT_WIDTH = 100
+
+
 class _HelpFormatter(argparse.HelpFormatter):
+
+    def __init__(self, prog):
+        super().__init__(prog, width=_HELP_OUTPUT_WIDTH)
 
     def _format_action(self, action):
         return super()._format_action(action) + "\n"

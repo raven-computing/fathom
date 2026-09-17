@@ -25,7 +25,7 @@ import threading
 
 from enum import Enum
 from pathlib import PurePath
-from typing import Optional
+from typing import Optional, Final
 
 from raven.fathom.base.decorators import noexcept
 from raven.fathom.base.system import SystemEnvironment
@@ -33,23 +33,23 @@ from raven.fathom.base.file import File
 from raven.fathom.base.exceptions import FathomBaseException
 
 
-APPLICATION_NAME = "Fathom"
+APPLICATION_NAME: Final = "Fathom"
 
-APPLICATION_PROJECT_ID = APPLICATION_NAME.lower()
+APPLICATION_PROJECT_ID: Final = APPLICATION_NAME.lower()
 
-ENV_VAR_FATHOM_DEBUG = "FATHOM_DEBUG"
+ENV_VAR_FATHOM_DEBUG: Final = "FATHOM_DEBUG"
 
-_BUILD_DIRECTORY = "build"
+_BUILD_DIRECTORY: Final = "build"
 
-_DEVELOPMENT_DIRECTORY = "devel"
+_DEVELOPMENT_DIRECTORY: Final = "devel"
 
-_TESTING_DIRECTORY = "testing"
+_TESTING_DIRECTORY: Final = "testing"
 
-_ENV_VAR_FATHOM_TEST_MODE = "A_FATHOM_TEST_MODE"
+_ENV_VAR_FATHOM_TEST_MODE: Final = "A_FATHOM_TEST_MODE"
 
-_ENV_VAR_ENABLED = "1"
+_ENV_VAR_ENABLED: Final = "1"
 
-_ENV_VAR_DISABLED = "0"
+_ENV_VAR_DISABLED: Final = "0"
 
 _PROJECT_ROOT_FILE_CACHE = False
 

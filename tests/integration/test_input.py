@@ -117,6 +117,14 @@ class TestSystemInputPromptStdIn(TestCase):
         first = self.input_prompt.read()
         self.assertEqual(first, "first line")
 
+    def test_secret_input_uses_configured_stream(self):
+        self.set_in("secret-value")
+        captured_input = self.input_prompt.read("Password: ", secret=True)
+
+        self.assertIsInstance(captured_input, str)
+        self.assertEqual(captured_input, "secret-value")
+        self.assert_output_contains("Password: ")
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

@@ -22,11 +22,13 @@ its stdout/stderr output. The `ServerDriver` launches the Fathom server in
 a separate process and manages its lifecycle.
 """
 
+import sys
 import io
 import multiprocessing
 
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import ExitStack, nullcontext, redirect_stdout, redirect_stderr
 from typing import Optional, Final
+from unittest.mock import patch
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
@@ -47,6 +49,17 @@ _SERVER_READY_TIMEOUT: Final = 15.0
 
 # Timeout in seconds for a graceful server shutdown before force-killing.
 _SERVER_SHUTDOWN_TIMEOUT: Final = 5.0
+
+
+def _create_stdin_context(lines):
+    if lines is None:
+        return nullcontext()
+
+    if not lines:
+        return io.StringIO("")
+
+    stdin_buffer = io.StringIO("\n".join(lines) + "\n")
+    return patch.object(sys, "stdin", stdin_buffer)
 
 
 def _convert_sys_exit(sys_exit: SystemExit) -> int:
@@ -80,6 +93,7 @@ class ClientDriver:
     def __init__(self, env: ClientEnvironment):
         self._env = env
         self._exit_status: Optional[int] = None
+        self._stdin: Optional[list[str]] = None
         self._stdout: str = ""
         self._stderr: str = ""
         self._has_executed: bool = False
@@ -98,6 +112,22 @@ class ClientDriver:
         Is `None` if `execute()` has not been called yet.
         """
         return self._exit_status
+
+    @property
+    def stdin(self) -> Optional[list[str]]:
+        """The predefined stdin lines for client execution.
+
+        Each item is exposed to the client as one newline-terminated line.
+        If `None`, the client reads from the underlying process stdin.
+        """
+        if self._stdin is None:
+            return None
+
+        return list(self._stdin)
+
+    @stdin.setter
+    def stdin(self, lines: Optional[list[str]]):
+        self._stdin = None if lines is None else list(lines)
 
     @property
     def stdout(self) -> str:
@@ -129,7 +159,11 @@ class ClientDriver:
         exec_args = ["fathom"] + list(args)
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
-        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+        stdin_context = _create_stdin_context(self._stdin)
+        with ExitStack() as stack:
+            stack.enter_context(stdin_context)
+            stack.enter_context(redirect_stdout(stdout_buffer))
+            stack.enter_context(redirect_stderr(stderr_buffer))
             try:
                 self._exit_status = int(client_main(exec_args))
             except SystemExit as sys_exit:
@@ -160,6 +194,7 @@ class ServerDriver:
 
     def __init__(self, env: ServerEnvironment):
         self._env = env
+        self._stdin: Optional[list[str]] = None
         self._stdout: str = ""
         self._stderr: str = ""
         self._exit_status: Optional[int] = None
@@ -192,6 +227,22 @@ class ServerDriver:
         Is `None` if no server CLI command has been executed yet.
         """
         return self._command_exit_status
+
+    @property
+    def stdin(self) -> Optional[list[str]]:
+        """The predefined stdin lines for server CLI execution.
+
+        Each item is exposed to the command as one newline-terminated line.
+        If `None`, the server reads from the underlying process stdin.
+        """
+        if self._stdin is None:
+            return None
+
+        return list(self._stdin)
+
+    @stdin.setter
+    def stdin(self, lines: Optional[list[str]]):
+        self._stdin = None if lines is None else list(lines)
 
     @property
     def stdout(self) -> str:
@@ -319,11 +370,15 @@ class ServerDriver:
 
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
-        with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
+        stdin_context = _create_stdin_context(self._stdin)
+        with ExitStack() as stack:
+            stack.enter_context(stdin_context)
+            stack.enter_context(redirect_stdout(stdout_buffer))
+            stack.enter_context(redirect_stderr(stderr_buffer))
             try:
                 self._command_exit_status = int(server_main(exec_args))
             except SystemExit as sys_exit:
-                self._exit_status = _convert_sys_exit(sys_exit)
+                self._command_exit_status = _convert_sys_exit(sys_exit)
 
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()

@@ -42,8 +42,8 @@ class SystemInputPromptStdIn(InputPrompt):
             )
 
         try:
-            if secret:
-                user_input = getpass.getpass("")
+            if secret and self._can_read_secret():
+                user_input = getpass.getpass("", stream=self.stream_out)
             else:
                 user_input = self.stream_in.readline()
         except KeyboardInterrupt:
@@ -58,3 +58,13 @@ class SystemInputPromptStdIn(InputPrompt):
             return default_value
 
         return user_input.rstrip("\n") or default_value
+
+    def _can_read_secret(self):
+        if self.stream_in is not sys.stdin:
+            return False
+
+        is_tty = getattr(self.stream_in, "isatty", None)
+        if is_tty is None or callable(is_tty) is False:
+            return False
+
+        return bool(is_tty())

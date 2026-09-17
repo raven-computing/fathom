@@ -14,8 +14,6 @@
 #
 """Functionality tests for user management commands."""
 
-from unittest.mock import patch
-
 from raven.fathom.base import File
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.client.config import UserConfiguration
@@ -59,11 +57,8 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "managed-user\tManaged User\tregular\tonboarding"
         )
 
-        with patch(
-            "raven.fathom.base._input.getpass.getpass",
-            side_effect=["whatever", "secret-password", "secret-password"],
-        ):
-            self.client.execute("setup", "user", "managed-user")
+        self.client.stdin = ["whatever", "secret-password", "secret-password"]
+        self.client.execute("setup", "user", "managed-user")
 
         self.assertClientSuccess()
         self.assertClientStdoutContains("Initialized user 'managed-user'")

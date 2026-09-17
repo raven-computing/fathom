@@ -147,13 +147,13 @@ class TestServerHelpOptionCLI(TestCase):
 
     def test_help_option_long_form(self):
         self.server.execute("--help")
-        self.assertEqual(ExitStatus.SUCCESS, self.server.exit_status)
+        self.assertEqual(ExitStatus.SUCCESS, self.server.command_exit_status)
         self.assertEqual(EXPECTED_SERVER_HELP_OUTPUT, self.server.stdout)
         self.assertEqual("", self.server.stderr)
 
     def test_help_option_short_form(self):
         self.server.execute("-?")
-        self.assertEqual(ExitStatus.SUCCESS, self.server.exit_status)
+        self.assertEqual(ExitStatus.SUCCESS, self.server.command_exit_status)
         self.assertEqual(EXPECTED_SERVER_HELP_OUTPUT, self.server.stdout)
         self.assertEqual("", self.server.stderr)
 

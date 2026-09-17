@@ -49,6 +49,16 @@ _SERVER_READY_TIMEOUT: Final = 15.0
 _SERVER_SHUTDOWN_TIMEOUT: Final = 5.0
 
 
+def _convert_sys_exit(sys_exit: SystemExit) -> int:
+    if isinstance(sys_exit.code, int):
+        return int(sys_exit.code)
+
+    if sys_exit.code is None:
+        return 0
+
+    return 1
+
+
 class ServerStartupException(Exception):
     """Raised when the Fathom server fails to start within the expected
     time or the server process terminates prematurely.
@@ -120,7 +130,10 @@ class ClientDriver:
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
         with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-            self._exit_status = int(client_main(exec_args))
+            try:
+                self._exit_status = int(client_main(exec_args))
+            except SystemExit as sys_exit:
+                self._exit_status = _convert_sys_exit(sys_exit)
 
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()
@@ -307,7 +320,10 @@ class ServerDriver:
         stdout_buffer = io.StringIO()
         stderr_buffer = io.StringIO()
         with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-            self._command_exit_status = int(server_main(exec_args))
+            try:
+                self._command_exit_status = int(server_main(exec_args))
+            except SystemExit as sys_exit:
+                self._exit_status = _convert_sys_exit(sys_exit)
 
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()

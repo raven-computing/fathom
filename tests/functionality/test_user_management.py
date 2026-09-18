@@ -17,7 +17,6 @@
 from raven.fathom.base import File
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.client.config import UserConfiguration
-from raven.fathom.server.cli import ExitStatus as ServerExitStatus
 
 from tests.functionality import TestCase
 from tests.fixtures import ConfigurationFixture
@@ -62,18 +61,21 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains("Initialized user 'managed-user'")
-        stored_user = self.server.datastore.users().find_by_identifier(
-            "managed-user"
-        )
-        assert stored_user is not None
-        self.assertEqual(stored_user.state, "active")
 
         self.client.execute("manage", "user", "delete", "managed-user")
 
         self.assertClientSuccess()
         self.assertClientStdoutContains("Deleted user 'managed-user'")
-        self.assertIsNone(
-            self.server.datastore.users().find_by_identifier("managed-user")
+
+        self.client.execute("manage", "user", "list")
+
+        self.assertClientSuccess()
+        self.assertNotIn(
+            "managed-user\tManaged User\tregular\tonboarding",
+            self.client.stdout
+        )
+        self.assertClientStdoutContains(
+            "alpha\tAlphanet Administrator\tadmin\tactive"
         )
 
     def test_non_admin_client_is_rejected(self):
@@ -91,7 +93,9 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
 
 class TestServerUserManagementCLI(TestCase):
-    """Functionality tests for local user management via fathom-server."""
+    """End-to-end functionality tests for the user management
+    via the fathom-server CLI.
+    """
 
     _AUTO_START_SERVER = False
 
@@ -101,28 +105,15 @@ class TestServerUserManagementCLI(TestCase):
             "--name", "Local Admin", "--admin"
         )
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
+        self.assertServerSuccess()
         self.assertIn(
             "Created user 'local-admin' (admin, onboarding).",
             self.server.stdout
         )
-        stored_user = self.server.datastore.users().find_by_identifier(
-            "local-admin"
-        )
-        self.assertIsNotNone(stored_user)
-        assert stored_user is not None
-        permission = self.server.datastore.users().find_permission(stored_user)
-        self.assertTrue(permission.is_admin)
 
         self.server.execute("user", "list")
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
+        self.assertServerSuccess()
         self.assertIn(
             "User: 'local-admin'\tName: 'Local Admin'"
             "\tRole: 'admin'\tState: 'onboarding'",
@@ -131,14 +122,22 @@ class TestServerUserManagementCLI(TestCase):
 
         self.server.execute("user", "delete", "local-admin")
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
+        self.assertServerSuccess()
         self.assertIn("Deleted user 'local-admin'.", self.server.stdout)
-        self.assertIsNone(
-            self.server.datastore.users().find_by_identifier("local-admin")
-        )
+
+        self.server.execute("user", "list")
+
+        self.assertServerSuccess()
+        self.assertNotIn("local-admin", self.server.stdout)
+        self.assertNotIn("Local Admin", self.server.stdout)
+
+
+class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
+    """Same tests as `TestServerUserManagementCLI` but with the
+    server already running.
+    """
+
+    _AUTO_START_SERVER = True
 
 
 if __name__ == "__main__":

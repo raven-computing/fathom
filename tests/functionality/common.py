@@ -405,6 +405,30 @@ class TestCase(FathomTestCase):
                 msg or "Expected server to be running"
             )
 
+    def assertServerSuccess(self, msg: Optional[str] = None):
+        """Asserts that the last server command exited with status code 0.
+
+        Args:
+            msg (str): Optional failure message override.
+
+        Raises:
+            AssertionError: If the server has not been executed or exited
+                with a non-zero status.
+        """
+        status = self.server.command_exit_status
+        if status is None:
+            raise AssertionError(
+                msg or "Server command has not been executed yet"
+            )
+
+        if status != 0:
+            detail = (
+                f"Server command exited with status {status}.\n"
+                f"stdout: {self.server.stdout!r}\n"
+                f"stderr: {self.server.stderr!r}"
+            )
+            raise AssertionError(msg or detail)
+
     def assertFileExists(self, path):
         """Asserts that a file exists at the given path.
 

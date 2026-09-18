@@ -15,11 +15,15 @@
 """Functionality tests for the deployment feature."""
 
 from raven.fathom.base import File
+from raven.fathom.base import Project
 from raven.fathom.client.cli import ExitStatus
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 
 from tests.functionality import TestCase
 from tests.fixtures import ProjectFixture, ConfigurationFixture
+
+
+# pylint: disable=invalid-name
 
 
 class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
@@ -29,7 +33,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
     covering successful deployments as well as various failure conditions.
     """
 
-    _DATASTORE_SQL_FILE = "default_datastore.sql"
+    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def setUp(self):
         super().setUp()
@@ -43,11 +47,37 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
             self.configuration_project
         )
 
+    def assertProjectIsDeployedOnServer(self, deployed_project: Project):
+        """Asserts that content from the specified project's build directory
+        on the client side was fully deployed to the server's site
+        target directory.
+        """
+        project_src_dir = self.get_project_resource_directory()
+        assert deployed_project.version is not None
+        deployed_project_dir = (
+            self.get_server_directory()
+            / "site"
+            / deployed_project.identifier
+            / deployed_project.version.identifier
+        )
+        expected_files = set(
+            str(file.path.relative_to(project_src_dir))
+            for file in project_src_dir.list_all_files()
+        )
+        self.assertDirectoryExists(deployed_project_dir)
+        self.assertDirectoryContent(
+            deployed_project_dir,
+            expected_files,
+            include_subdirectories=True
+        )
+
     def test_client_can_deploy_resources(self):
         self.client.execute("deploy")
 
         self.assertClientSuccess()
+        self.assertClientStdoutContains("Deployment SUCCESSFUL")
         self.assertServerIsRunning()
+        self.assertProjectIsDeployedOnServer(self.project)
 
     def test_client_with_invalid_username_is_rejected(self):
         config = self.configuration_user
@@ -114,6 +144,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         self.client.execute("--user", "alpha", "--password", "alpha", "deploy")
 
         self.assertClientSuccess()
+        self.assertProjectIsDeployedOnServer(self.project)
 
 
 if __name__ == "__main__":

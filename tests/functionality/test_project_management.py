@@ -25,7 +25,7 @@ from tests.fixtures import ConfigurationFixture
 class TestClientProjectManagement(TestCase, ConfigurationFixture):
     """End-to-end tests for remote project management through the client CLI."""
 
-    _DATASTORE_SQL_FILE = "default_datastore.sql"
+    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def setUp(self):
         super().setUp()
@@ -87,8 +87,9 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 class TestServerProjectManagementCLI(TestCase):
     """Functionality tests for local project management via fathom-server."""
 
-    _AUTO_START_SERVER = False
-    _DATASTORE_SQL_FILE = "default_datastore.sql"
+    AUTO_START_SERVER = False
+
+    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def test_server_cli_can_create_list_and_delete_project(self):
         self.server.execute(

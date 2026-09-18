@@ -24,7 +24,7 @@ from tests.fixtures import ConfigurationFixture
 class TestClientUserManagement(TestCase, ConfigurationFixture):
     """End-to-end tests for remote user management through the client CLI."""
 
-    _DATASTORE_SQL_FILE = "default_datastore.sql"
+    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def setUp(self):
         super().setUp()
@@ -93,7 +93,7 @@ class TestServerUserManagementCLI(TestCase):
     via the fathom-server CLI.
     """
 
-    _AUTO_START_SERVER = False
+    AUTO_START_SERVER = False
 
     def test_server_cli_can_create_list_and_delete_admin_user(self):
         self.server.execute(
@@ -137,7 +137,7 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     manage server resources.
     """
 
-    _AUTO_START_SERVER = True
+    AUTO_START_SERVER = True
 
 
 if __name__ == "__main__":

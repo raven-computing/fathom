@@ -58,14 +58,24 @@ class ProjectFixture(FathomTestFixture):
         project_v2.version.identifier = "2.0.0"
         return project_v2
 
+    def get_project_resource_directory(self) -> File:
+        """Gets the directory that contains the deployable resources
+        of the project designated by the `project` property.
+
+        Returns:
+            File: The directory containing the deployable resources
+                of the project.
+        """
+        fixture_dir = File(__file__).get_parent_directory()
+        return fixture_dir / File("res/projects") / self.project.identifier
+
     def set_up_project_files(self, target: File):
         """Copies project resource files to the given target location.
 
         This method can only be used when real interaction with
         the host filesystem is enabled during testing.
         """
-        fixture_root_dir = File(__file__).get_parent_directory()
         # Source does not exist in virtual FS
-        source = fixture_root_dir / File("res/projects/test-project-1")
+        source = self.get_project_resource_directory()
         target.get_parent_directory().create_directory_tree()
         source.copy(target)

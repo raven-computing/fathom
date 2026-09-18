@@ -92,21 +92,21 @@ class TestCase(FathomTestCase):
     * Method level (`setUp()` / `tearDown()`): A fresh server and
       client are created for each test method. The server is started
       before the test body runs and shut down after it completes,
-      ensuring full isolation between test methods.
+      ensuring that each test method starts with a new state.
 
-    Subclasses may set the class attribute ``_AUTO_START_SERVER = False``
+    Subclasses may set the class attribute ``AUTO_START_SERVER = False``
     to skip the automatic server startup, e.g. for tests that only
     exercise offline client functionality.
     """
 
-    _AUTO_START_SERVER: bool = True
+    AUTO_START_SERVER: bool = True
 
     # Optional path to a .sql file used to pre-populate the server datastore
     # before the server process starts. When set, the schema is created and
     # the SQL file is executed against the database so that the server finds
     # an existing, ready-to-use datastore on startup. When None, the server
     # initializes the datastore itself (default behaviour).
-    _DATASTORE_SQL_FILE: Optional[str] = None
+    DATASTORE_SQL_FILE: Optional[str] = None
 
     @classmethod
     def setUpClass(cls):
@@ -254,9 +254,9 @@ class TestCase(FathomTestCase):
         os.environ[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
 
         server = ServerDriver(env)
-        if self._AUTO_START_SERVER:
-            if self._DATASTORE_SQL_FILE is not None:
-                server.initialize_datastore(self._DATASTORE_SQL_FILE)
+        if self.AUTO_START_SERVER:
+            if self.DATASTORE_SQL_FILE is not None:
+                server.initialize_datastore(self.DATASTORE_SQL_FILE)
 
             server.start([])
             if not server.is_running():
@@ -509,17 +509,29 @@ class TestCase(FathomTestCase):
                 f"Actual:   {actual!r}"
             )
 
-    def assertDirectoryContent(self, path, expected_names):
+    def assertDirectoryContent(
+        self,
+        path,
+        expected_names: set[str],
+        include_subdirectories: bool = False
+    ):
         """Asserts that a directory contains exactly the expected entries.
 
-        Only checks immediate children (non-recursive). The comparison is
-        done on entry names as a set of strings.
+        By default, only checks immediate children (non-recursive).
+        The comparison is done on entry names as a set of strings.
+        Specify `include_subdirectories=True` to compare with entire directory
+        including all children (recursive).
 
         Args:
             path: An absolute or relative path. Relative paths are resolved
                 against the client working directory.
             expected_names (set): A set of file/directory name strings
                 expected to be present.
+            include_subdirectories (bool): Whether to include all files and
+                directory entries in all subdirectories of the
+                specified directory. If left as `False` (default), only the
+                immediate files and directory entries of the specified
+                directory are considered in the comparison.
 
         Raises:
             AssertionError: If the directory contents do not match.
@@ -532,7 +544,14 @@ class TestCase(FathomTestCase):
                 "an existing directory"
             )
 
-        actual_names = set(entry.name for entry in file.list_files())
+        actual_names = (
+            set(
+                str(entry.path.relative_to(file.path))
+                for entry in file.list_all_files()
+            )
+            if include_subdirectories
+            else set(entry.name for entry in file.list_files())
+        )
         if actual_names != expected_names:
             missing = expected_names - actual_names
             unexpected = actual_names - expected_names

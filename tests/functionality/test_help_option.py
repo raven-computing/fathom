@@ -115,7 +115,7 @@ class TestClientHelpOptionCLI(TestCase):
     using the `--help` or `-?` CLI option.
     """
 
-    _AUTO_START_SERVER = False
+    AUTO_START_SERVER = False
 
     def setUp(self):
         super().setUp()
@@ -139,7 +139,7 @@ class TestServerHelpOptionCLI(TestCase):
     using the `--help` or `-?` CLI option.
     """
 
-    _AUTO_START_SERVER = False
+    AUTO_START_SERVER = False
 
     def setUp(self):
         super().setUp()

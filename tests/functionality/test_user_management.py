@@ -14,7 +14,6 @@
 #
 """Functionality tests for user management commands."""
 
-from raven.fathom.base import File
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.client.config import UserConfiguration
 
@@ -29,13 +28,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
     def setUp(self):
         super().setUp()
-        self.user_config_file = File(
-            self.client.env.home / ".config/fathom/user.cfg"
-        )
-        self.save_configuration(
-            self.configuration_user,
-            self.user_config_file,
-        )
+        self.set_up_client_configuration_files(self.client.env)
 
     def test_admin_client_can_create_list_and_delete_users(self):
         self.client.execute(
@@ -82,7 +75,10 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "test-user-1"
         config[UserConfiguration.USER.PASSWORD] = "123456"
-        self.save_configuration(config, self.user_config_file)
+        self.save_configuration(
+            config,
+            self.get_user_configuration_file(self.client.env)
+        )
 
         self.client.execute("manage", "user", "list")
 

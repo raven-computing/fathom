@@ -17,6 +17,7 @@
 from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.base import ConfigurationLoader
 from raven.fathom.base import File
+from raven.fathom.base import SystemEnvironment
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
 
@@ -67,9 +68,54 @@ class ConfigurationFixture(FathomTestFixture):
         config.add_section(server)
         return config
 
+    def get_user_configuration_file(self, env: SystemEnvironment) -> File:
+        """Get the file that is used to store the user configuration.
+
+        Args:
+            env (SystemEnvironment): The environment to use for the test case.
+
+        Returns:
+            File: The file where the configuration from
+                the `configuration_user` property will be saved
+                when calling `set_up_configuration_files()`.
+        """
+        user_home = env.get_home_path()
+        assert user_home is not None
+        return File(user_home / ".config/fathom/user.cfg")
+
+    def get_project_configuration_file(self, env: SystemEnvironment) -> File:
+        """Gets the file that is used to store the project configuration.
+
+        Args:
+            env (SystemEnvironment): The environment to use for the test case.
+
+        Returns:
+            File: The file where the configuration from
+                the `configuration_project` property will be saved
+                when calling `set_up_configuration_files()`.
+        """
+        cwd = env.get_current_working_directory()
+        return File(cwd / "fathom.cfg")
+
     def save_configuration(self, config: Configuration, target: File):
         """Sets up a configuration file with the given `Configuration` object
         at the given target `File` path.
         """
         target.get_parent_directory().create_directory_tree()
         ConfigurationLoader().store(config, target)
+
+    def set_up_client_configuration_files(self, env: SystemEnvironment):
+        """Sets up and saves client-related configuration files
+        (user and project configs) of the test fixture in the filesystem.
+
+        Args:
+            env (SystemEnvironment): The environment to use for the test case.
+        """
+        self.save_configuration(
+            self.configuration_user,
+            self.get_user_configuration_file(env),
+        )
+        self.save_configuration(
+            self.configuration_project,
+            self.get_project_configuration_file(env)
+        )

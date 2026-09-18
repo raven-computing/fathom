@@ -38,7 +38,10 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         self.set_up_project_files(
             self.project_build_dir
         )
-        self.set_up_client_configuration_files(self.client.env)
+        self.client.set_up_configuration_files(
+            self.configuration_user,
+            self.configuration_project
+        )
 
     def test_client_can_deploy_resources(self):
         self.client.execute("deploy")
@@ -49,10 +52,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
     def test_client_with_invalid_username_is_rejected(self):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "unknown-user"
-        self.save_configuration(
-            config,
-            self.get_user_configuration_file(self.client.env)
-        )
+        self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
 
@@ -61,10 +61,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
     def test_client_with_invalid_password_credentials_is_rejected(self):
         config = self.configuration_user
         config[UserConfiguration.USER.PASSWORD] = "invalid-password"
-        self.save_configuration(
-            config,
-            self.get_user_configuration_file(self.client.env)
-        )
+        self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
 
@@ -75,10 +72,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         config[ProjectConfiguration.PROJECT.IDENTIFIER] = "invalid-project-id"
         config[ProjectConfiguration.PROJECT.NAME] = "Unknown Project"
         config[ProjectConfiguration.PROJECT.DESCRIPTION] = "I don't know"
-        self.save_configuration(
-            config,
-            self.get_project_configuration_file(self.client.env)
-        )
+        self.client.save_project_configuration(config)
 
         self.client.execute("deploy")
 
@@ -92,7 +86,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         self.assertClientExitStatus(ExitStatus.SERVER_UNREACHABLE)
 
     def test_client_with_missing_project_config_fails_gracefully(self):
-        self.get_project_configuration_file(self.client.env).remove()
+        self.client.get_project_configuration_file().remove()
 
         self.client.execute("deploy")
 
@@ -101,10 +95,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
     def test_client_with_invalid_assets_path_is_rejected(self):
         config = self.configuration_project
         config[ProjectConfiguration.PROJECT.ASSETS] = "something_invalid"
-        self.save_configuration(
-            config,
-            self.get_project_configuration_file(self.client.env)
-        )
+        self.client.save_project_configuration(config)
 
         self.client.execute("deploy")
 
@@ -118,10 +109,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "wrong-user"
         config[UserConfiguration.USER.PASSWORD] = "wrong-password"
-        self.save_configuration(
-            config,
-            self.get_user_configuration_file(self.client.env)
-        )
+        self.client.save_user_configuration(config)
 
         self.client.execute("--user", "alpha", "--password", "alpha", "deploy")
 

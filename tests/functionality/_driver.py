@@ -32,6 +32,7 @@ from unittest.mock import patch
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
+from raven.fathom.base import Configuration, ConfigurationLoader
 from raven.fathom.client.cli.application import main as client_main
 from raven.fathom.server.cli import main as server_main
 from raven.fathom.server.datastore import DatabaseManager
@@ -180,6 +181,74 @@ class ClientDriver:
             bool: `True` if `execute()` has been called.
         """
         return self._has_executed
+
+    def get_user_configuration_file(self) -> File:
+        """Get the file that is used to store the user configuration.
+
+        Returns:
+            File: The file where the user configuration is stored
+                for the client under test.
+        """
+        user_home = self.env.get_home_path()
+        assert user_home is not None
+        return File(user_home / ".config/fathom/user.cfg")
+
+    def get_project_configuration_file(self) -> File:
+        """Gets the file that is used to store the project configuration.
+
+        Returns:
+            File: The file where the project configuration is stored
+                for the client under test.
+        """
+        cwd = self.env.get_current_working_directory()
+        return File(cwd / "fathom.cfg")
+
+    def save_configuration(self, config: Configuration, target: File):
+        """Saves the given `Configuration` object to the specified config file.
+
+        The parent directory is created automatically if it
+        does not already exist.
+
+        Args:
+            config (Configuration): The user config to store in the filesystem.
+            target (File): The file where to store the given configuration.
+        """
+        target.get_parent_directory().create_directory_tree()
+        ConfigurationLoader().store(config, target)
+
+    def save_user_configuration(self, config: Configuration):
+        """Saves the given `Configuration` object to the user config file.
+
+        Args:
+            config (Configuration): The user config to store in the filesystem.
+        """
+        self.save_configuration(config, self.get_user_configuration_file())
+
+    def save_project_configuration(self, config: Configuration):
+        """Saves the given `Configuration` object to the project config file.
+
+        Args:
+            config (Configuration): The project config to store
+                in the filesystem.
+        """
+        self.save_configuration(config, self.get_project_configuration_file())
+
+    def set_up_configuration_files(
+        self,
+        user_config: Configuration,
+        project_config: Configuration
+    ):
+        """Sets up and saves client-related configuration files
+        (user and project configs) in the filesystem.
+
+        Overwrites the configuration files if they already exist.
+
+        Args:
+            user_config (Configuration): The user configuration to use.
+            project_config (Configuration): The project configuration to use.
+        """
+        self.save_user_configuration(user_config)
+        self.save_project_configuration(project_config)
 
 
 class ServerDriver:

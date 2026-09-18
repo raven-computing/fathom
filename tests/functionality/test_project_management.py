@@ -29,7 +29,10 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
     def setUp(self):
         super().setUp()
-        self.set_up_client_configuration_files(self.client.env)
+        self.client.set_up_configuration_files(
+            self.configuration_user,
+            self.configuration_project
+        )
 
     def test_admin_client_can_create_list_and_delete_projects(self):
         self.client.execute(
@@ -71,10 +74,7 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "test-user-1"
         config[UserConfiguration.USER.PASSWORD] = "123456"
-        self.save_configuration(
-            config,
-            self.get_user_configuration_file(self.client.env)
-        )
+        self.client.save_user_configuration(config)
 
         self.client.execute("manage", "project", "list")
 

@@ -28,7 +28,10 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
     def setUp(self):
         super().setUp()
-        self.set_up_client_configuration_files(self.client.env)
+        self.client.set_up_configuration_files(
+            self.configuration_user,
+            self.configuration_project
+        )
 
     def test_admin_client_can_create_list_and_delete_users(self):
         self.client.execute(
@@ -75,10 +78,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "test-user-1"
         config[UserConfiguration.USER.PASSWORD] = "123456"
-        self.save_configuration(
-            config,
-            self.get_user_configuration_file(self.client.env)
-        )
+        self.client.save_user_configuration(config)
 
         self.client.execute("manage", "user", "list")
 
@@ -131,6 +131,10 @@ class TestServerUserManagementCLI(TestCase):
 class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     """Same tests as `TestServerUserManagementCLI` but with the
     server already running.
+
+    This tests that there is no conflict when a Fathom server is running in
+    the background and a server admin user uses a CLI command to
+    manage server resources.
     """
 
     _AUTO_START_SERVER = True

@@ -31,7 +31,7 @@ from raven.fathom.client.cli.registry import command_with_args
 from raven.fathom.client.cli.status import ExitStatus
 
 
-def _check_version(args: ArgumentsCLI) -> ExitStatus | None:
+def _check_version_option(args: ArgumentsCLI) -> ExitStatus | None:
     if args.version:
         ok = show_version(args.version_short)
         return ExitStatus.SUCCESS if ok else ExitStatus.INTERNAL_ERROR
@@ -68,7 +68,7 @@ def main(argv: Optional[list[str]] = None) -> ExitStatus:
     ctx = ApplicationContext.create_instance()
     with ctx.initialize(app_mode, working_directory):
         try:
-            if (status := _check_version(args)) is not None:
+            if (status := _check_version_option(args)) is not None:
                 return status
 
             _setup_client(args)

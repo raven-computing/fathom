@@ -31,7 +31,7 @@ from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.main import run
 
 
-def _check_version(args) -> ExitStatus | None:
+def _check_version_option(args) -> ExitStatus | None:
     if args.version:
         ok = show_version(args.version_short)
         return ExitStatus.SUCCESS if ok else ExitStatus.INTERNAL_ERROR
@@ -76,7 +76,7 @@ def main(argv: Optional[list[str]] = None) -> ExitStatus:
     app_ctx = ApplicationContext.create_instance()
     with app_ctx.initialize(app_mode, work_dir):
         try:
-            if (status := _check_version(args)) is not None:
+            if (status := _check_version_option(args)) is not None:
                 return status
 
             setup_server_logging(args)

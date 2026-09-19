@@ -12,24 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Contains data models."""
+"""Data access object declaration for org- and settings-related data."""
 
-__all__ = [
-    "AuthDeployment",
-    "User",
-    "UserProjectRel",
-    "UserPermission",
-    "Project",
-    "ProjectVersion",
-    "StagingAllocation",
-    "Settings",
-]
+from abc import abstractmethod
 
-from .auth_deployment import AuthDeployment
-from .user import User
-from .user import UserProjectRel
-from .user_permission import UserPermission
-from .project import Project
-from .project import ProjectVersion
-from .staging_allocation import StagingAllocation
-from .settings import Settings
+from raven.fathom.server.dao.base import DataAccessObject
+from raven.fathom.server.models import Settings
+
+
+class SettingsDAO(DataAccessObject[Settings]):
+    """A data access object for server settings data."""
+
+    @abstractmethod
+    def find_server_settings(self) -> Settings:
+        """Gets the active settings record that applies to the server.
+
+        Returns:
+            Settings: The `Settings` object containing the server settings.
+        """

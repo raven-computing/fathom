@@ -15,6 +15,7 @@
 """Implementation of the data access API using mocks for testing."""
 
 from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.dao.settings import SettingsDAO
 from raven.fathom.server.models import User
 from raven.fathom.server.models import Project
 from raven.fathom.server.models import UserPermission
@@ -34,6 +35,10 @@ class ProjectDAOMock(Mock):
     """Mock object for the `ProjectDAO`."""
 
 
+class SettingsDAOMock(Mock):
+    """Mock object for the `SettingsDAO`."""
+
+
 class DataAccessMock(DataAccess):
     """Implementation of the `DataAccess` interface for testing purposes."""
 
@@ -43,6 +48,8 @@ class DataAccessMock(DataAccess):
 
     PROJECT_DAO_MOCK = ProjectDAOMock()
 
+    SETTINGS_DAO_MOCK = SettingsDAOMock()
+
     def data(self, model):
         return DataAccessMock.DATA_MOCK
 
@@ -51,6 +58,9 @@ class DataAccessMock(DataAccess):
 
     def projects(self):
         return DataAccessMock.PROJECT_DAO_MOCK
+
+    def settings(self) -> SettingsDAO:
+        return DataAccessMock.SETTINGS_DAO_MOCK
 
     def set_up_deployment_authorization_mocks(self, valid_intent):
         """Setup method for deployment authorization tests."""
@@ -83,3 +93,4 @@ class DataAccessMock(DataAccess):
         DataAccessMock.DATA_MOCK  = DataMock()
         DataAccessMock.USER_DAO_MOCK  = UserDAOMock()
         DataAccessMock.PROJECT_DAO_MOCK = ProjectDAOMock()
+        DataAccessMock.SETTINGS_DAO_MOCK = SettingsDAOMock()

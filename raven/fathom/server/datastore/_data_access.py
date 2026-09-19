@@ -21,12 +21,13 @@ from typing import cast, Type, TypeVar
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.dao import FailedDeleteQueryException
-from raven.fathom.server.dao import UserDAO, ProjectDAO
+from raven.fathom.server.dao import UserDAO, ProjectDAO, SettingsDAO
 from raven.fathom.server.models import User, Project, ProjectVersion
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import AuthDeployment
+from raven.fathom.server.models import Settings
 from raven.fathom.server.datastore.orm.model import Model
 from raven.fathom.server.datastore.orm.query import CreateQuery, ReadQuery
 from raven.fathom.server.datastore.orm.query import UpdateQuery, DeleteQuery
@@ -181,6 +182,23 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
         ).execute()
 
 
+class _SettingsDAOImpl(DataAccessObjectRDBMS, SettingsDAO):
+
+    def __init__(self):
+        super().__init__(Settings)
+
+    def find_server_settings(self):
+        record = ReadQuery[Settings](
+            Settings.select().where(Settings.active)
+        ).find_one()
+        if record is None:
+            raise IncoherentDatastoreStateException(
+                f"Missing {Settings} record. No active settings found"
+            )
+
+        return record
+
+
 class DataAccessRDBMS(DataAccess):
     """Implementation of the `DataAccess` interface for RDBMS persistence."""
 
@@ -192,3 +210,6 @@ class DataAccessRDBMS(DataAccess):
 
     def projects(self):
         return _ProjectDAOImpl()
+
+    def settings(self) -> SettingsDAO:
+        return _SettingsDAOImpl()

@@ -2,6 +2,9 @@
 -- Default datastore fixture for functionality tests.
 --
 
+INSERT INTO "settings" (organisation_name, shared_secret, active) VALUES
+    ("Test Org 1", "secret", 1);
+
 INSERT INTO "user" (identifier, name, password, state) VALUES
     ('alpha', 'Alphanet Administrator', 'alpha', 'active'),
     ('test-user-1', 'Test User 1', '123456', 'active');

@@ -29,6 +29,7 @@ from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.models import User, UserPermission, Project
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import AuthDeployment
+from raven.fathom.server.models import Settings
 
 from tests.common import FathomTestCase
 
@@ -118,6 +119,11 @@ class DatabaseIntegrationTestCase(TestCase):
         """Concrete test cases may override this method to customize
         their database initialization.
         """
+        Settings.create(
+            organisation_name="Test Org 1",
+            shared_secret="secret",
+            active=True,
+        )
         test_user_id = User.create(
             identifier="test-user-1",
             name="Test User 1",

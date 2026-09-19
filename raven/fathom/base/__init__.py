@@ -147,7 +147,6 @@ from .url import URLUserAuthentication
 from .url import InvalidURLException
 from .user import User
 from .user import UserState
-from .user import USER_ONBOARDING_SHARED_SECRET
 from .version import VERSION_FILE_NAME
 from .version import VERSION_REGEX
 from .version import read_version_string

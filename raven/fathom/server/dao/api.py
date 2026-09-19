@@ -26,6 +26,7 @@ from raven.fathom.base.decorators import inject
 from raven.fathom.server.dao.base import DataAccessObject
 from raven.fathom.server.dao.user import UserDAO
 from raven.fathom.server.dao.project import ProjectDAO
+from raven.fathom.server.dao.settings import SettingsDAO
 from raven.fathom.server.datastore.orm.model import Model
 from raven.fathom.server.exceptions import FathomServerException
 
@@ -97,4 +98,12 @@ class DataAccess(Interface):
 
         Returns:
             ProjectDAO: A data access object.
+        """
+
+    @abstractmethod
+    def settings(self) -> SettingsDAO:
+        """Provides access to server settings data.
+
+        Returns:
+            SettingsDAO: A data access object.
         """

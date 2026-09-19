@@ -17,7 +17,6 @@
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import User
 from raven.fathom.base import UserState
-from raven.fathom.base import USER_ONBOARDING_SHARED_SECRET
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
@@ -61,7 +60,7 @@ class UserManager:
         user_record = UserModel(
             identifier=user.identifier,
             name=user.name,
-            password=USER_ONBOARDING_SHARED_SECRET,
+            password=self._ds.settings().find_server_settings().shared_secret,
             state=str(UserState.ONBOARDING),
         )
         self._authenticator.constitute_password_authentication(user_record)

@@ -12,24 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Contains data models."""
+"""Data model to represent organisational settings within the Fathom server."""
 
-__all__ = [
-    "AuthDeployment",
-    "User",
-    "UserProjectRel",
-    "UserPermission",
-    "Project",
-    "ProjectVersion",
-    "StagingAllocation",
-    "Settings",
-]
+from raven.fathom.server.datastore.orm import Model
+from raven.fathom.server.datastore.orm import CharField, BooleanField
 
-from .auth_deployment import AuthDeployment
-from .user import User
-from .user import UserProjectRel
-from .user_permission import UserPermission
-from .project import Project
-from .project import ProjectVersion
-from .staging_allocation import StagingAllocation
-from .settings import Settings
+
+class Settings(Model):
+    """Models Fathom server settings."""
+
+    organisation_name = CharField()
+
+    shared_secret = CharField()
+
+    active = BooleanField()

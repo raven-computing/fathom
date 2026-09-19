@@ -242,5 +242,20 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertTrue(project.is_published)
 
 
+    ###########################################################################
+    #                                                                         #
+    #                             SettingsDAO Tests                           #
+    #                                                                         #
+    ###########################################################################
+
+
+    def test_query_can_find_active_setting_record(self):
+        settings = self.db.settings().find_server_settings()
+        self.assertIsNotNone(settings)
+        self.assertEqual("Test Org 1", settings.organisation_name)
+        self.assertEqual("secret", settings.shared_secret)
+        self.assertTrue(settings.active)
+
+
 if __name__ == "__main__":
     DatabaseIntegrationTestCase.run_tests()

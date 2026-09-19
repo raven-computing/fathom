@@ -52,7 +52,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "managed-user\tManaged User\tregular\tonboarding"
         )
 
-        self.client.stdin = ["whatever", "secret-password", "secret-password"]
+        self.client.stdin = ["secret", "secret-password", "secret-password"]
         self.client.execute("setup", "user", "managed-user")
 
         self.assertClientSuccess()
@@ -95,7 +95,12 @@ class TestServerUserManagementCLI(TestCase):
 
     AUTO_START_SERVER = False
 
-    def test_server_cli_can_create_list_and_delete_admin_user(self):
+    DATASTORE_SQL_FILE = "default_datastore.sql"
+
+    def server_cli_can_create_list_and_delete_admin_user(self):
+        """Tests an entire cycle of creating, listing and deleting
+        an admin user.
+        """
         self.server.execute(
             "user", "create", "local-admin",
             "--name", "Local Admin", "--admin"
@@ -127,6 +132,10 @@ class TestServerUserManagementCLI(TestCase):
         self.assertNotIn("local-admin", self.server.stdout)
         self.assertNotIn("Local Admin", self.server.stdout)
 
+    def test_server_cli_can_create_list_and_delete_admin_user(self):
+        self.server.initialize_datastore(self.DATASTORE_SQL_FILE)
+        self.server_cli_can_create_list_and_delete_admin_user()
+
 
 class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     """Same tests as `TestServerUserManagementCLI` but with the
@@ -138,6 +147,11 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     """
 
     AUTO_START_SERVER = True
+
+    DATASTORE_SQL_FILE = "default_datastore.sql"
+
+    def test_server_cli_can_create_list_and_delete_admin_user(self):
+        self.server_cli_can_create_list_and_delete_admin_user()
 
 
 if __name__ == "__main__":

@@ -16,11 +16,6 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Final
-
-
-# This should be defined by the org record on the server.
-USER_ONBOARDING_SHARED_SECRET: Final[str] = "whatever"
 
 
 class UserState(StrEnum):

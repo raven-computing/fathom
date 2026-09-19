@@ -31,3 +31,4 @@ from .api import IncoherentDatastoreStateException
 from .base import DataAccessObject
 from .user import UserDAO
 from .project import ProjectDAO
+from .settings import SettingsDAO

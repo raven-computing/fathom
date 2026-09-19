@@ -394,7 +394,7 @@ class ServerDriver:
         """
         if self.is_running():
             raise RuntimeError(
-                "Cannot initialize datastore while server is running. "
+                "Cannot initialize the datastore while the server is running. "
                 "You must call initialize_datastore() before `execute()`."
             )
 

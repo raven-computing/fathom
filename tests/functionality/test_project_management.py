@@ -26,8 +26,6 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
     the client CLI.
     """
 
-    DATASTORE_SQL_FILE = "default_datastore.sql"
-
     def setUp(self):
         super().setUp()
         self.client.set_up_configuration_files(
@@ -93,8 +91,6 @@ class TestServerProjectManagementCLI(TestCase):
     """Functionality tests for project management via fathom-server CLI."""
 
     AUTO_START_SERVER = False
-
-    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def test_server_cli_can_create_list_and_delete_project(self):
         self.server.execute(

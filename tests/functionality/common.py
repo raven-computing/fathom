@@ -96,7 +96,9 @@ class TestCase(FathomTestCase):
 
     Subclasses may set the class attribute ``AUTO_START_SERVER = False``
     to skip the automatic server startup, e.g. for tests that only
-    exercise offline client functionality.
+    exercise offline client functionality. This will also skip the datastore
+    initialization, so manually starting the server in a test case will result
+    in the server doing the DS initialization.
     """
 
     AUTO_START_SERVER: bool = True
@@ -105,8 +107,8 @@ class TestCase(FathomTestCase):
     # before the server process starts. When set, the schema is created and
     # the SQL file is executed against the database so that the server finds
     # an existing, ready-to-use datastore on startup. When None, the server
-    # initializes the datastore itself (default behaviour).
-    DATASTORE_SQL_FILE: Optional[str] = None
+    # initializes the datastore itself with an empty schema.
+    DATASTORE_SQL_FILE: Optional[str] = "default_datastore.sql"
 
     @classmethod
     def setUpClass(cls):

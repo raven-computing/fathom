@@ -34,8 +34,6 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
     covering successful deployments as well as various failure conditions.
     """
 
-    DATASTORE_SQL_FILE = "default_datastore.sql"
-
     def setUp(self):
         super().setUp()
         self.client.env.cwd /= self.project.identifier

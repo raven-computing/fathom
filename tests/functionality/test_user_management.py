@@ -24,8 +24,6 @@ from tests.fixtures import ConfigurationFixture
 class TestClientUserManagement(TestCase, ConfigurationFixture):
     """End-to-end tests for remote user management through the client CLI."""
 
-    DATASTORE_SQL_FILE = "default_datastore.sql"
-
     def setUp(self):
         super().setUp()
         self.client.set_up_configuration_files(
@@ -95,8 +93,6 @@ class TestServerUserManagementCLI(TestCase):
 
     AUTO_START_SERVER = False
 
-    DATASTORE_SQL_FILE = "default_datastore.sql"
-
     def server_cli_can_create_list_and_delete_admin_user(self):
         """Tests an entire cycle of creating, listing and deleting
         an admin user.
@@ -147,8 +143,6 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     """
 
     AUTO_START_SERVER = True
-
-    DATASTORE_SQL_FILE = "default_datastore.sql"
 
     def test_server_cli_can_create_list_and_delete_admin_user(self):
         self.server_cli_can_create_list_and_delete_admin_user()

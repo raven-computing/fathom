@@ -84,6 +84,30 @@ class ManageCommand(Command):
                 LOG.i("Deleted user '%s'", self.args.user_identifier)
                 return ExitStatus.SUCCESS
 
+            if self.args.manage_command == "assign":
+                server.assign_user_to_project(
+                    self.args.user_identifier,
+                    self.args.project_identifier,
+                )
+                LOG.i(
+                    "Assigned user '%s' to project '%s'",
+                    self.args.user_identifier,
+                    self.args.project_identifier,
+                )
+                return ExitStatus.SUCCESS
+
+            if self.args.manage_command == "unassign":
+                server.unassign_user_from_project(
+                    self.args.user_identifier,
+                    self.args.project_identifier,
+                )
+                LOG.i(
+                    "Unassigned user '%s' from project '%s'",
+                    self.args.user_identifier,
+                    self.args.project_identifier,
+                )
+                return ExitStatus.SUCCESS
+
             raise ValueError(
                 f"Invalid manage command '{self.args.manage_command}'"
             )

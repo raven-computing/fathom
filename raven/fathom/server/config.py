@@ -145,10 +145,7 @@ class ConfigurationManager:
         self._config_app = None
         self._args = None
         self._lock = threading.Lock()
-        ctx = ApplicationContext.instance()
-        self._cache_enabled = (
-            ctx.get_application_mode() == ApplicationMode.PRODUCTION
-        )
+        self._cache_enabled = None
 
     def load_configs(self, args: "AppArgs"):
         """Setup functionality for the server configuration.
@@ -177,6 +174,12 @@ class ConfigurationManager:
                 LOG.d(
                     "Lazy-loading server app configuration file "
                     "because is it requested now"
+                )
+
+            if self._cache_enabled is None:
+                ctx = ApplicationContext.instance()
+                self._cache_enabled = (
+                    ctx.get_application_mode() == ApplicationMode.PRODUCTION
                 )
 
             if self._config_app is None or not self._cache_enabled:

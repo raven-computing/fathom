@@ -81,6 +81,16 @@ class ProjectDAO(DataAccessObject[Project]):
         """
 
     @abstractmethod
+    def unassign_user_from_project(self, user: User, project: Project):
+        """Removes the assignment of the given user from the project.
+
+        Args:
+            user (User): The user to remove from the project.
+            project (Project): The project from which the user
+                should be removed.
+        """
+
+    @abstractmethod
     def find_staging_allocations(
         self,
         project: Project

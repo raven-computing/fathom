@@ -43,10 +43,18 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
 
         self.assertClientSuccess("Should be able to create a new user")
 
-        config = self.configuration_user
-        config[UserConfiguration.USER.USERNAME] = "new-user"
-        config[UserConfiguration.USER.PASSWORD] = "new-password"
-        self.client.save_user_configuration(config)
+        self.client.execute(
+            "manage", "user", "assign", "new-user", self.project.identifier
+        )
+
+        self.assertClientSuccess(
+            "Administrator should be able to assign the user to the project"
+        )
+
+        new_user_config = self.configuration_user
+        new_user_config[UserConfiguration.USER.USERNAME] = "new-user"
+        new_user_config[UserConfiguration.USER.PASSWORD] = "new-password"
+        self.client.save_user_configuration(new_user_config)
 
         self.client.execute("deploy")
 
@@ -68,14 +76,6 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
             "User should be able to complete setup successfully"
         )
         self.assertClientStdoutContains("Initialized user 'new-user'")
-
-        # Should be handles by client CLI admin command instead
-        ds = self.server.datastore
-        project_id = self.project.identifier
-        ds.projects().assign_user_to_project(
-            ds.users().find_by_identifier("new-user"), # type: ignore
-            ds.projects().find_by_identifier(project_id) # type: ignore
-        )
 
         self.client.execute("deploy")
 

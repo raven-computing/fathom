@@ -30,6 +30,7 @@ from .deployment_intent import DeploymentIntentHandler
 from .deployment_transaction import DeploymentTransactionHandler
 from .user_management import (
     UserCreateHandler, UserListHandler, UserDeleteHandler,
+    UserAssignHandler, UserUnassignHandler,
 )
 from .project_management import (
     ProjectCreateHandler, ProjectListHandler, ProjectDeleteHandler,
@@ -74,6 +75,10 @@ class HandlerFactory:
             handler = UserListHandler(UserAuthorizer(), UserManager())
         elif client_action == Interaction.DELETE_USER:
             handler = UserDeleteHandler(UserAuthorizer(), UserManager())
+        elif client_action == Interaction.ASSIGN_USER:
+            handler = UserAssignHandler(UserAuthorizer(), UserManager())
+        elif client_action == Interaction.UNASSIGN_USER:
+            handler = UserUnassignHandler(UserAuthorizer(), UserManager())
         elif client_action == Interaction.CREATE_PROJECT:
             handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())
         elif client_action == Interaction.LIST_PROJECTS:

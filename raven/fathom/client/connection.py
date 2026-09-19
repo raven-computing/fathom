@@ -289,6 +289,62 @@ class Server:
         response = self._send(request)
         self._raise_on_errors(response)
 
+    def assign_user_to_project(
+        self,
+        user_identifier: str,
+        project_identifier: str
+    ):
+        """Assigns an application user to a project on the server.
+
+        Args:
+            user_identifier (str): The identifier of the user to assign.
+            project_identifier (str): The identifier of the project to assign
+                the user to.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to assign the user to the project.
+        """
+        request = ClientRequest(Interaction.ASSIGN_USER)
+        request.authentication = self._client_authentication
+        request.user = User(identifier=user_identifier)
+        request.project = Project(identifier=project_identifier)
+
+        LOG.v("Requesting remote user-project assignment")
+        response = self._send(request)
+        self._raise_on_errors(response)
+
+    def unassign_user_from_project(
+        self,
+        user_identifier: str,
+        project_identifier: str
+    ):
+        """Unassigns an application user from a project on the server.
+
+        Args:
+            user_identifier (str): The identifier of the user to unassign.
+            project_identifier (str): The identifier of the project to remove
+                the user from.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to unassign the user from the project.
+        """
+        request = ClientRequest(Interaction.UNASSIGN_USER)
+        request.authentication = self._client_authentication
+        request.user = User(identifier=user_identifier)
+        request.project = Project(identifier=project_identifier)
+
+        LOG.v("Requesting remote user-project unassignment")
+        response = self._send(request)
+        self._raise_on_errors(response)
+
     def create_project(self, project: Project) -> Project:
         """Creates a project on the server.
 

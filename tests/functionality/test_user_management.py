@@ -72,6 +72,48 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "alpha\tAlphanet Administrator\tadmin\tactive"
         )
 
+    def test_admin_client_can_assign_and_unassign_users_to_projects(self):
+        self.client.execute(
+            "manage", "project", "create", "test-project-2",
+            "--name", "Test Project 2",
+            "--description", "A Project for Testing Purposes (2).",
+        )
+
+        self.assertClientSuccess()
+
+        self.client.execute(
+            "manage", "user", "assign", "test-user-1", "test-project-2"
+        )
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains(
+            "Assigned user 'test-user-1' to project 'test-project-2'"
+        )
+
+        user = self.server.datastore.users().find_by_identifier("test-user-1")
+        assert user is not None
+        result = self.server.datastore.projects().find_all_assigned_to_user(
+            user
+        )
+        self.assertEqual(
+            sorted(project.identifier for project in result),
+            ["test-project-2"],
+        )
+
+        self.client.execute(
+            "manage", "user", "unassign", "test-user-1", "test-project-2"
+        )
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains(
+            "Unassigned user 'test-user-1' from project 'test-project-2'"
+        )
+
+        result = self.server.datastore.projects().find_all_assigned_to_user(
+            user
+        )
+        self.assertEqual(result, [])
+
     def test_non_admin_client_is_rejected(self):
         config = self.configuration_user
         config[UserConfiguration.USER.USERNAME] = "test-user-1"

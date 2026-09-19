@@ -155,6 +155,14 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             project=project,
         )
 
+    def unassign_user_from_project(self, user, project):
+        DeleteQuery[UserProjectRel](
+            UserProjectRel.delete().where(
+                (UserProjectRel.user == user)
+                & (UserProjectRel.project == project)
+            )
+        ).execute()
+
     def find_staging_allocations(self, project):
         if isinstance(project, str):
             project_selection = ProjectVersion.project.identifier == project

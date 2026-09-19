@@ -210,6 +210,37 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="The unique identifier of the user to delete."
     )
 
+    manage_user_assign = manage_user_subparsers.add_parser(
+        "assign",
+        help="Assign a dedicated application user to a project on the server."
+    )
+    manage_user_assign.add_argument(
+        "user_identifier",
+        metavar="<USER>",
+        help="The unique identifier of the user to assign."
+    )
+    manage_user_assign.add_argument(
+        "project_identifier",
+        metavar="<PROJECT>",
+        help="The unique identifier of the project to assign the user to."
+    )
+
+    manage_user_unassign = manage_user_subparsers.add_parser(
+        "unassign",
+        help="Unassign a dedicated application user "
+             "from a project on the server."
+    )
+    manage_user_unassign.add_argument(
+        "user_identifier",
+        metavar="<USER>",
+        help="The unique identifier of the user to unassign."
+    )
+    manage_user_unassign.add_argument(
+        "project_identifier",
+        metavar="<PROJECT>",
+        help="The unique identifier of the project to remove the user from."
+    )
+
     manage_project = manage_subparsers.add_parser(
         "project",
         help=f"Manage registered projects on a {APPLICATION_NAME} server."

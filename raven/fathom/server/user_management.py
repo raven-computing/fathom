@@ -15,6 +15,7 @@
 """Management of dedicated application users."""
 
 from raven.fathom.base import TypeCheck
+from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.base import UserState
 from raven.fathom.server.dao import DataAccess
@@ -149,3 +150,90 @@ class UserManager:
             raise ValueError(
                 f"Failed to delete user '{user.identifier}'"
             ) from ex
+
+    def assign_user_to_project(self, user: User, project: Project):
+        """Assigns an existing user to an existing project.
+
+        Args:
+            user (User): The user to assign.
+            project (Project): The project to assign the user to.
+
+        Raises:
+            ValueError: If the given user or project is invalid.
+        """
+        TypeCheck.require_arg(user.identifier, str)
+        TypeCheck.require_arg(project.identifier, str)
+        if not user.identifier:
+            raise ValueError("User identifier must not be empty")
+
+        if not project.identifier:
+            raise ValueError("Project identifier must not be empty")
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise ValueError(f"User '{user.identifier}' does not exist")
+
+        project_record = self._ds.projects().find_by_identifier(
+            project.identifier
+        )
+        if project_record is None:
+            raise ValueError(f"Project '{project.identifier}' does not exist")
+
+        assigned_projects = self._ds.projects().find_all_assigned_to_user(
+            user_record
+        )
+        if any(
+            record.id == project_record.id # type: ignore
+            for record in assigned_projects
+        ):
+            raise ValueError(
+                f"User '{user.identifier}' is already assigned "
+                f"to project '{project.identifier}'"
+            )
+
+        self._ds.projects().assign_user_to_project(user_record, project_record)
+
+    def unassign_user_from_project(self, user: User, project: Project):
+        """Removes a user's assignment from an existing project.
+
+        Args:
+            user (User): The user to unassign.
+            project (Project): The project to remove the user from.
+
+        Raises:
+            ValueError: If the given user or project is invalid.
+        """
+        TypeCheck.require_arg(user.identifier, str)
+        TypeCheck.require_arg(project.identifier, str)
+        if not user.identifier:
+            raise ValueError("User identifier must not be empty")
+
+        if not project.identifier:
+            raise ValueError("Project identifier must not be empty")
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise ValueError(f"User '{user.identifier}' does not exist")
+
+        project_record = self._ds.projects().find_by_identifier(
+            project.identifier
+        )
+        if project_record is None:
+            raise ValueError(f"Project '{project.identifier}' does not exist")
+
+        assigned_projects = self._ds.projects().find_all_assigned_to_user(
+            user_record
+        )
+        if all(
+            record.id != project_record.id # type: ignore
+            for record in assigned_projects
+        ):
+            raise ValueError(
+                f"User '{user.identifier}' is not assigned "
+                f"to project '{project.identifier}'"
+            )
+
+        self._ds.projects().unassign_user_from_project(
+            user_record,
+            project_record,
+        )

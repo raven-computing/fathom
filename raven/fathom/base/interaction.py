@@ -99,6 +99,10 @@ class Interaction(StrEnum):
 
     DELETE_USER = "user-delete"
 
+    ASSIGN_USER = "user-assign"
+
+    UNASSIGN_USER = "user-unassign"
+
     CREATE_PROJECT = "project-create"
 
     LIST_PROJECTS = "project-list"

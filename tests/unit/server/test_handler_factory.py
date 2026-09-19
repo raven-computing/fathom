@@ -29,6 +29,10 @@ from raven.fathom.server.handlers.project_management import (
     ProjectListHandler,
     ProjectDeleteHandler,
 )
+from raven.fathom.server.handlers.user_management import (
+    UserAssignHandler,
+    UserUnassignHandler,
+)
 
 from tests.unit import TestCase, TestFixture
 
@@ -65,6 +69,16 @@ class TestHandlerFactory(TestCase, TestFixture):
         request = ClientRequest(Interaction.DELETE_PROJECT)
         handler = HandlerFactory().create_action_handler_for(request)
         self.assertIsInstance(handler, ProjectDeleteHandler)
+
+    def test_creates_user_assign_handler_for_user_assignment(self):
+        request = ClientRequest(Interaction.ASSIGN_USER)
+        handler = HandlerFactory().create_action_handler_for(request)
+        self.assertIsInstance(handler, UserAssignHandler)
+
+    def test_creates_user_unassign_handler_for_user_unassignment(self):
+        request = ClientRequest(Interaction.UNASSIGN_USER)
+        handler = HandlerFactory().create_action_handler_for(request)
+        self.assertIsInstance(handler, UserUnassignHandler)
 
     def test_returns_none_for_unrecognized_action(self):
         request = ClientRequest("unknown-action") # type: ignore

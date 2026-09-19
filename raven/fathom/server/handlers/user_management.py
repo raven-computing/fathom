@@ -174,3 +174,87 @@ class UserDeleteHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+
+
+class UserAssignHandler(ActionHandler):
+    """Handles remote user-project assignment requests."""
+
+    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+        self._authorizer = authorizer
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        if _deny_unless_admin(self._authorizer, request, response):
+            return
+
+        user = request.user
+        if user is None or not user.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed user identifier provided.",
+                )
+            )
+            return
+
+        project = request.project
+        if project is None or not project.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed project identifier provided.",
+                )
+            )
+            return
+
+        try:
+            self._manager.assign_user_to_project(user, project)
+        except ValueError as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+
+
+class UserUnassignHandler(ActionHandler):
+    """Handles remote user-project unassignment requests."""
+
+    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+        self._authorizer = authorizer
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        if _deny_unless_admin(self._authorizer, request, response):
+            return
+
+        user = request.user
+        if user is None or not user.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed user identifier provided.",
+                )
+            )
+            return
+
+        project = request.project
+        if project is None or not project.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed project identifier provided.",
+                )
+            )
+            return
+
+        try:
+            self._manager.unassign_user_from_project(user, project)
+        except ValueError as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )

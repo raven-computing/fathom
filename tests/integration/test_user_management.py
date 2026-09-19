@@ -14,6 +14,7 @@
 #
 """Integration tests for server-side user management."""
 
+from raven.fathom.base.project import Project
 from raven.fathom.base.user import User, UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
@@ -118,6 +119,31 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(UserPermission.select().count(), 0)
         self.assertEqual(UserProjectRel.select().count(), 0)
         self.assertEqual(AuthDeployment.select().count(), 0)
+
+    def test_can_assign_user_to_project(self):
+        UserManager().assign_user_to_project(
+            User(identifier="test-user-1"),
+            Project(identifier="test-project-2"),
+        )
+
+        user = self.db.users().find_by_identifier("test-user-1")
+        assert user is not None
+        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
+        self.assertEqual(
+            sorted(project.identifier for project in assigned_projects),
+            ["test-project-1", "test-project-2"],
+        )
+
+    def test_can_unassign_user_from_project(self):
+        UserManager().unassign_user_from_project(
+            User(identifier="test-user-1"),
+            Project(identifier="test-project-1"),
+        )
+
+        user = self.db.users().find_by_identifier("test-user-1")
+        assert user is not None
+        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
+        self.assertEqual(assigned_projects, [])
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ from raven.fathom.base import ConfigurationKey, ConfigurationSectionKey
 from raven.fathom.base import ConfigurationLoader
 from raven.fathom.base import ConfigurationWriteException
 from raven.fathom.base import File, FileSize, FileSizeUnit
-from raven.fathom.base import ApplicationContext
+from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base.decorators import singleton
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
@@ -145,6 +145,10 @@ class ConfigurationManager:
         self._config_app = None
         self._args = None
         self._lock = threading.Lock()
+        ctx = ApplicationContext.instance()
+        self._cache_enabled = (
+            ctx.get_application_mode() == ApplicationMode.PRODUCTION
+        )
 
     def load_configs(self, args: "AppArgs"):
         """Setup functionality for the server configuration.
@@ -174,6 +178,8 @@ class ConfigurationManager:
                     "Lazy-loading server app configuration file "
                     "because is it requested now"
                 )
+
+            if self._config_app is None or not self._cache_enabled:
                 self._config_app = self._load_server_config()
 
         return self._config_app

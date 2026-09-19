@@ -29,6 +29,7 @@ from raven.fathom.base import ConfigurationKey, ConfigurationSectionKey
 from raven.fathom.base import ConfigurationLoader
 from raven.fathom.base import File, FileSize
 from raven.fathom.base import SystemEnvironment
+from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.base.decorators import singleton
 from raven.fathom.client.logging import Logger
@@ -245,6 +246,11 @@ class ConfigurationManager:
         self._config_project = None
         self._args = None
         self._lock = threading.Lock()
+        ctx = ApplicationContext.instance()
+        self._cache_enabled = (
+            ctx.get_application_mode() == ApplicationMode.PRODUCTION
+        )
+
 
     def load_configs(self, args: "ArgumentsCLI"):
         """Setup functionality for the client configuration.
@@ -279,6 +285,8 @@ class ConfigurationManager:
                     "Lazy-loading user configuration file "
                     "because is it requested now"
                 )
+
+            if self._config_user is None or not self._cache_enabled:
                 self._config_user = self._load_user_config()
 
         return self._config_user
@@ -304,6 +312,8 @@ class ConfigurationManager:
                     "Lazy-loading project configuration file "
                     "because is it requested now"
                 )
+
+            if self._config_project is None or not self._cache_enabled:
                 self._config_project = self._load_project_config()
 
         return self._config_project

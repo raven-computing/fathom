@@ -239,6 +239,20 @@ class ResponseHTTP:
 
         return json.loads(self.get_body_text())
 
+    def __repr__(self):
+        preview_size = 512
+        body_size = len(self._body) if self._body is not None else 0
+        body_preview = b"" if self._body is None else self._body[:preview_size]
+        body_suffix = " [...] " if body_size > preview_size else ""
+        return (
+            "ResponseHTTP("
+            f"status_code={self._status_code}, "
+            f"headers={self._headers!r}, "
+            f"body_size={body_size}, "
+            f"body_preview={body_preview!r}{body_suffix}"
+            ")"
+        )
+
 
 class RequestHTTP:
     """An HTTP request to be sent to a server."""
@@ -356,6 +370,31 @@ class RequestHTTP:
         http_connection = ConnectionHTTP.instance()
         http_response = http_connection.send(self)
         return http_response
+
+    def __repr__(self):
+        preview_size = 512
+        body = self._body
+        body_size = len(body) if isinstance(body, (str, bytes)) else 0
+        if body is None:
+            body_preview = None
+            body_suffix = ""
+        elif isinstance(body, (bytes, str)):
+            body_preview = body[:preview_size]
+            body_suffix = " [...] " if len(body) > preview_size else ""
+        else:
+            body_preview = body
+            body_suffix = ""
+
+        return (
+            "RequestHTTP("
+            f"method={self._method.value!r}, "
+            f"url={str(self._url)!r}, "
+            f"timeout={self._timeout}, "
+            f"headers={self._headers!r}, "
+            f"body_size={body_size}, "
+            f"body_preview={body_preview!r}{body_suffix}"
+            ")"
+        )
 
     @classmethod
     def get(cls, url: URL) -> "RequestHTTP":

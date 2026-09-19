@@ -16,14 +16,15 @@
 
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.client.config import UserConfiguration
-from raven.fathom.server.cli import ExitStatus as ServerExitStatus
 
 from tests.functionality import TestCase
 from tests.fixtures import ConfigurationFixture
 
 
 class TestClientProjectManagement(TestCase, ConfigurationFixture):
-    """End-to-end tests for remote project management through the client CLI."""
+    """End-to-end tests for remote project management through
+    the client CLI.
+    """
 
     DATASTORE_SQL_FILE = "default_datastore.sql"
 
@@ -43,10 +44,6 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains("Created project 'managed-project'")
-        stored_project = self.server.datastore.projects().find_by_identifier(
-            "managed-project"
-        )
-        self.assertIsNotNone(stored_project)
 
         self.client.execute("manage", "project", "list")
 
@@ -64,10 +61,18 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains("Deleted project 'managed-project'")
-        self.assertIsNone(
-            self.server.datastore.projects().find_by_identifier(
-                "managed-project"
-            )
+
+        self.client.execute("manage", "project", "list")
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains(
+            "test-project-1\tTest Project 1\t"
+            "A Project for Testing Purposes (1)."
+        )
+        self.assertNotIn(
+            "managed-project\tManaged Project\t"
+            "Managed project description",
+            self.client.stdout
         )
 
     def test_non_admin_client_is_rejected(self):
@@ -85,7 +90,7 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
 
 class TestServerProjectManagementCLI(TestCase):
-    """Functionality tests for local project management via fathom-server."""
+    """Functionality tests for project management via fathom-server CLI."""
 
     AUTO_START_SERVER = False
 
@@ -98,25 +103,12 @@ class TestServerProjectManagementCLI(TestCase):
             "--description", "Local project description",
         )
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
-        self.assertIn(
-            "Created project 'local-project'.",
-            self.server.stdout
-        )
-        stored_project = self.server.datastore.projects().find_by_identifier(
-            "local-project"
-        )
-        self.assertIsNotNone(stored_project)
+        self.assertServerSuccess()
+        self.assertIn("Created project 'local-project'.", self.server.stdout)
 
         self.server.execute("project", "list")
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
+        self.assertServerSuccess()
         self.assertIn(
             "Project: 'local-project'\tName: 'Local Project'"
             "\tDescription: 'Local project description'",
@@ -125,14 +117,12 @@ class TestServerProjectManagementCLI(TestCase):
 
         self.server.execute("project", "delete", "local-project")
 
-        self.assertEqual(
-            ServerExitStatus.SUCCESS,
-            self.server.command_exit_status
-        )
+        self.assertServerSuccess()
         self.assertIn("Deleted project 'local-project'.", self.server.stdout)
-        self.assertIsNone(
-            self.server.datastore.projects().find_by_identifier("local-project")
-        )
+
+        self.server.execute("project", "list")
+
+        self.assertNotIn("'local-project'", self.server.stdout)
 
 
 if __name__ == "__main__":

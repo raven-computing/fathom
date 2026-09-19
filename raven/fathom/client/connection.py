@@ -27,6 +27,7 @@ from raven.fathom.base import Package
 from raven.fathom.base import DeploymentMessage
 from raven.fathom.base import User
 from raven.fathom.base import Project
+from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.signup import UserSignupRequest
 from raven.fathom.client.exceptions import FathomClientException
@@ -366,6 +367,10 @@ class Server:
         try:
             return ServerInteraction.instance(self._location).process(request)
         except TransmissionException as ex:
+            LOG.v(
+                "Failed to interact with %s server: %s",
+                APPLICATION_NAME, ex
+            )
             raise ServerConnectionException(
                 "Could not establish a connection to the server"
             ) from ex

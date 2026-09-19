@@ -23,6 +23,10 @@ from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ConnectionException
 from raven.fathom.client.http import RequestHTTP
 from raven.fathom.client.locator import ServerLocator, server_locator_to_url
+from raven.fathom.client.logging import Logger
+
+
+LOG = Logger.get()
 
 
 class ServerInteractionHTTP(ServerInteraction):
@@ -44,6 +48,8 @@ class ServerInteractionHTTP(ServerInteraction):
         self._server_url = url
 
     def process(self, request):
+        LOG.d("Processing client request:")
+        LOG.d("%r", request)
         try:
             return self._send_http(request)
         except HTTPEncodeException as ex:
@@ -72,5 +78,17 @@ class ServerInteractionHTTP(ServerInteraction):
         parcel = RequestParcelJSON(request)
         http_request.set_body(parcel.encode())
         http_request.set_header("Content-Type", parcel.content_type())
+        LOG.d("Sending HTTP request:")
+        LOG.d("%r", http_request)
+
         http_response = http_request.send()
+
+        LOG.d("Received HTTP response:")
+        LOG.d("%r", http_response)
+        if not http_response.ok:
+            raise TransmissionException(
+                "Server has responded "
+                f"with HTTP status code {http_response.status_code}"
+            )
+
         return ResponseParcelJSON(http_response.get_body()).decode()

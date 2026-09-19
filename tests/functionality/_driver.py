@@ -35,6 +35,7 @@ from raven.fathom.base import File
 from raven.fathom.base import Configuration, ConfigurationLoader
 from raven.fathom.client.cli.application import main as client_main
 from raven.fathom.server.cli import main as server_main
+from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.dao.api import DataAccess
 from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
@@ -541,6 +542,51 @@ class ServerDriver:
         """
         self.shutdown()
         self.start(args or [])
+
+    def save_server_configuration(self, config: Configuration):
+        """Saves the given `Configuration` object to the server config file.
+
+        If the server is already running, remember to restart it by
+        calling `restart()` so that the new configuration values are loaded.
+
+        Args:
+            config (Configuration): The server config to store
+                in the filesystem.
+        """
+        config_file = ConfigurationManager().get_default_config_file()
+        ConfigurationLoader().store(
+            config,
+            File(self.env.get_current_working_directory()) / config_file
+        )
+
+    def set_up_configuration_files(self):
+        """Sets up and saves server-related configuration files
+        (main server config) in the filesystem.
+
+        Overwrites the configuration files if they already exist.
+
+        Args:
+            server_config (Configuration): The Fathom server configuration
+                to use.
+        """
+        self.save_server_configuration(
+            ConfigurationManager().create_default_server_config()
+        )
+
+    def get_configuration(self) -> Configuration:
+        """Loads the server configuration from its corresponding config file.
+
+        The config file must exist on disk.
+        Use `set_up_configuration_files()` to automatically generate a
+        server config file with default values.
+
+        Returns:
+            Configuration: The server configuration read from the config file.
+        """
+        config_file = ConfigurationManager().get_default_config_file()
+        return ConfigurationLoader().load(
+            File(self.env.get_current_working_directory()) / config_file
+        )
 
     def _force_shutdown(self):
         """Forcefully terminates the server process without waiting."""

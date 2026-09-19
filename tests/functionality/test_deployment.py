@@ -18,6 +18,7 @@ from raven.fathom.base import File
 from raven.fathom.base import Project
 from raven.fathom.client.cli import ExitStatus
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
+from raven.fathom.server.config import ServerConfiguration
 
 from tests.functionality import TestCase
 from tests.fixtures import ProjectFixture, ConfigurationFixture
@@ -46,6 +47,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
             self.configuration_user,
             self.configuration_project
         )
+        self.server.set_up_configuration_files()
 
     def assertProjectIsDeployedOnServer(self, deployed_project: Project):
         """Asserts that content from the specified project's build directory
@@ -53,10 +55,11 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         target directory.
         """
         project_src_dir = self.get_project_resource_directory()
+        config = self.server.get_configuration()
         assert deployed_project.version is not None
         deployed_project_dir = (
             self.get_server_directory()
-            / "site"
+            / config[ServerConfiguration.SERVER.DEPLOYMENT_SITE_DIRECTORY]
             / deployed_project.identifier
             / deployed_project.version.identifier
         )

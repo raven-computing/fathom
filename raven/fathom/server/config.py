@@ -134,7 +134,7 @@ class ConfigurationManager:
 
     FILE_NAMES: Final = ("fathom", "app")
 
-    FILE_EXTENSIONS: Final = ("config", "cfg")
+    FILE_EXTENSIONS: Final = ("cfg", "config")
 
     def __init__(self):
         """Initializes a new `ConfigurationManager` instance.
@@ -178,6 +178,30 @@ class ConfigurationManager:
 
         return self._config_app
 
+    def create_default_server_config(self) -> Configuration:
+        """Creates a new `Configuration` object that holds the default
+        values of the server configuration.
+
+        Returns:
+            Configuration: A new `Configuration` instance with all default
+                server config values set.
+        """
+        default_config = Configuration()
+        server_section = ConfigurationSection(ServerConfiguration.SERVER)
+        self._init_default_config(server_section)
+        default_config.add_section(server_section)
+        return default_config
+
+    def get_default_config_file(self) -> File:
+        """Gets the configuration file that is used by default.
+
+        Returns:
+            File: A file that represents the default server configuration file.
+        """
+        default_file_name = ConfigurationManager.FILE_NAMES[0]
+        default_file_ext = ConfigurationManager.FILE_EXTENSIONS[0]
+        return File(f"{default_file_name}.{default_file_ext}")
+
     def _load_server_config(self):
         config_dir = ApplicationContext.instance().get_working_directory()
         for config_file in self._get_all_file_permutations(
@@ -200,10 +224,7 @@ class ConfigurationManager:
             "No server configuration file found in known places. "
             "Falling back to empty configuration object with default values"
         )
-        default_config = Configuration()
-        server_section = ConfigurationSection(ServerConfiguration.SERVER)
-        self._init_default_config(server_section)
-        default_config.add_section(server_section)
+        default_config = self.create_default_server_config()
         self._store_default_config(config_dir, default_config)
         return default_config
 

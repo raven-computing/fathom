@@ -2805,14 +2805,11 @@ class TestFileSystem(FileSystemIntegrationTestCase):
         owner = self.host_user_name
         group = self.host_group_name
         # Modification time
+
+        perms = "rw-rw-rw-" if IS_OS_WINDOWS else "rw-rw-r--"
         mt_file = datetime.datetime.fromtimestamp(
             os.stat(path_file).st_mtime, datetime.UTC
         ).replace(tzinfo=None).isoformat(timespec="seconds")
-        mt_link = datetime.datetime.fromtimestamp(
-            os.stat(path_link).st_mtime, datetime.UTC
-        ).replace(tzinfo=None).isoformat(timespec="seconds")
-
-        perms = "rw-rw-rw-" if IS_OS_WINDOWS else "rw-rw-r--"
         expected_info = f"-{perms} {owner} {group} 4.32MB {mt_file} test-file"
         file = File(path_file)
         file.follow_symlinks = True
@@ -2822,6 +2819,9 @@ class TestFileSystem(FileSystemIntegrationTestCase):
         file.follow_symlinks = False
         fname = f"test-link -> {self.testdir}{PATH_SEP}test-file"
         perms = "rw-rw-rw-" if IS_OS_WINDOWS else "rwxrwxrwx"
+        mt_link = datetime.datetime.fromtimestamp(
+            os.stat(path_link).st_mtime, datetime.UTC
+        ).replace(tzinfo=None).isoformat(timespec="seconds")
         expected_info = f"l{perms} {owner} {group} 4.32MB {mt_link} {fname}"
         actual_info = file.info()
         self.assertEqual(expected_info, actual_info)

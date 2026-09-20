@@ -69,6 +69,20 @@ class ProjectDAO(DataAccessObject[Project]):
         """
 
     @abstractmethod
+    def find_all_users_assigned_to_project(
+        self,
+        project: Project
+    ) -> list[User]:
+        """Finds all users who are assigned to the given project.
+
+        Args:
+            project (Project): The project to find all assigned users for.
+
+        Returns:
+            list: All `User` records assigned to the specified project.
+        """
+
+    @abstractmethod
     def assign_user_to_project(self, user: User, project: Project):
         """Assigns the given user to the specified project.
 

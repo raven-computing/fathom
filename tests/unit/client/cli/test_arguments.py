@@ -173,6 +173,15 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.manage_subject, "project")
         self.assertEqual(args.manage_command, "list")
 
+    def test_manage_project_list_users_command_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "project", "list-users", "proj3"
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "project")
+        self.assertEqual(args.manage_command, "list-users")
+        self.assertEqual(args.project_identifier, "proj3")
+
     def test_manage_project_delete_command_is_recognized(self):
         args = parse_args([
             "fathom", "manage", "project", "delete", "proj3"

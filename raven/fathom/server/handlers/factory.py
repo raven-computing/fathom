@@ -33,7 +33,8 @@ from .user_management import (
     UserAssignHandler, UserUnassignHandler,
 )
 from .project_management import (
-    ProjectCreateHandler, ProjectListHandler, ProjectDeleteHandler,
+    ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
+    ProjectDeleteHandler,
 )
 
 
@@ -83,6 +84,11 @@ class HandlerFactory:
             handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())
         elif client_action == Interaction.LIST_PROJECTS:
             handler = ProjectListHandler(UserAuthorizer(), ProjectManager())
+        elif client_action == Interaction.LIST_PROJECT_USERS:
+            handler = ProjectUserListHandler(
+                UserAuthorizer(),
+                ProjectManager(),
+            )
         elif client_action == Interaction.DELETE_PROJECT:
             handler = ProjectDeleteHandler(UserAuthorizer(), ProjectManager())
 

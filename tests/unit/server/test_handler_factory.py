@@ -27,6 +27,7 @@ from raven.fathom.server.handlers.deployment_transaction import (
 from raven.fathom.server.handlers.project_management import (
     ProjectCreateHandler,
     ProjectListHandler,
+    ProjectUserListHandler,
     ProjectDeleteHandler,
 )
 from raven.fathom.server.handlers.user_management import (
@@ -69,6 +70,11 @@ class TestHandlerFactory(TestCase, TestFixture):
         request = ClientRequest(Interaction.DELETE_PROJECT)
         handler = HandlerFactory().create_action_handler_for(request)
         self.assertIsInstance(handler, ProjectDeleteHandler)
+
+    def test_creates_project_user_list_handler_for_project_users(self):
+        request = ClientRequest(Interaction.LIST_PROJECT_USERS)
+        handler = HandlerFactory().create_action_handler_for(request)
+        self.assertIsInstance(handler, ProjectUserListHandler)
 
     def test_creates_user_assign_handler_for_user_assignment(self):
         request = ClientRequest(Interaction.ASSIGN_USER)

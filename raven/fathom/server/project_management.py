@@ -16,6 +16,7 @@
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
+from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
@@ -83,6 +84,38 @@ class ProjectManager:
                 name=str(project.name),
                 description=str(project.description),
             ) for project in self._ds.projects().read_all()
+        ]
+
+    def list_project_users(self, project: Project) -> list[User]:
+        """Lists all users assigned to a registered project.
+
+        Args:
+            project (Project): The project whose assigned users to list.
+
+        Returns:
+            list: A `list` of `User` objects assigned to the project.
+
+        Raises:
+            ValueError: If the given project is invalid.
+        """
+        TypeCheck.require_arg(project.identifier, str)
+        if not project.identifier:
+            raise ValueError("Project identifier must not be empty")
+
+        project_record = self._ds.projects().find_by_identifier(
+            project.identifier
+        )
+        if project_record is None:
+            raise ValueError(f"Project '{project.identifier}' does not exist")
+
+        return [
+            User(
+                identifier=str(user.identifier),
+                name=str(user.name),
+            )
+            for user in self._ds.projects().find_all_users_assigned_to_project(
+                project_record
+            )
         ]
 
     def delete_project(self, project: Project):

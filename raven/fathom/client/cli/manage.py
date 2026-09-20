@@ -44,6 +44,8 @@ class ManageCommand(Command):
             LOG.e(str(ex))
             return ExitStatus.FAILURE
 
+    # Needs refactoring anyway!
+    # pylint: disable=too-many-branches
     def _manage(self):
         config = ConfigurationManager()
         user_config = config.get_user_config()
@@ -134,6 +136,21 @@ class ManageCommand(Command):
                         project.identifier,
                         project.name,
                         project.description,
+                    )
+                return ExitStatus.SUCCESS
+
+            if self.args.manage_command == "list-users":
+                LOG.i(
+                    "Users assigned to project '%s':",
+                    self.args.project_identifier,
+                )
+                for user in server.list_project_users(
+                    self.args.project_identifier
+                ):
+                    LOG.i(
+                        " | %s\t%s",
+                        user.identifier,
+                        user.name,
                     )
                 return ExitStatus.SUCCESS
 

@@ -107,6 +107,8 @@ class Interaction(StrEnum):
 
     LIST_PROJECTS = "project-list"
 
+    LIST_PROJECT_USERS = "project-list-users"
+
     DELETE_PROJECT = "project-delete"
 
 

@@ -398,6 +398,31 @@ class Server:
         self._raise_on_errors(response)
         return response.projects or []
 
+    def list_project_users(self, identifier: str) -> list[User]:
+        """Lists all users assigned to a project from the server.
+
+        Args:
+            identifier (str): The identifier of the project to query.
+
+        Returns:
+            list: A `list` of base `User` objects assigned to the project.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or if the server responds incorrectly or in
+                an unexpected way.
+            ServerOperationException: If the server refuses or fails
+                to list the project's assigned users.
+        """
+        request = ClientRequest(Interaction.LIST_PROJECT_USERS)
+        request.authentication = self._client_authentication
+        request.project = Project(identifier=identifier)
+
+        LOG.v("Requesting remote project-user list")
+        response = self._send(request)
+        self._raise_on_errors(response)
+        return response.users or []
+
     def delete_project(self, identifier: str):
         """Deletes a project on the server.
 

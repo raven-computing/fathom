@@ -15,6 +15,7 @@
 """Integration tests for server-side project management."""
 
 from raven.fathom.base import Project
+from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.project_management import ProjectManager
 
@@ -61,6 +62,16 @@ class TestProjectManagement(DatabaseIntegrationTestCase):
         self.assertEqual(
             [project.identifier for project in projects],
             ["test-project-1", "test-project-2", "test-project-3"]
+        )
+
+    def test_list_project_users_returns_assigned_users(self):
+        users = ProjectManager().list_project_users(
+            Project(identifier="test-project-1")
+        )
+
+        self.assertEqual(
+            users,
+            [User(identifier="test-user-1", name="Test User 1")]
         )
 
     def test_delete_project_removes_record(self):

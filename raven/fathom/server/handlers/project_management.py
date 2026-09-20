@@ -89,6 +89,38 @@ class ProjectListHandler(ActionHandler):
         response.projects = self._manager.list_projects()
 
 
+class ProjectUserListHandler(ActionHandler):
+    """Handles remote project-user listing requests."""
+
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
+        self._authorizer = authorizer
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        if _deny_unless_admin(self._authorizer, request, response):
+            return
+
+        project = request.project
+        if project is None or not project.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed project identifier provided.",
+                )
+            )
+            return
+
+        try:
+            response.users = self._manager.list_project_users(project)
+        except ValueError as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+
+
 class ProjectDeleteHandler(ActionHandler):
     """Handles remote project deletion requests."""
 

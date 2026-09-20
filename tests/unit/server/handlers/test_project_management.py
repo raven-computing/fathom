@@ -17,7 +17,8 @@
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, User, Project
 from raven.fathom.server.handlers.project_management import (
-    ProjectCreateHandler, ProjectListHandler, ProjectDeleteHandler,
+    ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
+    ProjectDeleteHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.project_management import ProjectManager
@@ -94,6 +95,43 @@ class TestProjectManagementHandlers(TestCase):
         self.assertEqual(
             response.projects,
             self.manager.list_projects.return_value,
+        )
+
+    def test_list_users_handler_rejects_non_admin(self):
+        self.admin_authorizer.is_administrator.return_value = False
+        request = ClientRequest(Interaction.LIST_PROJECT_USERS)
+        request.authenticated_user = self.request_user
+        request.project = Project(identifier="proj-one")
+        response = ServerResponse(Interaction.LIST_PROJECT_USERS)
+
+        ProjectUserListHandler(self.admin_authorizer, self.manager).handle(
+            request, response
+        )
+
+        self.assertEqual(
+            response.errors[0].code,
+            ResponseCode.AUTHORIZATION_DENIED,
+        )
+        self.manager.list_project_users.assert_not_called()
+
+    def test_list_users_handler_returns_project_users(self):
+        self.admin_authorizer.is_administrator.return_value = True
+        self.manager.list_project_users.return_value = [
+            User(identifier="user-one", name="User One"),
+        ]
+        request = ClientRequest(Interaction.LIST_PROJECT_USERS)
+        request.authenticated_user = self.request_user
+        request.project = Project(identifier="proj-one")
+        response = ServerResponse(Interaction.LIST_PROJECT_USERS)
+
+        ProjectUserListHandler(self.admin_authorizer, self.manager).handle(
+            request, response
+        )
+
+        self.assertFalse(response.has_errors())
+        self.assertEqual(
+            response.users,
+            self.manager.list_project_users.return_value,
         )
 
     def test_delete_handler_reports_unknown_project(self):

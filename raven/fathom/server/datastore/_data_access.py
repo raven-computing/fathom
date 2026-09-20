@@ -149,6 +149,17 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             ).execute()
         ]
 
+    def find_all_users_assigned_to_project(self, project):
+        project_id = project.id # type: ignore
+        return [
+            cast(User, user_project_rel.user)
+            for user_project_rel in ReadQuery[UserProjectRel](
+                UserProjectRel.select().where(
+                    UserProjectRel.project == project_id
+                )
+            ).execute()
+        ]
+
     def assign_user_to_project(self, user, project):
         UserProjectRel.create(
             user=user,

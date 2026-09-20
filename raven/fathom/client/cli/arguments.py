@@ -280,6 +280,16 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         help="List all projects that are registered on the server."
     )
 
+    manage_project_list_users = manage_project_subparsers.add_parser(
+        "list-users",
+        help="List all application users assigned to a project on the server."
+    )
+    manage_project_list_users.add_argument(
+        "project_identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the project to list users for."
+    )
+
     manage_project_delete = manage_project_subparsers.add_parser(
         "delete",
         help="Delete a registered project on the server."

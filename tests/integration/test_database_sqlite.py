@@ -199,6 +199,36 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertIsInstance(assigned_projects, list)
         self.assertEqual(len(assigned_projects), 0)
 
+    def test_query_can_find_all_users_assigned_to_project(self):
+        project = self.db.projects().find_by_identifier("test-project-1")
+        user_1 = self.db.users().find_by_identifier("test-user-1")
+        self.assertIsNotNone(project)
+        assert project is not None
+        self.assertIsNotNone(user_1)
+        assert user_1 is not None
+
+        assigned_users = self.db.projects().find_all_users_assigned_to_project(
+            project
+        )
+        self.assertEqual(len(assigned_users), 1)
+        self.assertIsInstance(assigned_users[0], User)
+        self.assertEqual(assigned_users[0].identifier, user_1.identifier)
+
+        user_2 = User.create(
+            identifier="test-user-2",
+            name="Test User 2",
+            password="test-password-2",
+        )
+        self.db.projects().assign_user_to_project(user_2, project)
+
+        assigned_users = self.db.projects().find_all_users_assigned_to_project(
+            project
+        )
+        self.assertEqual(len(assigned_users), 2)
+        assigned_users.sort(key=lambda record: record.id) # type: ignore
+        self.assertEqual(assigned_users[0].identifier, user_1.identifier)
+        self.assertEqual(assigned_users[1].identifier, user_2.identifier)
+
     def test_persisted_deployment_authorization_has_correct_fields(self):
         user = self.db.users().find_by_identifier("test-user-1")
         project = self.db.projects().find_by_identifier("test-project-1")

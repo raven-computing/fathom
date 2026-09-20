@@ -90,15 +90,15 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "Assigned user 'test-user-1' to project 'test-project-2'"
         )
 
-        user = self.server.datastore.users().find_by_identifier("test-user-1")
-        assert user is not None
-        result = self.server.datastore.projects().find_all_assigned_to_user(
-            user
+        self.client.execute(
+            "manage", "project", "list-users", "test-project-2"
         )
-        self.assertEqual(
-            sorted(project.identifier for project in result),
-            ["test-project-2"],
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains(
+            "Users assigned to project 'test-project-2':"
         )
+        self.assertClientStdoutContains("test-user-1\tTest User 1")
 
         self.client.execute(
             "manage", "user", "unassign", "test-user-1", "test-project-2"
@@ -109,10 +109,16 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
             "Unassigned user 'test-user-1' from project 'test-project-2'"
         )
 
-        result = self.server.datastore.projects().find_all_assigned_to_user(
-            user
+        self.client.execute(
+            "manage", "project", "list-users", "test-project-2"
         )
-        self.assertEqual(result, [])
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains(
+            "Users assigned to project 'test-project-2':"
+        )
+        self.assertNotIn("test-user-1", self.client.stdout)
+        self.assertNotIn("Test User 1", self.client.stdout)
 
     def test_non_admin_client_is_rejected(self):
         config = self.configuration_user

@@ -246,6 +246,7 @@ class ConfigurationManager:
         self._config_project = None
         self._args = None
         self._lock = threading.Lock()
+        self._mode = None
         self._cache_enabled = None
 
     def load_configs(self, args: "ArgumentsCLI"):
@@ -282,12 +283,7 @@ class ConfigurationManager:
                     "because is it requested now"
                 )
 
-            if self._cache_enabled is None:
-                ctx = ApplicationContext.instance()
-                self._cache_enabled = (
-                    ctx.get_application_mode() == ApplicationMode.PRODUCTION
-                )
-
+            self._check_mode()
             if self._config_user is None or not self._cache_enabled:
                 self._config_user = self._load_user_config()
 
@@ -315,10 +311,17 @@ class ConfigurationManager:
                     "because is it requested now"
                 )
 
+            self._check_mode()
             if self._config_project is None or not self._cache_enabled:
                 self._config_project = self._load_project_config()
 
         return self._config_project
+
+    def _check_mode(self):
+        if self._mode is None:
+            ctx = ApplicationContext.instance()
+            self._mode = ctx.get_application_mode()
+            self._cache_enabled = self._mode == ApplicationMode.PRODUCTION
 
     def _load_user_config(self):
         config_dir = self._get_user_config_base()

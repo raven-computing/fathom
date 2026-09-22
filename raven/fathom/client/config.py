@@ -337,26 +337,55 @@ class ConfigurationManager:
                     UserConfiguration, LOG, enable_validation=True
                 ).load(config_file)
 
-        LOG.d(
-            "No user configuration file found in known places. "
-            "Falling back to empty configuration object with default values"
-        )
+        if self._mode == ApplicationMode.DEVELOPMENT:
+            LOG.d("[DEVELOPMENT MODE] Storing user config file for testing")
+            devel_config = UserConfiguration.default_configuration()
+            server = devel_config.get_section(UserConfiguration.SERVER)
+            server[UserConfiguration.SERVER.NAME] = (
+                "Local Development Server"
+            )
+            server[UserConfiguration.SERVER.DOMAIN] = "localhost"
+            server[UserConfiguration.SERVER.PORT] = 8080
+            server[UserConfiguration.SERVER.TRANSPORT_SECURE] = False
+            devel_config[UserConfiguration.USER.USERNAME] = "alpha"
+            devel_config[UserConfiguration.USER.PASSWORD] = "alpha"
+            config_dir.create_directory_tree()
+            ConfigurationLoader(UserConfiguration).store(
+                devel_config,
+                config_dir / File("user.cfg")
+            )
+        else:
+            LOG.d(
+                "No user configuration file found in known places. "
+                "Falling back to empty configuration object "
+                "with default values"
+            )
+
         return Configuration()
 
     def _get_user_config_base(self):
-        env = SystemEnvironment.instance()
-        xdg_config_home = env.get_variable("XDG_CONFIG_HOME")
-        if xdg_config_home:
-            return File(xdg_config_home)
-
-        home_dir = env.get_home_path()
-        if home_dir is None:
-            LOG.w(
-                "Cannot determine configuration directory. "
-                "User home directory not found. "
-                "Your system might be misconfigured"
+        if self._mode == ApplicationMode.DEVELOPMENT:
+            ctx = ApplicationContext.instance()
+            home_dir = ctx.get_working_directory() / File("user")
+            LOG.d(
+                "[DEVELOPMENT MODE] Overriding user's home directory "
+                "to confined directory in build tree"
             )
-            home_dir = env.get_current_working_directory() # Unlikely fallback
+        else:
+            env = SystemEnvironment.instance()
+            xdg_config_home = env.get_variable("XDG_CONFIG_HOME")
+            if xdg_config_home:
+                home_dir = File(xdg_config_home)
+            else:
+                home_dir = env.get_home_path()
+                if home_dir is None:
+                    LOG.w(
+                        "Cannot determine configuration directory. "
+                        "User home directory not found. "
+                        "Your system might be misconfigured"
+                    )
+                    # Unlikely fallback
+                    home_dir = env.get_current_working_directory()
 
         return File(home_dir) / File(".config") / File(APPLICATION_PROJECT_ID)
 

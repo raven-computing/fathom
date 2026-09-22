@@ -41,7 +41,9 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
             "manage", "user", "create", "new-user", "--name", "A New User"
         )
 
-        self.assertClientSuccess("Should be able to create a new user")
+        self.assertClientSuccess(
+            "Administrator should be able to create a new user"
+        )
 
         self.client.execute(
             "manage", "user", "assign", "new-user", self.project.identifier

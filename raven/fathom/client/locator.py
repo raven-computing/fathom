@@ -18,11 +18,12 @@ Implements a function to retrieve the details for how to
 contact the Fathom server.
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Final
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import Configuration
 from raven.fathom.base import URL, URLAuthority
+from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import InvalidConfigurationException
@@ -32,6 +33,8 @@ if TYPE_CHECKING:
 
 
 LOG = Logger.get()
+
+_SERVER_COMM_VERSION: Final = "v1"
 
 
 class ServerLocator:
@@ -147,7 +150,7 @@ def server_locator_to_url(locator: ServerLocator) -> URL:
     if locator.location is not None:
         url.path = locator.location
 
-    url.path += "/fathom/v1"
+    url.path += f"/{APPLICATION_PROJECT_ID}/{_SERVER_COMM_VERSION}"
     return url
 
 

@@ -136,6 +136,34 @@ class TestConfigurationDefinition(TestCase):
         self.assertIs(sections[1], FakeTestConfig.SECTION_B)
         self.assertIs(sections[2], FakeTestConfig.SECTION_C)
 
+    def test_default_configuration_populates_defined_defaults(self):
+        config = FakeTestConfig.default_configuration()
+
+        self.assertIsInstance(config, Configuration)
+        self.assertEqual(len(config), 3)
+        self.assertTrue(config.has_section(FakeTestConfig.SECTION_A))
+        self.assertTrue(config.has_section(FakeTestConfig.SECTION_B))
+        self.assertTrue(config.has_section(FakeTestConfig.SECTION_C))
+
+        section_a = config.get_section(FakeTestConfig.SECTION_A)
+        self.assertTrue(section_a.is_empty())
+
+        section_b = config.get_section(FakeTestConfig.SECTION_B)
+        self.assertEqual(
+            section_b.value_of(FakeTestConfig.SECTION_B.CONFIG_KEY_A),
+            FakeTestConfig.SECTION_B.CONFIG_KEY_A.default_value
+        )
+        self.assertEqual(
+            section_b.value_of(FakeTestConfig.SECTION_B.CONFIG_KEY_B),
+            FakeTestConfig.SECTION_B.CONFIG_KEY_B.default_value
+        )
+
+        section_c = config.get_section(FakeTestConfig.SECTION_C)
+        self.assertEqual(
+            section_c.value_of(FakeTestConfig.SECTION_C.CONFIG_KEY_A),
+            FakeTestConfig.SECTION_C.CONFIG_KEY_A.default_value
+        )
+
 
 class TestConfigurationSectionKey(TestCase):
     """Unit tests for the `ConfigurationSectionKey` class."""
@@ -161,6 +189,21 @@ class TestConfigurationSectionKey(TestCase):
     def test_section_key_description_none(self):
         key = FakeTestConfig.SECTION_C
         self.assertIsNone(key.description)
+
+    def test_default_configuration_populates_defined_defaults(self):
+        section = FakeTestConfig.SECTION_B.default_configuration()
+
+        self.assertIsInstance(section, ConfigurationSection)
+        self.assertIs(section.key, FakeTestConfig.SECTION_B)
+        self.assertEqual(
+            section.value_of(FakeTestConfig.SECTION_B.CONFIG_KEY_A),
+            FakeTestConfig.SECTION_B.CONFIG_KEY_A.default_value
+        )
+        self.assertEqual(
+            section.value_of(FakeTestConfig.SECTION_B.CONFIG_KEY_B),
+            FakeTestConfig.SECTION_B.CONFIG_KEY_B.default_value
+        )
+        self.assertEqual(len(section), 2)
 
     def test_get_all_keys_from_section(self):
         section = FakeTestConfig.SECTION_A

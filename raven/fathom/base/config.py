@@ -267,6 +267,24 @@ class ConfigurationDefinition:
             if isinstance(attr, ConfigurationSectionKey)
         ]
 
+    @classmethod
+    def default_configuration(cls) -> "Configuration":
+        """Creates a new `Configuration` object with all default
+        values prepopulated.
+
+        The returned configuration represents the default for
+        the entire definition, including all sections and keys.
+
+        Returns:
+            Configuration: A configuration that has all sections and
+                configurations of this definition.
+        """
+        config = Configuration()
+        for section in cls.all_sections():
+            config.add_section(section.default_configuration())
+
+        return config
+
     def __str__(self):
         return self._name
 
@@ -355,6 +373,24 @@ class ConfigurationSectionKey(metaclass=_SectionKeyMeta):
     def description(self) -> Optional[str]:
         """A human-readable description of this configuration section."""
         return self._description
+
+    def default_configuration(self) -> "ConfigurationSection":
+        """Creates a new `ConfigurationSection` object with all default
+        values prepopulated.
+
+        The returned configuration represents the default for
+        the entire section definition.
+
+        Returns:
+            ConfigurationSection: A configuration section that has all
+                configurations of this section definition.
+        """
+        section = ConfigurationSection(self)
+        for key in self.__class__.all_keys():
+            if key.default_value is not None:
+                section[key] = key.default_value
+
+        return section
 
     @classmethod
     def all_keys(cls) -> list["ConfigurationKey"]:

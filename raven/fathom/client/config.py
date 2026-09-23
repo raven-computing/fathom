@@ -121,27 +121,43 @@ class ProjectConfigurationSection(ConfigurationSectionKey):
     """Definition of configuration keys within the project config section."""
 
     IDENTIFIER = ConfigurationKey[str](
-        "id", str
+        "id", str,
+        description=(
+            "The unique identifier of the project. This must match the global "
+            "identifier of the project as it is known to the Fathom server."
+        )
     )
 
     NAME = ConfigurationKey[str](
-        "name", str
+        "name", str,
+        description="The human-readable name of the project."
     )
 
     DESCRIPTION = ConfigurationKey[str](
-        "description", str
+        "description", str,
+        description="A brief description of the project."
     )
 
     VERSION = ConfigurationKey[str](
-        "version", str
+        "version", str,
+        description="The version of the project."
     )
 
     DOMAIN = ConfigurationKey[str](
-        "domain", str
+        "domain", str,
+        description=(
+            "The domain associated with the project, or where "
+            "the documentation can be found. For example: 'docs.example.com'"
+        )
     )
 
     ASSETS = ConfigurationKey[str](
-        "assets", str
+        "assets", str,
+        description=(
+            "The location of the project's assets. This is a path in the "
+            "local filesystem where the files that should be "
+            "included in a deployment are located."
+        )
     )
 
 

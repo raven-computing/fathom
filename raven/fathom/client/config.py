@@ -68,31 +68,47 @@ class ServerConfigurationSection(ConfigurationSectionKey):
     """Definition of configuration keys within the server config section."""
 
     NAME = ConfigurationKey[str](
-        "name", str
+        "name", str,
+        description=(
+            "The name of the server by which a project can refer to it "
+            "in its configuration.")
     )
 
     DOMAIN = ConfigurationKey[str](
-        "domain", str
+        "domain", str,
+        description="The DNS domain or IP address of the server."
     )
 
     USERNAME = ConfigurationKey[str](
-        "username", str
+        "username", str,
+        description="The username to use when connecting to the server."
     )
 
     PASSWORD = ConfigurationKey[str](
-        "password", str
+        "password", str,
+        description="The password to use when authenticating to the server."
     )
 
     PORT = ConfigurationKey[int](
-        "port", int
+        "port", int,
+        description="The port of the server to connect to."
     )
 
     LOCATION = ConfigurationKey[str](
-        "location", str
+        "location", str,
+        description=(
+            "The location of the server under the given domain. "
+            "This is a path on the remote host where the Fathom server "
+            "can be accessed."
+        )
     )
 
     TRANSPORT_SECURE = ConfigurationKey[bool](
-        "transport.secure", bool, default=True
+        "transport.secure", bool, default=True,
+        description=(
+            "Whether to use a cryptographically secure networking protocol "
+            "when connecting to the server."
+        )
     )
 
 

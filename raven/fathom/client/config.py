@@ -407,16 +407,7 @@ class ConfigurationManager:
 
         if self._mode == ApplicationMode.DEVELOPMENT:
             LOG.d("[DEVELOPMENT MODE] Storing user config file for testing")
-            devel_config = UserConfiguration.default_configuration()
-            server = devel_config.get_section(UserConfiguration.SERVER)
-            server[UserConfiguration.SERVER.NAME] = (
-                "Local Development Server"
-            )
-            server[UserConfiguration.SERVER.DOMAIN] = "localhost"
-            server[UserConfiguration.SERVER.PORT] = 8080
-            server[UserConfiguration.SERVER.TRANSPORT_SECURE] = False
-            devel_config[UserConfiguration.USER.USERNAME] = "alpha"
-            devel_config[UserConfiguration.USER.PASSWORD] = "alpha"
+            devel_config = self._create_default_devel_user_config()
             config_dir.create_directory_tree()
             ConfigurationLoader(UserConfiguration).store(
                 devel_config,
@@ -430,6 +421,19 @@ class ConfigurationManager:
             )
 
         return Configuration()
+
+    def _create_default_devel_user_config(self):
+        devel_config = UserConfiguration.default_configuration()
+        server = devel_config.get_section(UserConfiguration.SERVER)
+        server[UserConfiguration.SERVER.NAME] = (
+                "Local Development Server"
+            )
+        server[UserConfiguration.SERVER.DOMAIN] = "localhost"
+        server[UserConfiguration.SERVER.PORT] = 8080
+        server[UserConfiguration.SERVER.TRANSPORT_SECURE] = False
+        devel_config[UserConfiguration.USER.USERNAME] = "alpha"
+        devel_config[UserConfiguration.USER.PASSWORD] = "alpha"
+        return devel_config
 
     def _get_user_config_base(self):
         if self._mode == ApplicationMode.DEVELOPMENT:

@@ -51,15 +51,20 @@ class UserConfigurationSection(ConfigurationSectionKey):
 
     USERNAME = ConfigurationKey[str](
         "username", str,
-        description="The username for the Fathom client."
+        description=(
+            "The username to use when authenticating to the Fathom server "
+            "and there is no username set in the specific server "
+            "configuration entry."
+        )
     )
 
     PASSWORD = ConfigurationKey[str](
         "password", str,
         description=(
-            "The password for the Fathom client. "
-            "Leave empty to be prompted for the password interactively "
-            "when using the client."
+            "The password to use when authenticating to the Fathom server "
+            "and there is no password set in the specific server "
+            "configuration entry. Leave empty to be prompted for the password "
+            "interactively when using the client."
         )
     )
 

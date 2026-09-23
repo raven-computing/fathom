@@ -165,31 +165,62 @@ class FileFilterConfigurationSection(ConfigurationSectionKey):
     """Definition of config keys within the file filter config section."""
 
     FILE_TYPE = ConfigurationKey[str](
-        "file.type", str
+        "file.type", str,
+        description=(
+            "The type of the file to filter for. Must be one of "
+            "['any', 'regular_file', 'directory', 'symlink', 'nonexistent']"
+        )
     )
 
     FILE_NAMES = ConfigurationKey[set](
-        "file.names", set
+        "file.names", set,
+        description=(
+            "The set of file names to filter for, specified as "
+            "a set of strings. For example: {'myfile.txt', 'index.html'}"
+        )
     )
 
     FILE_EXTENSIONS = ConfigurationKey[set](
-        "file.extensions", set
+        "file.extensions", set,
+        description=(
+            "The set of file extensions to filter for, specified as "
+            "a set of strings. For example: {'.py', '.txt'}"
+        )
     )
 
     FILE_PREFIXES = ConfigurationKey[set](
-        "file.prefixes", set
+        "file.prefixes", set,
+        description=(
+            "The set of file prefixes to filter for, specified as "
+            "a set of strings. A prefix is matched against the beginning "
+            "of the file path. For example: {'this/that', 'res/unused'}"
+        )
     )
 
     FILE_SIZE_MIN = ConfigurationKey[FileSize](
-        "file.size.min", FileSize
+        "file.size.min", FileSize,
+        description=(
+            "The minimum size of files allowed. "
+            "Must be specified as a number with a unit. "
+            "For example: '10MB', '500KB'."
+        )
     )
 
     FILE_SIZE_MAX = ConfigurationKey[FileSize](
-        "file.size.max", FileSize
+        "file.size.max", FileSize,
+        description=(
+            "The maximum size of files allowed. "
+            "Must be specified as a number with a unit. "
+            "For example: '10MB', '500KB'."
+        )
     )
 
     FILE_IGNORE_NONEXISTENT = ConfigurationKey[bool](
-        "file.ignore.nonexistent", bool, default=False
+        "file.ignore.nonexistent", bool, default=False,
+        description=(
+            "Indicates whether to ignore files which do not actually "
+            "exist in the filesystem."
+        )
     )
 
 

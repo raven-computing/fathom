@@ -27,12 +27,13 @@ import io
 import multiprocessing
 
 from contextlib import ExitStack, nullcontext, redirect_stdout, redirect_stderr
-from typing import Optional, Final
+from typing import Optional, Final, Type
 from unittest.mock import patch
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
 from raven.fathom.base import Configuration, ConfigurationLoader
+from raven.fathom.base import ConfigurationDefinition
 from raven.fathom.client.cli.application import main as client_main
 from raven.fathom.server.cli import main as server_main
 from raven.fathom.server.config import ConfigurationManager
@@ -203,6 +204,26 @@ class ClientDriver:
         """
         cwd = self.env.get_current_working_directory()
         return File(cwd / "fathom.cfg")
+
+    def load_configuration(
+        self,
+        definition: Type[ConfigurationDefinition],
+        file: File
+    ) -> Configuration:
+        """Loads the configuration from the specified config file.
+
+        Args:
+            definition (Type[ConfigurationDefinition]): The configuration
+                definition class to use for loading and validation.
+            file (File): The configuration file to load the configuration from.
+
+        Returns:
+            Configuration: The loaded configuration from the specified file.
+        """
+        return ConfigurationLoader(
+            definition,
+            enable_validation=True
+        ).load(file)
 
     def save_configuration(self, config: Configuration, target: File):
         """Saves the given `Configuration` object to the specified config file.

@@ -14,7 +14,6 @@
 #
 """Functionality tests for client configuration setup commands."""
 
-from raven.fathom.base import ConfigurationLoader
 from raven.fathom.client.config import UserConfiguration
 from raven.fathom.client.config import ProjectConfiguration
 
@@ -34,7 +33,8 @@ class TestClientUserConfigSetup(TestCase):
 
         self.assertClientSuccess()
         self.assertTrue(config_file.is_regular_file())
-        created_config = ConfigurationLoader(UserConfiguration).load(
+        created_config = self.client.load_configuration(
+            UserConfiguration,
             config_file
         )
         expected_default_config = UserConfiguration.default_configuration()
@@ -50,7 +50,7 @@ class TestClientUserConfigSetup(TestCase):
         self.client.execute("setup", "config", "user")
 
         self.assertClientSuccess()
-        config = ConfigurationLoader(UserConfiguration).load(config_file)
+        config = self.client.load_configuration(UserConfiguration, config_file)
         self.assertEqual(
             "sentinel-user",
             config[UserConfiguration.USER.USERNAME],
@@ -66,18 +66,17 @@ class TestClientUserConfigSetup(TestCase):
         )
         existing_config = UserConfiguration.default_configuration()
         existing_config[UserConfiguration.USER.USERNAME] = "alternate-user"
-        alternate_file.get_parent_directory().create_directory_tree()
-        ConfigurationLoader(UserConfiguration).store(
-            existing_config,
-            alternate_file,
-        )
+        self.client.save_configuration(existing_config, alternate_file)
 
         self.client.execute("setup", "config", "user")
 
         self.assertClientSuccess()
         self.assertFalse(default_config_file.exists())
         self.assertTrue(alternate_file.is_regular_file())
-        config = ConfigurationLoader(UserConfiguration).load(alternate_file)
+        config = self.client.load_configuration(
+            UserConfiguration,
+            alternate_file
+        )
         self.assertEqual(
             "alternate-user",
             config[UserConfiguration.USER.USERNAME],
@@ -100,7 +99,8 @@ class TestClientProjectConfigSetup(TestCase):
 
         self.assertClientSuccess()
         self.assertTrue(config_file.is_regular_file())
-        created_config = ConfigurationLoader(ProjectConfiguration).load(
+        created_config = self.client.load_configuration(
+            ProjectConfiguration,
             config_file
         )
         expected_default_config = ProjectConfiguration.default_configuration()
@@ -116,7 +116,10 @@ class TestClientProjectConfigSetup(TestCase):
         self.client.execute("setup", "config", "project")
 
         self.assertClientSuccess()
-        config = ConfigurationLoader(ProjectConfiguration).load(config_file)
+        config = self.client.load_configuration(
+            ProjectConfiguration,
+            config_file
+        )
         self.assertEqual(
             "Sentinel Name",
             config[ProjectConfiguration.PROJECT.NAME],
@@ -132,18 +135,17 @@ class TestClientProjectConfigSetup(TestCase):
         )
         existing_config = ProjectConfiguration.default_configuration()
         existing_config[ProjectConfiguration.PROJECT.NAME] = "Alt Project"
-        alternate_file.get_parent_directory().create_directory_tree()
-        ConfigurationLoader(ProjectConfiguration).store(
-            existing_config,
-            alternate_file,
-        )
+        self.client.save_configuration(existing_config, alternate_file)
 
         self.client.execute("setup", "config", "project")
 
         self.assertClientSuccess()
         self.assertFalse(default_config_file.exists())
         self.assertTrue(alternate_file.is_regular_file())
-        config = ConfigurationLoader(ProjectConfiguration).load(alternate_file)
+        config = self.client.load_configuration(
+            ProjectConfiguration,
+            alternate_file
+        )
         self.assertEqual(
             "Alt Project",
             config[ProjectConfiguration.PROJECT.NAME],

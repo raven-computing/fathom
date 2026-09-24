@@ -16,6 +16,7 @@
 
 from raven.fathom.base import InputPrompt, User
 from raven.fathom.base import ClientAuthentication
+from raven.fathom.base import ConfigurationWriteException
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.connection import Server
 from raven.fathom.client.connection import (
@@ -36,6 +37,9 @@ class SetupCommand(Command):
     def execute(self):
         try:
             return self._setup()
+        except ConfigurationWriteException as ex:
+            LOG.e(str(ex))
+            return ExitStatus.FAILURE
         except ServerConnectionException as ex:
             LOG.e(str(ex))
             return ExitStatus.SERVER_UNREACHABLE
@@ -44,6 +48,9 @@ class SetupCommand(Command):
             return ExitStatus.FAILURE
 
     def _setup(self):
+        if self.args.setup_subject == "config":
+            return self._setup_config()
+
         if self.args.setup_subject != "user":
             raise ValueError(
                 f"Invalid setup subject '{self.args.setup_subject}'"
@@ -85,3 +92,37 @@ class SetupCommand(Command):
         server.sign_up_user(User(identifier=identifier, password=new_password))
         LOG.i("Initialized user '%s'", identifier)
         return ExitStatus.SUCCESS
+
+    def _setup_config(self):
+        cm = ConfigurationManager()
+        cm.load_configs(self.args)
+
+        if self.args.setup_command == "user":
+            config_file = cm.get_default_user_config_file()
+            if cm.has_user_config_file():
+                LOG.i(
+                    "User configuration file already exists: '%s'",
+                    config_file,
+                )
+                return ExitStatus.SUCCESS
+
+            cm.create_default_user_config_file()
+            LOG.i("Created user configuration file '%s'", config_file)
+            return ExitStatus.SUCCESS
+
+        if self.args.setup_command == "project":
+            config_file = cm.get_default_project_config_file()
+            if cm.has_project_config_file():
+                LOG.i(
+                    "Project configuration file already exists: '%s'",
+                    config_file,
+                )
+                return ExitStatus.SUCCESS
+
+            cm.create_default_project_config_file()
+            LOG.i("Created project configuration file '%s'", config_file)
+            return ExitStatus.SUCCESS
+
+        raise ValueError(
+            f"Invalid setup command '{self.args.setup_command}'"
+        )

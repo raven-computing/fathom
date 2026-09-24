@@ -385,6 +385,84 @@ class ConfigurationManager:
 
         return self._config_project
 
+    def has_user_config_file(self) -> bool:
+        """Checks whether the default user configuration file exists.
+
+        Returns:
+            bool: `True` if the configuration file exists.
+        """
+        self._check_mode()
+        return self.get_default_user_config_file().exists()
+
+    def create_default_user_config_file(self) -> File:
+        """Creates the default user configuration file.
+
+        Overwrites an existing file if it already exists.
+
+        Returns:
+            File: The user configuration file path.
+
+        Raises:
+            ConfigurationWriteException: If the file cannot be written.
+        """
+        self._check_mode()
+        config_file = self.get_default_user_config_file()
+        config_file.get_parent_directory().create_directory_tree()
+        ConfigurationLoader(UserConfiguration).store(
+            UserConfiguration.default_configuration(),
+            config_file,
+        )
+        return config_file
+
+    def has_project_config_file(self) -> bool:
+        """Checks whether the default project configuration file exists.
+
+        Returns:
+            bool: `True` if the configuration file exists.
+        """
+        return self.get_default_project_config_file().exists()
+
+    def create_default_project_config_file(self) -> File:
+        """Creates the default project configuration file.
+
+        Overwrites an existing file if it already exists.
+
+        Returns:
+            File: The project configuration file path.
+
+        Raises:
+            ConfigurationWriteException: If the file cannot be written.
+        """
+        config_file = self.get_default_project_config_file()
+        ConfigurationLoader(ProjectConfiguration).store(
+            ProjectConfiguration.default_configuration(),
+            config_file,
+        )
+        return config_file
+
+    def get_default_user_config_file(self) -> File:
+        """Gets the default user configuration file location.
+
+        Returns:
+            File: The default user configuration file path.
+        """
+        self._check_mode()
+        return self._get_user_config_base() / File("user.cfg")
+
+    def get_default_project_config_file(self) -> File:
+        """Gets the default project configuration file location.
+
+        Returns:
+            File: The default project configuration file path.
+        """
+        assert self._args is not None
+        project_directory = self._args.project_directory
+        if not project_directory:
+            env = SystemEnvironment.instance()
+            project_directory = env.get_current_working_directory()
+
+        return File(project_directory) / File("fathom.cfg")
+
     def _check_mode(self):
         if self._mode is None:
             ctx = ApplicationContext.instance()
@@ -462,17 +540,13 @@ class ConfigurationManager:
         return File(home_dir) / File(".config") / File(APPLICATION_PROJECT_ID)
 
     def _load_project_config(self):
-        assert self._args is not None
-        project_directory = self._args.project_directory
-        if not project_directory:
-            env = SystemEnvironment.instance()
-            project_directory = env.get_current_working_directory()
-
-        project_directory = File(project_directory)
+        project_directory = self.get_default_project_config_file()
         for config_file in self._get_all_file_permutations(
             ConfigurationManager.FILE_NAMES
         ):
-            config_file = project_directory / File(config_file)
+            config_file = project_directory.get_parent_directory() / File(
+                config_file
+            )
             if config_file.is_regular_file():
                 LOG.d(
                     "Loading found project configuration from file '%s'",

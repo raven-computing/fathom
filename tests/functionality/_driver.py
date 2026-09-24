@@ -184,7 +184,7 @@ class ClientDriver:
         return self._has_executed
 
     def get_user_configuration_file(self) -> File:
-        """Get the file that is used to store the user configuration.
+        """Gets the file that is used to store the user configuration.
 
         Returns:
             File: The file where the user configuration is stored

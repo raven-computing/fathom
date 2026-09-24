@@ -102,6 +102,15 @@ class TestCommandRegistry(TestCase):
         command_obj = command_with_args(args)
         self.assertIsInstance(command_obj, SetupCommand)
 
+    def test_registry_works_for_setup_config_command(self):
+        args = ArgumentsCLI(
+            command="setup",
+            setup_subject="config",
+            setup_command="user",
+        )
+        command_obj = command_with_args(args)
+        self.assertIsInstance(command_obj, SetupCommand)
+
     def test_registry_rejects_unknown_command_and_raises_exception(self):
         args = ArgumentsCLI(command="invalid_command")
         with self.assertRaises(ValueError) as raised:

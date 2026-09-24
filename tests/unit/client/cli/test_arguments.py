@@ -118,6 +118,18 @@ class TestArgumentsCLI(TestCase):
         self.assertEqual(args.setup_subject, "user")
         self.assertEqual(args.setup_user_identifier, "user2")
 
+    def test_setup_config_user_command_is_recognized(self):
+        args = parse_args(["fathom", "setup", "config", "user"])
+        self.assertEqual(args.command, "setup")
+        self.assertEqual(args.setup_subject, "config")
+        self.assertEqual(args.setup_command, "user")
+
+    def test_setup_config_project_command_is_recognized(self):
+        args = parse_args(["fathom", "setup", "config", "project"])
+        self.assertEqual(args.command, "setup")
+        self.assertEqual(args.setup_subject, "config")
+        self.assertEqual(args.setup_command, "project")
+
     def test_manage_user_list_command_is_recognized(self):
         args = parse_args(["fathom", "manage", "user", "list"])
         self.assertEqual(args.command, "manage")

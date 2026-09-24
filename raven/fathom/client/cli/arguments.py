@@ -52,6 +52,8 @@ class ArgumentsCLI:
 
     setup_subject: str = ""
 
+    setup_command: str = ""
+
     user_identifier: str = ""
 
     user_name: str = ""
@@ -310,6 +312,26 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         metavar="<SUBJECT>",
     )
 
+    setup_config = setup_subparsers.add_parser(
+        "config",
+        help="Create a default client configuration file if one is missing."
+    )
+    setup_config_subparsers = setup_config.add_subparsers(
+        dest="setup_command",
+        required=True,
+        metavar="<TYPE>",
+    )
+    setup_config_subparsers.add_parser(
+        "user",
+        help="Create the default user configuration file in the user's "
+             "configuration directory."
+    )
+    setup_config_subparsers.add_parser(
+        "project",
+        help="Create the default project configuration file in the current "
+             "working directory."
+    )
+
     setup_user = setup_subparsers.add_parser(
         "user",
         help="Performs a sign-up action for a user that was previously "
@@ -340,6 +362,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         manage_subject=getattr(args, "manage_subject", ""),
         manage_command=getattr(args, "manage_command", ""),
         setup_subject=getattr(args, "setup_subject", ""),
+        setup_command=getattr(args, "setup_command", ""),
         user_identifier=getattr(args, "user_identifier", ""),
         user_name=getattr(args, "user_name", ""),
         project_identifier=getattr(args, "project_identifier", ""),

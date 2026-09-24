@@ -24,7 +24,7 @@ import threading
 
 from typing import TYPE_CHECKING, Final
 
-from raven.fathom.base import Configuration, ConfigurationSection
+from raven.fathom.base import Configuration
 from raven.fathom.base import ConfigurationDefinition
 from raven.fathom.base import ConfigurationKey, ConfigurationSectionKey
 from raven.fathom.base import ConfigurationLoader
@@ -195,11 +195,7 @@ class ConfigurationManager:
             Configuration: A new `Configuration` instance with all default
                 server config values set.
         """
-        default_config = Configuration()
-        server_section = ConfigurationSection(ServerConfiguration.SERVER)
-        self._init_default_config(server_section)
-        default_config.add_section(server_section)
-        return default_config
+        return ServerConfiguration.default_configuration()
 
     def get_default_config_file(self) -> File:
         """Gets the configuration file that is used by default.
@@ -268,48 +264,4 @@ class ConfigurationManager:
                 file_names,
                 ConfigurationManager.FILE_EXTENSIONS,
             )
-        )
-
-    def _init_default_config(self, server_section):
-        server_section.set_value(
-            ServerConfiguration.SERVER.DEBUG_MODE_ENABLED,
-            ServerConfiguration.SERVER.DEBUG_MODE_ENABLED.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.DEPLOYMENT_STAGING_DIRECTORY,
-            ServerConfiguration.SERVER.DEPLOYMENT_STAGING_DIRECTORY
-            .default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.DEPLOYMENT_SITE_DIRECTORY,
-            ServerConfiguration.SERVER.DEPLOYMENT_SITE_DIRECTORY
-            .default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.ADDRESS_LISTEN,
-            ServerConfiguration.SERVER.ADDRESS_LISTEN.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.PORT_LISTEN,
-            ServerConfiguration.SERVER.PORT_LISTEN.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.PORT_CHECK_BIND,
-            ServerConfiguration.SERVER.PORT_CHECK_BIND.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.ENABLE_GZIP_COMPRESSION,
-            ServerConfiguration.SERVER.ENABLE_GZIP_COMPRESSION.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.THREAD_POOL_SIZE,
-            ServerConfiguration.SERVER.THREAD_POOL_SIZE.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.MAX_REQUEST_HEADER_SIZE,
-            ServerConfiguration.SERVER.MAX_REQUEST_HEADER_SIZE.default_value
-        )
-        server_section.set_value(
-            ServerConfiguration.SERVER.MAX_REQUEST_BODY_SIZE,
-            ServerConfiguration.SERVER.MAX_REQUEST_BODY_SIZE.default_value
         )

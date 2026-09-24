@@ -121,7 +121,14 @@ class ServerConfiguration(ConfigurationDefinition):
     These keys are specific to the Fathom server application.
     """
 
-    SERVER = ServerConfigurationSection("Server")
+    SERVER = ServerConfigurationSection(
+        name="Server",
+        description=(
+            "Definition of the Fathom server configuration. "
+            "This is the primary way to configure the server "
+            "and adjust its behaviour."
+        ),
+    )
 
 
 @singleton

@@ -31,10 +31,10 @@ Options:
   [--interactive]      <PROG> [args...]
                        Starts either the client or server application for interactive testing.
                        The <PROG> options argument is mandatory and must either
-                       be 'client' or 'server'. All optional arguments from [args...] are passed
-                       to the invoked application as is. If specified, this must be the last given
-                       option as all subsequent arguments will be interpreted as being part
-                       of the [args...] option argument.
+                       be 'client' ('fathom') or 'server' ('fathom-server'). All optional arguments
+                       from [args...] are passed to the invoked application as is. If specified,
+                       this must be the last given option as all subsequent arguments will be
+                       interpreted as being part of the [args...] option argument.
 
   [--isolated]         Execute the entire test process in an isolated Docker container.
 
@@ -223,8 +223,15 @@ if [[ $ARG_ALL == true ]]; then
 fi
 
 if [[ $ARG_INTERACTIVE == true ]]; then
+  if [[ "$app_prog" == "fathom" ]]; then
+    app_prog="client";
+  fi
+  if [[ "$app_prog" == "fathom-server" ]]; then
+    app_prog="server";
+  fi
   if [[ "$app_prog" != "client" && "$app_prog" != "server" ]]; then
-    logE "First option argument to --interactive option must either be 'client' or 'server'";
+    logE "Invalid first option argument to --interactive option.";
+    logE "Must either be 'client' ('fathom') or 'server' ('fathom-server')";
     exit 1;
   fi
 fi

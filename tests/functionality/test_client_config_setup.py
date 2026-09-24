@@ -34,19 +34,18 @@ class TestClientUserConfigSetup(TestCase):
 
         self.assertClientSuccess()
         self.assertTrue(config_file.is_regular_file())
-        config = ConfigurationLoader(UserConfiguration).load(config_file)
-        self.assertFalse(config[UserConfiguration.USER.LOGGING_ENABLED])
+        created_config = ConfigurationLoader(UserConfiguration).load(
+            config_file
+        )
+        expected_default_config = UserConfiguration.default_configuration()
+        self.assertEqual(expected_default_config, created_config)
         self.assertClientStdoutContains("Created user configuration file")
 
     def test_setup_config_user_keeps_existing_file(self):
         config_file = self.client.get_user_configuration_file()
         existing_config = UserConfiguration.default_configuration()
         existing_config[UserConfiguration.USER.USERNAME] = "sentinel-user"
-        config_file.get_parent_directory().create_directory_tree()
-        ConfigurationLoader(UserConfiguration).store(
-            existing_config,
-            config_file,
-        )
+        self.client.save_user_configuration(existing_config)
 
         self.client.execute("setup", "config", "user")
 
@@ -101,18 +100,18 @@ class TestClientProjectConfigSetup(TestCase):
 
         self.assertClientSuccess()
         self.assertTrue(config_file.is_regular_file())
-        config = ConfigurationLoader(ProjectConfiguration).load(config_file)
-        self.assertIsNotNone(config.get_section(ProjectConfiguration.PROJECT))
+        created_config = ConfigurationLoader(ProjectConfiguration).load(
+            config_file
+        )
+        expected_default_config = ProjectConfiguration.default_configuration()
+        self.assertEqual(expected_default_config, created_config)
         self.assertClientStdoutContains("Created project configuration file")
 
     def test_setup_config_project_keeps_existing_file(self):
         config_file = self.client.get_project_configuration_file()
         existing_config = ProjectConfiguration.default_configuration()
         existing_config[ProjectConfiguration.PROJECT.NAME] = "Sentinel Name"
-        ConfigurationLoader(ProjectConfiguration).store(
-            existing_config,
-            config_file,
-        )
+        self.client.save_project_configuration(existing_config)
 
         self.client.execute("setup", "config", "project")
 

@@ -313,7 +313,7 @@ class ConfigurationManager:
         self._config_user = None
         self._config_project = None
         self._args = None
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._mode = None
         self._cache_enabled = None
 
@@ -386,13 +386,12 @@ class ConfigurationManager:
         return self._config_project
 
     def has_user_config_file(self) -> bool:
-        """Checks whether the default user configuration file exists.
+        """Checks whether a user configuration file exists.
 
         Returns:
             bool: `True` if the configuration file exists.
         """
-        self._check_mode()
-        return self.get_default_user_config_file().exists()
+        return self.find_user_config_file() is not None
 
     def create_default_user_config_file(self) -> File:
         """Creates the default user configuration file.
@@ -415,12 +414,51 @@ class ConfigurationManager:
         return config_file
 
     def has_project_config_file(self) -> bool:
-        """Checks whether the default project configuration file exists.
+        """Checks whether a project configuration file exists.
 
         Returns:
             bool: `True` if the configuration file exists.
         """
-        return self.get_default_project_config_file().exists()
+        return self.find_project_config_file() is not None
+
+    def find_user_config_file(self) -> File | None:
+        """Finds the first applicable user configuration file.
+
+        Returns:
+            File: The discovered user configuration file, or `None`
+                if no applicable file exists.
+        """
+        with self._lock:
+            self._check_mode()
+            config_dir = self._get_user_config_base()
+            for config_file in self._get_all_file_permutations(
+                ("user", "User")
+            ):
+                candidate = config_dir / File(config_file)
+                LOG.d("Trying user configuration file '%s'", candidate)
+                if candidate.is_regular_file():
+                    return candidate
+
+        return None
+
+    def find_project_config_file(self) -> File | None:
+        """Finds the first applicable project configuration file.
+
+        Returns:
+            File: The discovered project configuration file, or `None`
+                if no applicable file exists.
+        """
+        with self._lock:
+            config_dir = self.get_default_project_config_file()
+            config_dir = config_dir.get_parent_directory()
+            for config_file in self._get_all_file_permutations(
+                ConfigurationManager.FILE_NAMES
+            ):
+                candidate = config_dir / File(config_file)
+                if candidate.is_regular_file():
+                    return candidate
+
+        return None
 
     def create_default_project_config_file(self) -> File:
         """Creates the default project configuration file.
@@ -470,20 +508,18 @@ class ConfigurationManager:
             self._cache_enabled = self._mode == ApplicationMode.PRODUCTION
 
     def _load_user_config(self):
-        config_dir = self._get_user_config_base()
-        for config_file in self._get_all_file_permutations(("user", "User")):
-            config_file = config_dir / File(config_file)
-            LOG.d("Trying user configuration file '%s'", config_file)
-            if config_file.is_regular_file():
-                LOG.d(
-                    "Loading found user configuration file '%s'",
-                    config_file
-                )
-                return ConfigurationLoader(
-                    UserConfiguration, LOG, enable_validation=True
-                ).load(config_file)
+        config_file = self.find_user_config_file()
+        if config_file is not None:
+            LOG.d(
+                "Loading found user configuration file '%s'",
+                config_file
+            )
+            return ConfigurationLoader(
+                UserConfiguration, LOG, enable_validation=True
+            ).load(config_file)
 
         if self._mode == ApplicationMode.DEVELOPMENT:
+            config_dir = self._get_user_config_base()
             LOG.d("[DEVELOPMENT MODE] Storing user config file for testing")
             devel_config = self._create_default_devel_user_config()
             config_dir.create_directory_tree()
@@ -540,21 +576,15 @@ class ConfigurationManager:
         return File(home_dir) / File(".config") / File(APPLICATION_PROJECT_ID)
 
     def _load_project_config(self):
-        project_directory = self.get_default_project_config_file()
-        for config_file in self._get_all_file_permutations(
-            ConfigurationManager.FILE_NAMES
-        ):
-            config_file = project_directory.get_parent_directory() / File(
+        config_file = self.find_project_config_file()
+        if config_file is not None:
+            LOG.d(
+                "Loading found project configuration from file '%s'",
                 config_file
             )
-            if config_file.is_regular_file():
-                LOG.d(
-                    "Loading found project configuration from file '%s'",
-                    config_file
-                )
-                return ConfigurationLoader(
-                    ProjectConfiguration, LOG, enable_validation=True
-                ).load(config_file)
+            return ConfigurationLoader(
+                ProjectConfiguration, LOG, enable_validation=True
+            ).load(config_file)
 
         LOG.w("No project configuration file found")
         return Configuration()

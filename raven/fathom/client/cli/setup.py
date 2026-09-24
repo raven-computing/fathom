@@ -98,28 +98,28 @@ class SetupCommand(Command):
         cm.load_configs(self.args)
 
         if self.args.setup_command == "user":
-            config_file = cm.get_default_user_config_file()
-            if cm.has_user_config_file():
+            config_file = cm.find_user_config_file()
+            if config_file is not None:
                 LOG.i(
                     "User configuration file already exists: '%s'",
                     config_file,
                 )
                 return ExitStatus.SUCCESS
 
-            cm.create_default_user_config_file()
+            config_file = cm.create_default_user_config_file()
             LOG.i("Created user configuration file '%s'", config_file)
             return ExitStatus.SUCCESS
 
         if self.args.setup_command == "project":
-            config_file = cm.get_default_project_config_file()
-            if cm.has_project_config_file():
+            config_file = cm.find_project_config_file()
+            if config_file is not None:
                 LOG.i(
                     "Project configuration file already exists: '%s'",
                     config_file,
                 )
                 return ExitStatus.SUCCESS
 
-            cm.create_default_project_config_file()
+            config_file = cm.create_default_project_config_file()
             LOG.i("Created project configuration file '%s'", config_file)
             return ExitStatus.SUCCESS
 

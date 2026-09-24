@@ -60,6 +60,33 @@ class TestClientUserConfigSetup(TestCase):
             "User configuration file already exists"
         )
 
+    def test_setup_config_user_detects_alternate_config_filename(self):
+        default_config_file = self.client.get_user_configuration_file()
+        alternate_file = (
+            default_config_file.get_parent_directory() / "User.config"
+        )
+        existing_config = UserConfiguration.default_configuration()
+        existing_config[UserConfiguration.USER.USERNAME] = "alternate-user"
+        alternate_file.get_parent_directory().create_directory_tree()
+        ConfigurationLoader(UserConfiguration).store(
+            existing_config,
+            alternate_file,
+        )
+
+        self.client.execute("setup", "config", "user")
+
+        self.assertClientSuccess()
+        self.assertFalse(default_config_file.exists())
+        self.assertTrue(alternate_file.is_regular_file())
+        config = ConfigurationLoader(UserConfiguration).load(alternate_file)
+        self.assertEqual(
+            "alternate-user",
+            config[UserConfiguration.USER.USERNAME],
+        )
+        self.assertClientStdoutContains(
+            "User configuration file already exists"
+        )
+
 
 class TestClientProjectConfigSetup(TestCase):
     """Functionality tests for client project config setup command."""
@@ -93,6 +120,33 @@ class TestClientProjectConfigSetup(TestCase):
         config = ConfigurationLoader(ProjectConfiguration).load(config_file)
         self.assertEqual(
             "Sentinel Name",
+            config[ProjectConfiguration.PROJECT.NAME],
+        )
+        self.assertClientStdoutContains(
+            "Project configuration file already exists"
+        )
+
+    def test_setup_config_project_detects_alternate_config_filename(self):
+        default_config_file = self.client.get_project_configuration_file()
+        alternate_file = (
+            default_config_file.get_parent_directory() / "docs/.fathom.config"
+        )
+        existing_config = ProjectConfiguration.default_configuration()
+        existing_config[ProjectConfiguration.PROJECT.NAME] = "Alt Project"
+        alternate_file.get_parent_directory().create_directory_tree()
+        ConfigurationLoader(ProjectConfiguration).store(
+            existing_config,
+            alternate_file,
+        )
+
+        self.client.execute("setup", "config", "project")
+
+        self.assertClientSuccess()
+        self.assertFalse(default_config_file.exists())
+        self.assertTrue(alternate_file.is_regular_file())
+        config = ConfigurationLoader(ProjectConfiguration).load(alternate_file)
+        self.assertEqual(
+            "Alt Project",
             config[ProjectConfiguration.PROJECT.NAME],
         )
         self.assertClientStdoutContains(

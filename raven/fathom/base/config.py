@@ -857,6 +857,14 @@ class ConfigurationSection:
 
         self._configs[key.name] = raw_value
 
+    def _comparison_key(self):
+        return (
+            self.name,
+            self.key.is_repeatable,
+            self.sequence_number,
+            frozenset(self._configs.items())
+        )
+
     def __len__(self):
         """Returns the number of key-value pairs in this section."""
         return len(self._configs)
@@ -879,6 +887,21 @@ class ConfigurationSection:
     def __contains__(self, key: ConfigurationKey):
         """Same as `rhs.contains(lhs)`."""
         return self.contains(key)
+
+    def __eq__(self, other):
+        if not isinstance(other, ConfigurationSection):
+            raise TypeError(
+                "Cannot compare ConfigurationSection instance "
+                f"with object of type {type(other)}"
+            )
+
+        return self._comparison_key() == other._comparison_key()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self._comparison_key())
 
 
 class Configuration:
@@ -1293,6 +1316,9 @@ class Configuration:
 
         raise missing_config_exception(msg) from None
 
+    def _comparison_key(self):
+        return frozenset(self._sections)
+
     def __len__(self):
         """Returns the number of sections in this configuration."""
         return len(self._sections)
@@ -1350,6 +1376,21 @@ class Configuration:
     ) -> bool:
         """Same as `rhs.contains(lhs)`."""
         return self.contains(key)
+
+    def __eq__(self, other):
+        if not isinstance(other, Configuration):
+            raise TypeError(
+                "Cannot compare Configuration instance "
+                f"with object of type {type(other)}"
+            )
+
+        return self._comparison_key() == other._comparison_key()
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self._comparison_key())
 
 
 class ConfigurationLoader:

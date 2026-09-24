@@ -607,6 +607,41 @@ class TestConfigurationSection(TestCase):
         self.assertEqual(clone.sequence_number, 7)
         self.assertEqual(clone.raw_value_of(key), str(value))
 
+    def test_section_equality_ignores_key_value_insertion_order(self):
+        section_1 = ConfigurationSection(self.section_key)
+        section_1.set_value(self.config_key_a, "value-a")
+        section_1.set_value(self.config_key_b, True)
+
+        section_2 = ConfigurationSection(self.section_key)
+        section_2.set_value(self.config_key_b, True)
+        section_2.set_value(self.config_key_a, "value-a")
+
+        self.assertEqual(section_1, section_2)
+        self.assertFalse(section_1 != section_2)
+        self.assertEqual(hash(section_1), hash(section_2))
+
+    def test_section_inequality_detects_different_content(self):
+        section_1 = ConfigurationSection(self.section_key)
+        section_1.set_value(self.config_key_a, "value-a")
+
+        section_2 = ConfigurationSection(self.section_key)
+        section_2.set_value(self.config_key_a, "value-b")
+
+        self.assertNotEqual(section_1, section_2)
+        self.assertTrue(section_1 != section_2)
+
+    def test_section_inequality_detects_different_sequence_number(self):
+        section_key = FakeTestConfig.SECTION_C
+        key = FakeTestConfig.SECTION_C.CONFIG_KEY_A
+
+        section_1 = ConfigurationSection(section_key, sequence_number=1)
+        section_1.set_value(key, File("/tmp/testfile"))
+
+        section_2 = ConfigurationSection(section_key, sequence_number=2)
+        section_2.set_value(key, File("/tmp/testfile"))
+
+        self.assertNotEqual(section_1, section_2)
+
     def test_section_to_string(self):
         section = ConfigurationSection(self.section_key)
         key = self.config_key_a
@@ -1247,6 +1282,52 @@ class TestConfiguration(TestCase):
             copied_sections[1].raw_value_of(key),
             str(File("/tmp/file2"))
         )
+
+    def test_configuration_equality_ignores_section_order(self):
+        config_1 = Configuration()
+        config_1.add_section(self.section_1.copy())
+        config_1.add_section(self.section_2.copy())
+
+        config_2 = Configuration()
+        config_2.add_section(self.section_2.copy())
+        config_2.add_section(self.section_1.copy())
+
+        self.assertEqual(config_1, config_2)
+        self.assertFalse(config_1 != config_2)
+        self.assertEqual(hash(config_1), hash(config_2))
+
+    def test_configuration_inequality_detects_different_sections(self):
+        config_1 = Configuration()
+        config_1.add_section(self.section_1.copy())
+
+        config_2 = Configuration()
+        config_2.add_section(self.section_2.copy())
+
+        self.assertNotEqual(config_1, config_2)
+        self.assertTrue(config_1 != config_2)
+
+    def test_configuration_equality_handles_repeatable_sections(self):
+        section_key = FakeTestConfig.SECTION_C
+        key = FakeTestConfig.SECTION_C.CONFIG_KEY_A
+
+        config_1 = Configuration()
+        section_1a = ConfigurationSection(section_key, sequence_number=1)
+        section_1a.set_value(key, File("/tmp/file1"))
+        section_1b = ConfigurationSection(section_key, sequence_number=2)
+        section_1b.set_value(key, File("/tmp/file2"))
+        config_1.add_section(section_1a)
+        config_1.add_section(section_1b)
+
+        config_2 = Configuration()
+        section_2b = ConfigurationSection(section_key, sequence_number=2)
+        section_2b.set_value(key, File("/tmp/file2"))
+        section_2a = ConfigurationSection(section_key, sequence_number=1)
+        section_2a.set_value(key, File("/tmp/file1"))
+        config_2.add_section(section_2b)
+        config_2.add_section(section_2a)
+
+        self.assertEqual(config_1, config_2)
+        self.assertEqual(hash(config_1), hash(config_2))
 
     def test_configuration_to_string(self):
         config = Configuration()

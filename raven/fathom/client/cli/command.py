@@ -97,4 +97,5 @@ def run(command: Command | None) -> ExitStatus:
             command.name
         )
         LOG.e(str(ex))
+        LOG.d("Caught %s", type(ex).__name__, exc_info=True)
         return ExitStatus.INTERNAL_ERROR

@@ -667,6 +667,38 @@ class TestConfigurationSection(TestCase):
             "my.config.key.a=some-string-value\n\n"
         )
 
+    def test_section_to_string_includes_missing_values(self):
+        section = ConfigurationSection(FakeTestConfig.SECTION_B)
+
+        string = section.to_string(include_missing=True)
+
+        self.assertEqual(
+            string,
+            "[My-Section-B]\n\n"
+            "#my.config.key.a=42\n"
+            "#my.config.key.b=my_default_value\n\n"
+        )
+
+    def test_section_to_string_with_comments_and_missing_values(self):
+        section = ConfigurationSection(FakeTestConfig.SECTION_B)
+        key = FakeTestConfig.SECTION_B.CONFIG_KEY_A
+        section.set_value(key, 123)
+
+        string = section.to_string(
+            include_descriptions=True,
+            include_missing=True
+        )
+
+        self.assertEqual(
+            string,
+            "[My-Section-B]\n"
+            "# Description for My-Section-B\n\n"
+            "# Description for my.config.key.a\n"
+            "my.config.key.a=123\n"
+            "# Description for my.config.key.b\n"
+            "#my.config.key.b=my_default_value\n\n"
+        )
+
     def test_section_to_string_with_long_comments_and_line_wrap(self):
         char_a = "A "
         char_b = "B "
@@ -1367,6 +1399,23 @@ class TestConfiguration(TestCase):
             "my.config.key.a=123\n\n\n"
         )
 
+    def test_configuration_to_string_includes_missing_values(self):
+        config = Configuration()
+        config.add_section(self.section_1)
+        config.add_section(ConfigurationSection(FakeTestConfig.SECTION_B))
+
+        string = config.to_string(include_missing=True)
+
+        self.assertEqual(
+            string,
+            "[My-Section-A]\n\n"
+            "my.config.key.a=/testing/my/work/dir\n"
+            "#my.config.key.b=\n\n"
+            "[My-Section-B]\n\n"
+            "#my.config.key.a=42\n"
+            "#my.config.key.b=my_default_value\n\n\n"
+        )
+
     def test_len(self):
         config = Configuration()
         self.assertEqual(len(config), 0)
@@ -1532,6 +1581,24 @@ class TestConfigurationLoader(TestCase):
         result = loader.write(config)
         self.assertIsInstance(result, str)
         self.assertIn("[My-Section-A]", result)
+
+    def test_write_includes_missing_values_when_enabled(self):
+        loader = ConfigurationLoader(FakeTestConfig, include_missing=True)
+        config = Configuration()
+        config.add_section(ConfigurationSection(FakeTestConfig.SECTION_B))
+
+        result = loader.write(config)
+
+        self.assertEqual(
+            result,
+            "[My-Section-B]\n"
+            "# Description for My-Section-B\n\n"
+            "# Description for my.config.key.a\n"
+            "#my.config.key.a=42\n"
+            "\n"
+            "# Description for my.config.key.b\n"
+            "#my.config.key.b=my_default_value\n\n\n"
+        )
 
     def test_store_wraps_file_io_exception(self):
         loader = ConfigurationLoader()

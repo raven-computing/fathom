@@ -744,13 +744,19 @@ class ConfigurationSection:
         section._configs = self._configs.copy()
         return section
 
-    def to_string(self, include_descriptions: bool = False) -> str:
+    def to_string(
+        self,
+        include_descriptions: bool = False,
+        include_missing: bool = False
+    ) -> str:
         """Creates a string representing this configuration section.
 
         Args:
             include_descriptions (bool): Whether to include the section and
                 key descriptions if that information is being provided by
                 the corresponding key declaration.
+            include_missing (bool): Whether to include absent values as
+                a commented-out entry.
 
         Returns:
             str: A string containing the data of this section
@@ -767,28 +773,47 @@ class ConfigurationSection:
             buffer.write(f"# {descr}\n")
 
         buffer.write("\n")
-        keys = self._key.all_keys()
+        # Use list instead of set to preserve key declaration order
+        keys = list(self._key.all_keys())
         i = 0
         for key, value in self:
+            key_obj = self._map_key_str_to_obj(keys, key)
             if include_descriptions:
-                self._add_description(buffer, key, keys, i > 0)
+                self._add_description(buffer, key_obj, i > 0)
 
             buffer.write(f"{key}={value}\n")
+            if key_obj:
+                keys.remove(key_obj)
+
             i += 1
+
+        if include_missing:
+            i = 0
+            for key in keys:
+                if include_descriptions:
+                    self._add_description(buffer, key, i > 0)
+
+                default_value = ""
+                if key.default_value is not None:
+                    default_value = self._convert_to_raw(key.default_value)
+
+                buffer.write(f"#{key.name}={default_value}\n")
+
+                i += 1
 
         buffer.write("\n")
         return buffer.getvalue()
 
-    def _add_description(self, buffer, key, config_keys, extra_nl):
-        key_obj = [k for k in config_keys if k.name == key]
-        if len(key_obj) == 1:
-            key_obj = key_obj[0]
-            if key_obj.description:
-                if extra_nl:
-                    buffer.write("\n")
+    def _map_key_str_to_obj(self, keys, key):
+        return next(filter(lambda k: k.name == key, keys), None)
 
-                descr = self._wrap_lines(key_obj.description)
-                buffer.write(f"# {descr}\n")
+    def _add_description(self, buffer, key_obj, extra_nl):
+        if key_obj and key_obj.description:
+            if extra_nl:
+                buffer.write("\n")
+
+            descr = self._wrap_lines(key_obj.description)
+            buffer.write(f"# {descr}\n")
 
     def _wrap_lines(self, text):
         """Wraps the given text into lines with a maximum length."""
@@ -1290,7 +1315,11 @@ class Configuration:
 
         return config
 
-    def to_string(self, include_descriptions: bool = False) -> str:
+    def to_string(
+        self,
+        include_descriptions: bool = False,
+        include_missing: bool = False
+    ) -> str:
         """Returns a string representation of this configuration.
 
         Args:
@@ -1298,6 +1327,8 @@ class Configuration:
                 sections and configuration keys in the string representation
                 if that information is being provided by the corresponding
                 key declaration.
+            include_missing (bool): Whether to include absent values as
+                a commented-out entry.
 
         Returns:
             str: A string containing the data of this `Configuration` object
@@ -1305,7 +1336,9 @@ class Configuration:
         """
         buffer = StringIO()
         for section in self:
-            buffer.write(section.to_string(include_descriptions))
+            buffer.write(
+                section.to_string(include_descriptions, include_missing)
+            )
 
         buffer.write("\n")
         return buffer.getvalue()
@@ -1405,7 +1438,8 @@ class ConfigurationLoader:
         definition: Optional[Type[ConfigurationDefinition]] = None,
         logger: Optional[Logger] = None,
         log_level: LogLevel = LogLevel.WARNING,
-        enable_validation: bool = False
+        enable_validation: bool = False,
+        include_missing: bool = False
     ):
         """Initialize a new `ConfigurationLoader` instance.
 
@@ -1420,11 +1454,14 @@ class ConfigurationLoader:
                 configuration values against the key definition. If this is
                 disabled, then a malformed config value will cause an exception
                 to be raised when it is first accessed.
+            include_missing (bool): Whether to include absent values as
+                commented-out entries when storing to a configuration file.
         """
         self._definition = definition
         self._logger = logger
         self._log_level = log_level
         self._enable_validation = enable_validation
+        self._include_missing = include_missing
         self._known_section_keys = None
         if self._definition is not None:
             self._known_section_keys = {
@@ -1495,7 +1532,10 @@ class ConfigurationLoader:
         Raises:
             ConfigurationWriteException: If the configuration cannot be stored.
         """
-        return config.to_string(include_descriptions=True)
+        return config.to_string(
+            include_descriptions=True,
+            include_missing=self._include_missing
+        )
 
     def _read_config_from_file(self, file):
         """Reads the given text file and creates a configuration from it."""

@@ -472,7 +472,7 @@ class ConfigurationManager:
             ConfigurationWriteException: If the file cannot be written.
         """
         config_file = self.get_default_project_config_file()
-        ConfigurationLoader(ProjectConfiguration).store(
+        ConfigurationLoader(ProjectConfiguration, include_missing=True).store(
             ProjectConfiguration.default_configuration(),
             config_file,
         )

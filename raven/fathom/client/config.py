@@ -407,7 +407,7 @@ class ConfigurationManager:
         self._check_mode()
         config_file = self.get_default_user_config_file()
         config_file.get_parent_directory().create_directory_tree()
-        ConfigurationLoader(UserConfiguration).store(
+        ConfigurationLoader(UserConfiguration, include_missing=True).store(
             UserConfiguration.default_configuration(),
             config_file,
         )

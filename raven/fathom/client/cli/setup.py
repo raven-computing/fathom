@@ -95,7 +95,6 @@ class SetupCommand(Command):
 
     def _setup_config(self):
         cm = ConfigurationManager()
-        cm.load_configs(self.args)
 
         if self.args.setup_command == "user":
             config_file = cm.find_user_config_file()

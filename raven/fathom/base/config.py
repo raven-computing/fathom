@@ -773,35 +773,44 @@ class ConfigurationSection:
             buffer.write(f"# {descr}\n")
 
         buffer.write("\n")
-        # Use list instead of set to preserve key declaration order
-        keys = list(self._key.all_keys())
+        # Keep the declaration order defined on the section key class.
+        keys = self._key.all_keys()
+        written_keys = set()
         i = 0
-        for key, value in self:
-            key_obj = self._map_key_str_to_obj(keys, key)
+        for key_obj in keys:
+            marker = ""
+            value = self.raw_value_of(key_obj)
+            if include_missing and value is None:
+                if key_obj.default_value is not None:
+                    value = self._convert_to_raw(key_obj.default_value)
+                else:
+                    marker = "#"
+
+            if not include_missing and value is None:
+                continue
+
+            if value is None:
+                value = ""
+
             if include_descriptions:
                 self._add_description(buffer, key_obj, i > 0)
 
-            buffer.write(f"{key}={value}\n")
-            if key_obj:
-                keys.remove(key_obj)
-
+            buffer.write(f"{marker}{key_obj.name}={value}\n")
+            written_keys.add(key_obj.name)
             i += 1
 
-        if include_missing:
-            i = 0
-            for key in keys:
-                if include_descriptions:
-                    self._add_description(buffer, key, i > 0)
-
-                default_value = ""
-                if key.default_value is not None:
-                    default_value = self._convert_to_raw(key.default_value)
-
-                buffer.write(f"#{key.name}={default_value}\n")
-
-                i += 1
-
         buffer.write("\n")
+        any_extra = False
+        for key, value in self:
+            if key in written_keys:
+                continue
+
+            buffer.write(f"{key}={value}\n")
+            any_extra = True
+
+        if any_extra:
+            buffer.write("\n")
+
         return buffer.getvalue()
 
     def _map_key_str_to_obj(self, keys, key):

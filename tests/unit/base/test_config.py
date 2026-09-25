@@ -653,6 +653,23 @@ class TestConfigurationSection(TestCase):
             "[My-Section-A]\n\nmy.config.key.a=/testing/my/work-dir\n\n"
         )
 
+    def test_section_to_string_respects_key_definition_order(self):
+        section = ConfigurationSection(FakeTestConfig.SECTION_A)
+        section.set_value(FakeTestConfig.SECTION_A.CONFIG_KEY_B, True)
+        section.set_value(
+            FakeTestConfig.SECTION_A.CONFIG_KEY_A,
+            "/testing/my/work-dir"
+        )
+
+        string = section.to_string()
+
+        self.assertEqual(
+            string,
+            "[My-Section-A]\n\n"
+            "my.config.key.a=/testing/my/work-dir\n"
+            "my.config.key.b=true\n\n"
+        )
+
     def test_section_to_string_with_comments(self):
         section = ConfigurationSection(FakeTestConfig.SECTION_B)
         key = FakeTestConfig.SECTION_B.CONFIG_KEY_A
@@ -675,8 +692,8 @@ class TestConfigurationSection(TestCase):
         self.assertEqual(
             string,
             "[My-Section-B]\n\n"
-            "#my.config.key.a=42\n"
-            "#my.config.key.b=my_default_value\n\n"
+            "my.config.key.a=42\n"
+            "my.config.key.b=my_default_value\n\n"
         )
 
     def test_section_to_string_with_comments_and_missing_values(self):
@@ -694,9 +711,9 @@ class TestConfigurationSection(TestCase):
             "[My-Section-B]\n"
             "# Description for My-Section-B\n\n"
             "# Description for my.config.key.a\n"
-            "my.config.key.a=123\n"
+            "my.config.key.a=123\n\n"
             "# Description for my.config.key.b\n"
-            "#my.config.key.b=my_default_value\n\n"
+            "my.config.key.b=my_default_value\n\n"
         )
 
     def test_section_to_string_with_long_comments_and_line_wrap(self):
@@ -1412,8 +1429,8 @@ class TestConfiguration(TestCase):
             "my.config.key.a=/testing/my/work/dir\n"
             "#my.config.key.b=\n\n"
             "[My-Section-B]\n\n"
-            "#my.config.key.a=42\n"
-            "#my.config.key.b=my_default_value\n\n\n"
+            "my.config.key.a=42\n"
+            "my.config.key.b=my_default_value\n\n\n"
         )
 
     def test_len(self):
@@ -1594,10 +1611,10 @@ class TestConfigurationLoader(TestCase):
             "[My-Section-B]\n"
             "# Description for My-Section-B\n\n"
             "# Description for my.config.key.a\n"
-            "#my.config.key.a=42\n"
+            "my.config.key.a=42\n"
             "\n"
             "# Description for my.config.key.b\n"
-            "#my.config.key.b=my_default_value\n\n\n"
+            "my.config.key.b=my_default_value\n\n\n"
         )
 
     def test_store_wraps_file_io_exception(self):

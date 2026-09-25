@@ -329,9 +329,19 @@ class Logger:
         if self._level >= LogLevel.VERBOSE:
             self._log.info(message, *args, **kwargs)
 
+    @overload
+    def d(self, message: Exception, *args, **kwargs):
+        ...
+    @overload
     def d(self, message: str, *args, **kwargs):
+        ...
+    def d(self, message, *args, **kwargs):
         """Logs a message with level DEBUG."""
-        self._log.debug(message, *args, **kwargs)
+        self._log.debug(
+            message,
+            *args,
+            **kwargs,
+        )
 
     def log(self, level: LogLevel, message: str, *args, **kwargs):
         """Logs a message with the specified log level.

@@ -407,8 +407,13 @@ class ConfigurationManager:
         self._check_mode()
         config_file = self.get_default_user_config_file()
         config_file.get_parent_directory().create_directory_tree()
+        default_config = (
+            self._create_default_devel_user_config()
+            if self._mode == ApplicationMode.DEVELOPMENT
+            else UserConfiguration.default_configuration()
+        )
         ConfigurationLoader(UserConfiguration, include_missing=True).store(
-            UserConfiguration.default_configuration(),
+            default_config,
             config_file,
         )
         return config_file
@@ -518,21 +523,11 @@ class ConfigurationManager:
                 UserConfiguration, LOG, enable_validation=True
             ).load(config_file)
 
-        if self._mode == ApplicationMode.DEVELOPMENT:
-            config_dir = self._get_user_config_base()
-            LOG.d("[DEVELOPMENT MODE] Storing user config file for testing")
-            devel_config = self._create_default_devel_user_config()
-            config_dir.create_directory_tree()
-            ConfigurationLoader(UserConfiguration).store(
-                devel_config,
-                config_dir / File("user.cfg")
-            )
-        else:
-            LOG.d(
-                "No user configuration file found in known places. "
-                "Falling back to empty configuration object "
-                "with default values"
-            )
+        LOG.d(
+            "No user configuration file found in known places. "
+            "Falling back to empty configuration object "
+            "with default values"
+        )
 
         return Configuration()
 

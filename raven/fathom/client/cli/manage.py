@@ -49,9 +49,14 @@ class ManageCommand(Command):
     def _manage(self):
         config = ConfigurationManager()
         user_config = config.get_user_config()
+        project_config = config.get_project_config()
         server = Server(
             load_management_server_locator(self.args, user_config),
-            load_client_authentication(self.args, user_config),
+            load_client_authentication(
+                self.args,
+                user_config,
+                project_config
+            ),
         )
 
         if self.args.manage_subject == "user":

@@ -90,7 +90,7 @@ class FathomDeployment:
     def __init__(self, location: ServerLocator):
         """Initializes a new `FathomDeployment` instance.
 
-        The created instance is empty, i.e it has no deployment resource set.
+        The created instance is empty, i.e. it has no deployment resource set.
         """
         TypeCheck.require_arg(location, ServerLocator)
         self._location = location

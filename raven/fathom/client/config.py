@@ -49,25 +49,6 @@ class UserConfigurationSection(ConfigurationSectionKey):
         description="Enable or disable logging to a user-specific file."
     )
 
-    USERNAME = ConfigurationKey[str](
-        "username", str,
-        description=(
-            "The username to use when authenticating to the Fathom server "
-            "and there is no username set in the specific server "
-            "configuration entry."
-        )
-    )
-
-    PASSWORD = ConfigurationKey[str](
-        "password", str,
-        description=(
-            "The password to use when authenticating to the Fathom server "
-            "and there is no password set in the specific server "
-            "configuration entry. Leave empty to be prompted for the password "
-            "interactively when using the client."
-        )
-    )
-
 
 class ServerConfigurationSection(ConfigurationSectionKey):
     """Definition of configuration keys within the server config section."""
@@ -86,12 +67,20 @@ class ServerConfigurationSection(ConfigurationSectionKey):
 
     USERNAME = ConfigurationKey[str](
         "username", str,
-        description="The username to use when connecting to the server."
+        description=(
+            "The username to use when connecting to the server. "
+            "Leave empty to be prompted for the username interactively "
+            "when using a client command that requires authentication."
+        )
     )
 
     PASSWORD = ConfigurationKey[str](
         "password", str,
-        description="The password to use when authenticating to the server."
+        description=(
+            "The password to use when authenticating to the Fathom server. "
+            "Leave empty to be prompted for the password interactively "
+            "when using a client command that requires authentication."
+        )
     )
 
     PORT = ConfigurationKey[int](
@@ -533,15 +522,17 @@ class ConfigurationManager:
 
     def _create_default_devel_user_config(self):
         devel_config = UserConfiguration.default_configuration()
-        server = devel_config.get_section(UserConfiguration.SERVER)
+        server = devel_config.get_repeatable_sections(
+            UserConfiguration.SERVER
+        )[0]
         server[UserConfiguration.SERVER.NAME] = (
                 "Local Development Server"
             )
         server[UserConfiguration.SERVER.DOMAIN] = "localhost"
         server[UserConfiguration.SERVER.PORT] = 8080
         server[UserConfiguration.SERVER.TRANSPORT_SECURE] = False
-        devel_config[UserConfiguration.USER.USERNAME] = "alpha"
-        devel_config[UserConfiguration.USER.PASSWORD] = "alpha"
+        server[UserConfiguration.SERVER.USERNAME] = "alpha"
+        server[UserConfiguration.SERVER.PASSWORD] = "alpha"
         return devel_config
 
     def _get_user_config_base(self):

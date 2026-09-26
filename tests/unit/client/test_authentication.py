@@ -22,7 +22,7 @@ from raven.fathom.client.authentication import (
     ENVIRONMENT_VARIABLE_USER_NAME,
     ENVIRONMENT_VARIABLE_USER_PASSWORD
 )
-from raven.fathom.client.config import UserConfiguration
+from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.cli.arguments import ArgumentsCLI
 
 from tests.unit import TestCase
@@ -41,19 +41,35 @@ class TestClientAuthentication(TestCase):
             password=self.user_password_cli
         )
         # User data from user configuration file
+        self.server_name = "Primary"
         self.user_name_config = "TestUserConfig"
         self.user_password_config = "TestPasswordConfig"
-        user_config = ConfigurationSection(UserConfiguration.USER)
-        user_config.set_value(
-            UserConfiguration.USER.USERNAME,
+        user_server = ConfigurationSection(
+            UserConfiguration.SERVER,
+            sequence_number=1
+        )
+        user_server.set_value(
+            UserConfiguration.SERVER.NAME,
+            self.server_name
+        )
+        user_server.set_value(
+            UserConfiguration.SERVER.USERNAME,
             self.user_name_config
         )
-        user_config.set_value(
-            UserConfiguration.USER.PASSWORD,
+        user_server.set_value(
+            UserConfiguration.SERVER.PASSWORD,
             self.user_password_config
         )
         self.user_config = Configuration()
-        self.user_config.add_section(user_config)
+        self.user_config.add_section(user_server)
+        # Server data from project configuration file
+        self.project_config = Configuration()
+        self.project_server = ConfigurationSection(ProjectConfiguration.SERVER)
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.NAME,
+            self.server_name
+        )
+        self.project_config.add_section(self.project_server)
         # User data from environment variables
         self.user_name_env = "TestUserEnvVar"
         self.user_password_env = "TestPasswordEnvVar"
@@ -69,28 +85,100 @@ class TestClientAuthentication(TestCase):
         test_input.inputs.append(self.user_name_in)
         test_input.inputs.append(self.user_password_in)
 
-    def test_returns_auth_from_config(self):
+    def test_returns_auth_from_user_config_when_project_server_matches(self):
         TestEnvironment.instance().env_vars.clear()
-        auth = load_client_authentication(ArgumentsCLI(), self.user_config)
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            self.user_config,
+            self.project_config
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_config)
         self.assertEqual(auth.password, self.user_password_config)
 
-    def test_env_overrides_config(self):
-        auth = load_client_authentication(ArgumentsCLI(), self.user_config)
+    def test_returns_auth_from_project_config(self):
+        TestEnvironment.instance().env_vars.clear()
+        project_user_name_config = "TestProjectUsernameConfig"
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.USERNAME,
+            project_user_name_config
+        )
+
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            self.user_config,
+            self.project_config
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, project_user_name_config)
+        self.assertEqual(auth.password, self.user_password_config)
+
+    def test_project_config_overrides_matching_user_server_values(self):
+        TestEnvironment.instance().env_vars.clear()
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.USERNAME,
+            "ProjectUser"
+        )
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.PASSWORD,
+            "ProjectPassword"
+        )
+
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            self.user_config,
+            self.project_config
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, "ProjectUser")
+        self.assertEqual(auth.password, "ProjectPassword")
+
+    def test_project_config_missing_password_falls_back_to_user_server(self):
+        TestEnvironment.instance().env_vars.clear()
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.USERNAME,
+            "ProjectUser"
+        )
+
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            self.user_config,
+            self.project_config
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, "ProjectUser")
+        self.assertEqual(auth.password, self.user_password_config)
+
+    def test_env_overrides_project_and_user_config(self):
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            self.user_config,
+            self.project_config
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_env)
         self.assertEqual(auth.password, self.user_password_env)
 
     def test_cli_overrides_env_and_config(self):
-        auth = load_client_authentication(self.cli_args, self.user_config)
+        auth = load_client_authentication(
+            self.cli_args,
+            self.user_config,
+            self.project_config
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_cli)
         self.assertEqual(auth.password, self.user_password_cli)
 
     def test_returns_auth_with_all_sources_none_prompts_user(self):
         TestEnvironment.instance().env_vars.clear()
-        auth = load_client_authentication(ArgumentsCLI(), Configuration())
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            Configuration(),
+            Configuration()
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_in)
         self.assertEqual(auth.password, self.user_password_in)
@@ -98,7 +186,11 @@ class TestClientAuthentication(TestCase):
     def test_prompt_only_for_missing_user_name(self):
         env = TestEnvironment.instance()
         env.env_vars[ENVIRONMENT_VARIABLE_USER_NAME] = ""
-        auth = load_client_authentication(ArgumentsCLI(), Configuration())
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            Configuration(),
+            Configuration()
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_in)
         self.assertEqual(auth.password, self.user_password_env)
@@ -108,7 +200,11 @@ class TestClientAuthentication(TestCase):
         SystemInputPromptMock.instance().inputs.reverse()
         env = TestEnvironment.instance()
         env.env_vars[ENVIRONMENT_VARIABLE_USER_PASSWORD] = ""
-        auth = load_client_authentication(ArgumentsCLI(), Configuration())
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            Configuration(),
+            Configuration()
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, self.user_name_env)
         self.assertEqual(auth.password, self.user_password_in)
@@ -116,7 +212,11 @@ class TestClientAuthentication(TestCase):
     def test_no_auth_provided_returns_empty_auth(self):
         TestEnvironment.instance().env_vars.clear()
         SystemInputPromptMock.instance().inputs.clear()
-        auth = load_client_authentication(ArgumentsCLI(), Configuration())
+        auth = load_client_authentication(
+            ArgumentsCLI(),
+            Configuration(),
+            Configuration()
+        )
         self.assertIsInstance(auth, ClientAuthentication)
         self.assertEqual(auth.username, "")
         self.assertEqual(auth.password, "")

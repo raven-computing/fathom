@@ -44,16 +44,21 @@ class TestClientUserConfigSetup(TestCase):
     def test_setup_config_user_keeps_existing_file(self):
         config_file = self.client.get_user_configuration_file()
         existing_config = UserConfiguration.default_configuration()
-        existing_config[UserConfiguration.USER.USERNAME] = "sentinel-user"
+        existing_config.get_repeatable_sections(
+            UserConfiguration.SERVER
+        )[0].set_value(UserConfiguration.SERVER.USERNAME, "sentinel-user")
         self.client.save_user_configuration(existing_config)
 
         self.client.execute("setup", "config", "user")
 
         self.assertClientSuccess()
-        config = self.client.load_configuration(UserConfiguration, config_file)
+        config = self.client.load_configuration(
+            UserConfiguration,
+            config_file
+        ).get_repeatable_sections(UserConfiguration.SERVER)[0]
         self.assertEqual(
             "sentinel-user",
-            config[UserConfiguration.USER.USERNAME],
+            config[UserConfiguration.SERVER.USERNAME],
         )
         self.assertClientStdoutContains(
             "User configuration file already exists"
@@ -65,7 +70,9 @@ class TestClientUserConfigSetup(TestCase):
             default_config_file.get_parent_directory() / "User.config"
         )
         existing_config = UserConfiguration.default_configuration()
-        existing_config[UserConfiguration.USER.USERNAME] = "alternate-user"
+        existing_config.get_repeatable_sections(
+            UserConfiguration.SERVER
+        )[0].set_value(UserConfiguration.SERVER.USERNAME, "alternate-user")
         self.client.save_configuration(existing_config, alternate_file)
 
         self.client.execute("setup", "config", "user")
@@ -76,10 +83,10 @@ class TestClientUserConfigSetup(TestCase):
         config = self.client.load_configuration(
             UserConfiguration,
             alternate_file
-        )
+        ).get_repeatable_sections(UserConfiguration.SERVER)[0]
         self.assertEqual(
             "alternate-user",
-            config[UserConfiguration.USER.USERNAME],
+            config[UserConfiguration.SERVER.USERNAME],
         )
         self.assertClientStdoutContains(
             "User configuration file already exists"

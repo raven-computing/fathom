@@ -81,7 +81,11 @@ class DeployCommand(Command):
 
         deployment = FathomDeployment(location)
         deployment.use_authentication(
-            load_client_authentication(self.args, config.get_user_config())
+            load_client_authentication(
+                self.args,
+                config.get_user_config(),
+                config.get_project_config()
+            )
         )
         deployment.set_project(project)
         deployment.add_resource(docs)

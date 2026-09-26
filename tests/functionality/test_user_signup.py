@@ -54,8 +54,8 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
         )
 
         new_user_config = self.configuration_user
-        new_user_config[UserConfiguration.USER.USERNAME] = "new-user"
-        new_user_config[UserConfiguration.USER.PASSWORD] = "new-password"
+        new_user_config[UserConfiguration.SERVER.USERNAME] = "new-user"
+        new_user_config[UserConfiguration.SERVER.PASSWORD] = "new-password"
         self.client.save_user_configuration(new_user_config)
 
         self.client.execute("deploy")

@@ -75,8 +75,8 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
     def test_non_admin_client_is_rejected(self):
         config = self.configuration_user
-        config[UserConfiguration.USER.USERNAME] = "test-user-1"
-        config[UserConfiguration.USER.PASSWORD] = "123456"
+        config[UserConfiguration.SERVER.USERNAME] = "test-user-1"
+        config[UserConfiguration.SERVER.PASSWORD] = "123456"
         self.client.save_user_configuration(config)
 
         self.client.execute("manage", "project", "list")

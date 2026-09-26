@@ -82,7 +82,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_with_invalid_username_is_rejected(self):
         config = self.configuration_user
-        config[UserConfiguration.USER.USERNAME] = "unknown-user"
+        config[UserConfiguration.SERVER.USERNAME] = "unknown-user"
         self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
@@ -91,7 +91,7 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_with_invalid_password_credentials_is_rejected(self):
         config = self.configuration_user
-        config[UserConfiguration.USER.PASSWORD] = "invalid-password"
+        config[UserConfiguration.SERVER.PASSWORD] = "invalid-password"
         self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
@@ -138,8 +138,11 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_can_deploy_using_cli_credential_arguments(self):
         config = self.configuration_user
-        config[UserConfiguration.USER.USERNAME] = "wrong-user"
-        config[UserConfiguration.USER.PASSWORD] = "wrong-password"
+        server_config = config.get_repeatable_sections(
+            UserConfiguration.SERVER
+        )[0]
+        server_config[UserConfiguration.SERVER.USERNAME] = "wrong-user"
+        server_config[UserConfiguration.SERVER.PASSWORD] = "wrong-password"
         self.client.save_user_configuration(config)
 
         self.client.execute("--user", "alpha", "--password", "alpha", "deploy")

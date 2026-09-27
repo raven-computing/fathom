@@ -34,6 +34,7 @@ from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
 from raven.fathom.base import Configuration, ConfigurationLoader
 from raven.fathom.base import ConfigurationDefinition
+from raven.fathom.client.config import UserConfiguration
 from raven.fathom.client.cli.application import main as client_main
 from raven.fathom.server.cli import main as server_main
 from raven.fathom.server.config import ConfigurationManager
@@ -271,6 +272,40 @@ class ClientDriver:
         """
         self.save_user_configuration(user_config)
         self.save_project_configuration(project_config)
+
+    def set_authentication_in(
+        self,
+        config: Configuration,
+        username: Optional[str],
+        password: Optional[str]
+    ):
+        """Sets the specified client authentication credentials in all server
+        sections of the specified user configuration.
+
+        The new credentials are only set in the specified `Configuration`
+        object. Call `save_user_configuration()` to persist the changed
+        configuration in the filesystem.
+
+        By specifying only either `username` or `password` as a non-empty
+        string and leaving the other argument `None` you can only set one
+        of the two.
+
+        Args:
+            config (Configuration): The user configuration where to apply
+                the new authentication credentials.
+            username (str): The username to set.
+                May be `None` to not set a username.
+            password (str): The password to set.
+                May be `None` to not set a password.
+        """
+        for server_config in config.get_repeatable_sections(
+            UserConfiguration.SERVER
+        ):
+            if username is not None:
+                server_config[UserConfiguration.SERVER.USERNAME] = username
+
+            if password is not None:
+                server_config[UserConfiguration.SERVER.PASSWORD] = password
 
 
 class ServerDriver:

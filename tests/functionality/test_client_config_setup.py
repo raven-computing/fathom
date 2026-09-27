@@ -44,9 +44,9 @@ class TestClientUserConfigSetup(TestCase):
     def test_setup_config_user_keeps_existing_file(self):
         config_file = self.client.get_user_configuration_file()
         existing_config = UserConfiguration.default_configuration()
-        existing_config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0].set_value(UserConfiguration.SERVER.USERNAME, "sentinel-user")
+        self.client.set_authentication_in(
+            existing_config, "sentinel-user", "sentinel-password"
+        )
         self.client.save_user_configuration(existing_config)
 
         self.client.execute("setup", "config", "user")
@@ -70,9 +70,9 @@ class TestClientUserConfigSetup(TestCase):
             default_config_file.get_parent_directory() / "User.config"
         )
         existing_config = UserConfiguration.default_configuration()
-        existing_config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0].set_value(UserConfiguration.SERVER.USERNAME, "alternate-user")
+        self.client.set_authentication_in(
+            existing_config, "alternate-user", "alternate-password"
+        )
         self.client.save_configuration(existing_config, alternate_file)
 
         self.client.execute("setup", "config", "user")

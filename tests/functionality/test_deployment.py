@@ -17,7 +17,7 @@
 from raven.fathom.base import File
 from raven.fathom.base import Project
 from raven.fathom.client.cli import ExitStatus
-from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
+from raven.fathom.client.config import ProjectConfiguration
 from raven.fathom.server.config import ServerConfiguration
 
 from tests.functionality import TestCase
@@ -25,6 +25,8 @@ from tests.fixtures import ProjectFixture, ConfigurationFixture
 
 
 # pylint: disable=invalid-name
+
+LEAVE_UNCHANGED = None
 
 
 class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
@@ -82,10 +84,9 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_with_invalid_username_is_rejected(self):
         config = self.configuration_user
-        server_config = config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0]
-        server_config[UserConfiguration.SERVER.USERNAME] = "unknown-user"
+        self.client.set_authentication_in(
+            config, username="unknown-user", password=LEAVE_UNCHANGED
+        )
         self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
@@ -94,10 +95,9 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_with_invalid_password_credentials_is_rejected(self):
         config = self.configuration_user
-        server_config = config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0]
-        server_config[UserConfiguration.SERVER.PASSWORD] = "invalid-password"
+        self.client.set_authentication_in(
+            config, username=LEAVE_UNCHANGED, password="invalid-password"
+        )
         self.client.save_user_configuration(config)
 
         self.client.execute("deploy")
@@ -144,11 +144,9 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
     def test_client_can_deploy_using_cli_credential_arguments(self):
         config = self.configuration_user
-        server_config = config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0]
-        server_config[UserConfiguration.SERVER.USERNAME] = "wrong-user"
-        server_config[UserConfiguration.SERVER.PASSWORD] = "wrong-password"
+        self.client.set_authentication_in(
+            config, "wrong-user", "wrong-password"
+        )
         self.client.save_user_configuration(config)
 
         self.client.execute("--user", "alpha", "--password", "alpha", "deploy")

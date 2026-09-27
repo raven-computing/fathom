@@ -15,7 +15,6 @@
 """Functionality tests for project management commands."""
 
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
-from raven.fathom.client.config import UserConfiguration
 
 from tests.functionality import TestCase
 from tests.fixtures import ConfigurationFixture
@@ -75,11 +74,7 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
     def test_non_admin_client_is_rejected(self):
         config = self.configuration_user
-        server_config = config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0]
-        server_config[UserConfiguration.SERVER.USERNAME] = "test-user-1"
-        server_config[UserConfiguration.SERVER.PASSWORD] = "123456"
+        self.client.set_authentication_in(config, "test-user-1", "123456")
         self.client.save_user_configuration(config)
 
         self.client.execute("manage", "project", "list")

@@ -15,7 +15,6 @@
 """Functionality tests for user sign-up commands."""
 
 from raven.fathom.base import File
-from raven.fathom.client.config import UserConfiguration
 
 from tests.functionality import TestCase
 from tests.fixtures import ConfigurationFixture, ProjectFixture
@@ -54,11 +53,9 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
         )
 
         new_user_config = self.configuration_user
-        server_config = new_user_config.get_repeatable_sections(
-            UserConfiguration.SERVER
-        )[0]
-        server_config[UserConfiguration.SERVER.USERNAME] = "new-user"
-        server_config[UserConfiguration.SERVER.PASSWORD] = "new-password"
+        self.client.set_authentication_in(
+            new_user_config, "new-user", "new-password"
+        )
         self.client.save_user_configuration(new_user_config)
 
         self.client.execute("deploy")

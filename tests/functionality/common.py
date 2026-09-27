@@ -307,10 +307,26 @@ class TestCase(FathomTestCase):
             )
 
         if status != 0:
+            msg_stdout = ""
+            msg_stderr = ""
+            if self.client.stdout:
+                msg_stdout = (
+                    f"{'-' * 31} stdout {'-' * 31}\n"
+                    f"{self.client.stdout}\n"
+                    f"{'-' * 70}\n"
+                )
+
+            if self.client.stderr:
+                msg_stderr = (
+                    f"{'-' * 31} stderr {'-' * 31}\n"
+                    f"{self.client.stderr}\n"
+                    f"{'-' * 70}\n"
+                )
+
             detail = (
                 f"Client exited with status {status}.\n"
-                f"stdout: {self.client.stdout!r}\n"
-                f"stderr: {self.client.stderr!r}"
+                f"{msg_stdout}\n"
+                f"{msg_stderr}\n"
             )
             raise AssertionError(msg or detail)
 

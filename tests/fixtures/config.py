@@ -32,8 +32,6 @@ class ConfigurationFixture(FathomTestFixture):
         config = Configuration()
         user = ConfigurationSection(UserConfiguration.USER)
         user[UserConfiguration.USER.LOGGING_ENABLED] = True
-        user[UserConfiguration.SERVER.USERNAME] = "alpha"
-        user[UserConfiguration.SERVER.PASSWORD] = "alpha"
         config.add_section(user)
         server_1 = ConfigurationSection(
             UserConfiguration.SERVER,

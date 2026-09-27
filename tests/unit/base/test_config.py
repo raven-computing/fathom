@@ -431,6 +431,26 @@ class TestConfigurationSection(TestCase):
         self.assertEqual(section.raw_value_of(key), str(new_value))
         self.assertEqual(section.value_of(key), new_value)
 
+    def test_setting_value_with_key_from_different_section_raises_ex(self):
+        section = ConfigurationSection(self.section_key)
+        key = FakeTestConfig.SECTION_B.CONFIG_KEY_A
+
+        with self.assertRaises(InvalidConfigurationKeyException) as raised:
+            section.set_value(key, 42)
+
+        self.assertIn(
+            "Cannot assign configuration value with key 'my.config.key.a' ",
+            str(raised.exception)
+        )
+        self.assertIn(
+            "in section 'My-Section-A'. The given configuration key is ",
+            str(raised.exception)
+        )
+        self.assertIn(
+            "associated with section 'My-Section-B'",
+            str(raised.exception)
+        )
+
     def test_setting_value_of_wrong_type_raises_exception(self):
         section = ConfigurationSection(self.section_key)
         key = FakeTestConfig.SECTION_B.CONFIG_KEY_A

@@ -662,6 +662,9 @@ class ConfigurationSection:
                 be convertible to a `str` object.
 
         Raises:
+            InvalidConfigurationKeyException: If the given configuration key
+                is associated with a different configuration section than
+                this section.
             ConfigurationValueTypeException: If `value` is neither
                 a non-empty `str` nor of the type `T` as declared by
                 the specified key.
@@ -680,6 +683,15 @@ class ConfigurationSection:
                 )
 
             value = self._convert_to_raw(value)
+
+        if key.section is not None:
+            if key.section is not self.key:
+                raise InvalidConfigurationKeyException(
+                    f"Cannot assign configuration value with key '{key}' "
+                    f"in section '{self.key}'. "
+                    "The given configuration key is associated "
+                    f"with section '{key.section}'"
+                )
 
         self._assign_raw_value(key, value)
 

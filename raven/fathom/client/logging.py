@@ -106,7 +106,7 @@ def setup_file_logger(args: "ArgumentsCLI"):
 
 def shutdown_loggers():
     """Shutdown function for the logging utilities."""
-    LogManager().shutdown_loggers()
+    LogManager().shutdown_loggers([FATHOM_CLIENT_LOGGER_NAME])
 
 
 class Logger(BaseLogger):

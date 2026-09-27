@@ -18,7 +18,7 @@ import sys
 import logging
 import threading
 
-from typing import Union, overload
+from typing import Union, Optional, overload
 from enum import IntEnum
 
 from raven.fathom.base import File
@@ -253,17 +253,30 @@ class LogManager:
             self._loggers[name] = logger
             self._handlers.extend(handlers)
 
-    def shutdown_loggers(self):
+    def shutdown_loggers(self, logger_names: Optional[list[str]] = None):
         """Executes shutdown procedures for the logging system.
 
         Should be called by applications before exiting to ensure
         proper cleanup of logging resources.
+
+        Args:
+            logger_names (list): A list of logger names that should
+                be shut down and discarded. Specifying them as an argument
+                will remove those loggers and their associated global data
+                from the logging system entirely.
         """
         with self._lock:
             for handler in self._handlers:
                 handler.close()
 
             logging.shutdown()
+
+            if logger_names is not None:
+                for name in logger_names:
+                    std_logger = logging.getLogger(name)
+                    std_logger.disabled = True
+                    std_logger.handlers.clear()
+                    std_logger.setLevel(logging.NOTSET)
 
     def _map_log_level(self, level):
         return _LOG_LEVEL_MAP.get(level, logging.INFO)

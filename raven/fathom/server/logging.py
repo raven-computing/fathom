@@ -139,7 +139,7 @@ def setup_server_logging(args):
 
 def shutdown_loggers():
     """Shutdown function for the logging utilities."""
-    LogManager().shutdown_loggers()
+    LogManager().shutdown_loggers([FATHOM_SERVER_LOGGER_NAME])
 
 
 class LogFormatterServerApp(logging.Formatter):

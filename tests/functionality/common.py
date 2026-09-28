@@ -440,10 +440,26 @@ class TestCase(FathomTestCase):
             )
 
         if status != 0:
+            msg_stdout = ""
+            msg_stderr = ""
+            if self.server.stdout:
+                msg_stdout = (
+                    f"{'-' * 31} stdout {'-' * 31}\n"
+                    f"{self.server.stdout}\n"
+                    f"{'-' * 70}\n"
+                )
+
+            if self.server.stderr:
+                msg_stderr = (
+                    f"{'-' * 31} stderr {'-' * 31}\n"
+                    f"{self.server.stderr}\n"
+                    f"{'-' * 70}\n"
+                )
+
             detail = (
                 f"Server command exited with status {status}.\n"
-                f"stdout: {self.server.stdout!r}\n"
-                f"stderr: {self.server.stderr!r}"
+                f"{msg_stdout}\n"
+                f"{msg_stderr}\n"
             )
             raise AssertionError(msg or detail)
 

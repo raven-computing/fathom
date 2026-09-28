@@ -18,6 +18,8 @@ from typing import TYPE_CHECKING
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import Configuration
+from raven.fathom.base import ClientAuthentication, ClientRequest
+from raven.fathom.base import InputPrompt, Interaction
 from raven.fathom.base import Project
 from raven.fathom.base import User, UserState
 from raven.fathom.server.logging import Logger, LogLevel
@@ -34,6 +36,7 @@ from raven.fathom.server.config import ServerConfiguration
 from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.user_management import UserManager
 from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.security import UserAuthenticator, UserAuthorizer
 from raven.fathom.server.updates import UpdateManager
 from raven.fathom.server.updates import FailedApplicationUpdateException
 
@@ -135,6 +138,28 @@ def _start_server(server: ServerHTTP):
         raise
 
 
+def _confirm_admin_privileges():
+    prompt = InputPrompt.instance()
+    LOG.i("Authentication is required to perform this action")
+    request = ClientRequest(Interaction.LIST_USERS)
+    request.authentication = ClientAuthentication(
+        username=prompt.read("User: "),
+        password=prompt.read("Password: ", secret=True),
+    )
+    auth_result = UserAuthenticator().authenticate_client(request)
+    if not auth_result.is_authenticated():
+        raise ValueError("Incorrect username or password.")
+
+    user_record = auth_result.user_record
+    if user_record is None:
+        raise ValueError("Authentication failed.")
+
+    if not UserAuthorizer().is_administrator(
+        User(identifier=str(user_record.identifier))
+    ):
+        raise ValueError("Administrative privileges are required.")
+
+
 def _run_fathom_server_application(args: "AppArgs", config: Configuration):
     port = config[ServerConfiguration.SERVER.PORT_LISTEN]
     LOG.i("Starting Fathom server on port %d", port)
@@ -160,6 +185,7 @@ def _run_user_command(args: "AppArgs") -> int:
         db.connect()
 
     try:
+        _confirm_admin_privileges()
         manager = UserManager()
         if args.user_command == "create":
             user = User(
@@ -205,6 +231,7 @@ def _run_project_command(args: "AppArgs") -> int:
         db.connect()
 
     try:
+        _confirm_admin_privileges()
         manager = ProjectManager()
         if args.project_command == "create":
             project = Project(

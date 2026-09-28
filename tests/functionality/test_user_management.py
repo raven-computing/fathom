@@ -143,6 +143,7 @@ class TestServerUserManagementCLI(TestCase):
         """Tests an entire cycle of creating, listing and deleting
         an admin user.
         """
+        self.server.stdin = ["alpha", "alpha"]
         self.server.execute(
             "user", "create", "local-admin",
             "--name", "Local Admin", "--admin"
@@ -154,6 +155,7 @@ class TestServerUserManagementCLI(TestCase):
             self.server.stdout
         )
 
+        self.server.stdin = ["alpha", "alpha"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
@@ -163,11 +165,13 @@ class TestServerUserManagementCLI(TestCase):
             self.server.stdout
         )
 
+        self.server.stdin = ["alpha", "alpha"]
         self.server.execute("user", "delete", "local-admin")
 
         self.assertServerSuccess()
         self.assertIn("Deleted user 'local-admin'.", self.server.stdout)
 
+        self.server.stdin = ["alpha", "alpha"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
@@ -185,13 +189,25 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
 
     This tests that there is no conflict when a Fathom server is running in
     the background and a server admin user uses a CLI command to
-    manage server resources.
+    manage server resources. Additionally contains tests that require the
+    datastore to be pre-initialized.
     """
 
     AUTO_START_SERVER = True
 
     def test_server_cli_can_create_list_and_delete_admin_user(self):
         self.server_cli_can_create_list_and_delete_admin_user()
+
+    def test_server_cli_rejects_non_admin_user(self):
+        self.server.stdin = ["test-user-1", "123456"]
+
+        self.server.execute("user", "list")
+
+        self.assertNotEqual(0, self.server.command_exit_status)
+        self.assertIn(
+            "Administrative privileges are required.",
+            self.server.stdout
+        )
 
 
 if __name__ == "__main__":

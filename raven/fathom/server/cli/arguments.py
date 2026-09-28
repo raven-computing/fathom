@@ -91,9 +91,11 @@ def parse_args(argv: list[str]) -> AppArgs:
     parser = ArgumentParser(
         allow_abbrev=False,
         prog=f"{APPLICATION_PROJECT_ID}-server",
-        description=f"Setup and manage the {APPLICATION_NAME} server "
-                     "application and its resources.",
-        usage="%(prog)s [options] <COMMAND> ...",
+        description=f"Starts the {APPLICATION_NAME} server to serve incoming "
+                     "client requests. Use one of the available commands to "
+                     "setup and manage the server application and its "
+                     "resources.",
+        usage="%(prog)s [options] [command] ...",
         epilog="[This version of the Fathom server is a Beta build]",
     )
 
@@ -135,7 +137,7 @@ def parse_args(argv: list[str]) -> AppArgs:
     subparsers = parser.add_subparsers(
         dest="command",
         required=False,
-        metavar="<COMMAND>",
+        metavar="[command]",
     )
     subparsers.add_parser(
         "setup",

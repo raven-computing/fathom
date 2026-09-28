@@ -73,12 +73,13 @@ options:
 
 
 EXPECTED_SERVER_HELP_OUTPUT = """\
-usage: fathom-server [options] <COMMAND> ...
+usage: fathom-server [options] [command] ...
 
-Setup and manage the Fathom server application and its resources.
+Starts the Fathom server to serve incoming client requests. Use one of the available commands to
+setup and manage the server application and its resources.
 
 positional arguments:
-  <COMMAND>
+  [command]
     setup               Perform initial setup work for the server application. This should be done
                         once after installation. This step is interactive.
 

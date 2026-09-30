@@ -17,6 +17,7 @@
 __all__ = [
     "AuthDeployment",
     "User",
+    "UserRole",
     "UserProjectRel",
     "UserPermission",
     "Project",
@@ -27,6 +28,7 @@ __all__ = [
 
 from .auth_deployment import AuthDeployment
 from .user import User
+from .user import UserRole
 from .user import UserProjectRel
 from .user_permission import UserPermission
 from .project import Project

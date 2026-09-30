@@ -139,6 +139,29 @@ class TestServerUserManagementCLI(TestCase):
 
     AUTO_START_SERVER = False
 
+    def test_server_cli_setup_creates_system_user(self):
+        self.server.stdin = [
+            "system-user", "secret-password", "secret-password"
+        ]
+
+        self.server.execute("setup")
+
+        self.assertServerSuccess()
+        self.assertIn(
+            "Configured system user 'system-user'.",
+            self.server.stdout
+        )
+
+        self.server.stdin = ["system-user", "secret-password"]
+        self.server.execute("user", "list")
+
+        self.assertServerSuccess()
+        self.assertIn(
+            "User: 'system-user'\tName: 'system-user'"
+            "\tRole: 'system'\tState: 'active'",
+            self.server.stdout
+        )
+
     def server_cli_can_create_list_and_delete_admin_user(self):
         """Tests an entire cycle of creating, listing and deleting
         an admin user.
@@ -182,6 +205,15 @@ class TestServerUserManagementCLI(TestCase):
         self.server.initialize_datastore(self.DATASTORE_SQL_FILE)
         self.server_cli_can_create_list_and_delete_admin_user()
 
+    def test_server_cli_requires_setup_before_other_commands(self):
+        self.server.execute("user", "list")
+
+        self.assertNotEqual(0, self.server.command_exit_status)
+        self.assertIn(
+            "Run 'fathom-server setup' first.",
+            self.server.stdout
+        )
+
 
 class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
     """Same tests as `TestServerUserManagementCLI` but with the
@@ -197,6 +229,12 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
 
     def test_server_cli_can_create_list_and_delete_admin_user(self):
         self.server_cli_can_create_list_and_delete_admin_user()
+
+    def test_server_cli_requires_setup_before_other_commands(self):
+        self.skipTest("Only applicable before the server datastore is seeded")
+
+    def test_server_cli_setup_creates_system_user(self):
+        self.skipTest("Only applicable before the server datastore is seeded")
 
     def test_server_cli_rejects_non_admin_user(self):
         self.server.stdin = ["test-user-1", "123456"]

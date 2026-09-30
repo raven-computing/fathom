@@ -14,6 +14,8 @@
 #
 """Data model to represent a user within the Fathom server."""
 
+from enum import StrEnum
+
 from raven.fathom.base import UserState
 
 from raven.fathom.server.datastore.orm import Model
@@ -25,21 +27,50 @@ from raven.fathom.server.models.project import Project
 # pylint: disable=missing-class-docstring
 
 
+class UserRole(StrEnum):
+    """Enumeration of available user roles."""
+
+    SYSTEM = "system"
+
+    ADMINISTRATOR = "admin"
+
+    USER = "user"
+
+    def has_administrative_privileges(self) -> bool:
+        """Indicates whether this user role has admin privileges.
+        
+        Returns:
+            bool: `True` if this user role can access data and perform actions
+                that are reserved for administrators. `False` if this role does
+                not grand such privileges.
+        """
+        return self in (UserRole.SYSTEM, UserRole.ADMINISTRATOR)
+
+
 class User(Model):
     """Models a Fathom user."""
 
     identifier = CharField(
         unique=True,
+        null=False,
     )
 
-    name = CharField()
+    name = CharField(
+        null=False,
+    )
 
     password = CharField(
         null=True,
     )
 
+    role = CharField(
+        null=False,
+        default=UserRole.USER,
+    )
+
     state = CharField(
-        default=UserState.ACTIVE,
+        null=False,
+        default=UserState.INACTIVE,
     )
 
 

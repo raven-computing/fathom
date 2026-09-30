@@ -24,10 +24,10 @@ from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import User, Project, ProjectVersion
 from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import User as StoredUser
+from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import Project as StoredProject
 
 
@@ -63,15 +63,15 @@ class UserAuthorizer:
             return False
 
         try:
-            permission = self._ds.users().find_permission(stored_user)
-        except IncoherentDatastoreStateException as ex:
+            role = UserRole(str(stored_user.role))
+        except ValueError as ex:
             LOG.e(
-                "Failed to retrieve permission record for user '%s': %s",
+                "Failed to resolve role for user '%s': %s",
                 user.identifier, str(ex)
             )
             return False
 
-        return bool(permission.is_admin)
+        return role.has_administrative_privileges()
 
 
 class DeploymentAuthorizer:

@@ -20,10 +20,10 @@ from raven.fathom.base import SecretToken, ConstantClock
 from raven.fathom.base import User, Project, ProjectVersion
 from raven.fathom.base import ClientDeploymentIntent, DeploymentAuthorization
 from raven.fathom.base.testing import EntropySourceMock
-from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
-from raven.fathom.server.models import AuthDeployment, UserPermission
+from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import User as UserModel
+from raven.fathom.server.models import UserRole
 
 from tests.unit import TestCase
 from tests.unit.server.mocks import DataAccessMock
@@ -282,15 +282,13 @@ class TestAdminAuthorizer(TestCase):
         result = UserAuthorizer().is_administrator(User("", "Test User"))
         self.assertFalse(result)
 
-    def test_is_admin_returns_false_when_permission_record_missing(self):
+    def test_is_admin_returns_false_for_invalid_role(self):
         stored_user = UserModel(
             identifier="test-user",
             name="Test User",
+            role="invalid",
         )
         self.dao.users().find_by_identifier.return_value = stored_user
-        self.dao.users().find_permission.side_effect = (
-            IncoherentDatastoreStateException("missing permission")
-        )
 
         result = UserAuthorizer().is_administrator(self.user)
         self.assertFalse(result)
@@ -299,13 +297,9 @@ class TestAdminAuthorizer(TestCase):
         stored_user = UserModel(
             identifier="test-user",
             name="Test User",
-        )
-        permission = UserPermission(
-            user=1,
-            is_admin=False,
+            role=UserRole.USER,
         )
         self.dao.users().find_by_identifier.return_value = stored_user
-        self.dao.users().find_permission.return_value = permission
 
         result = UserAuthorizer().is_administrator(self.user)
         self.assertFalse(result)
@@ -314,13 +308,20 @@ class TestAdminAuthorizer(TestCase):
         stored_user = UserModel(
             identifier="test-user",
             name="Test User",
-        )
-        permission = UserPermission(
-            user=1,
-            is_admin=True,
+            role=UserRole.ADMINISTRATOR,
         )
         self.dao.users().find_by_identifier.return_value = stored_user
-        self.dao.users().find_permission.return_value = permission
+
+        result = UserAuthorizer().is_administrator(self.user)
+        self.assertTrue(result)
+
+    def test_is_admin_returns_true_for_system_user(self):
+        stored_user = UserModel(
+            identifier="test-user",
+            name="Test User",
+            role=UserRole.SYSTEM,
+        )
+        self.dao.users().find_by_identifier.return_value = stored_user
 
         result = UserAuthorizer().is_administrator(self.user)
         self.assertTrue(result)

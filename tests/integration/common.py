@@ -30,6 +30,7 @@ from raven.fathom.server.models import User, UserPermission, Project
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import Settings
+from raven.fathom.server.models.user import UserRole
 
 from tests.common import FathomTestCase
 
@@ -128,6 +129,8 @@ class DatabaseIntegrationTestCase(TestCase):
             identifier="test-user-1",
             name="Test User 1",
             password="123456",
+            role=UserRole.SYSTEM,
+            state="active",
         )
         UserPermission.create(
             user=test_user_id,

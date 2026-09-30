@@ -32,8 +32,9 @@ class TestUserAuthentication(TestCase):
         super().setUp()
         self.user_signup = User(
             identifier="test-user-1",
-            password="test-cleartext-password-1",
             name="The Test User 1",
+            password="test-cleartext-password-1",
+            state=UserState.ACTIVE,
         )
         salt_byte = EntropySourceMock.instance().next_byte.hex()
         self.known_user_password_hash: str = (
@@ -44,8 +45,9 @@ class TestUserAuthentication(TestCase):
         )
         self.user_stored = User(
             identifier=self.user_signup.identifier,
-            password=self.known_user_password_hash,
             name=self.user_signup.name,
+            password=self.known_user_password_hash,
+            state=self.user_signup.state,
         )
         self.client_request = ClientRequest(
             action=Interaction.REQUEST_DEPLOYMENT

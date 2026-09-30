@@ -19,6 +19,7 @@ from raven.fathom.base.user import User, UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import UserProjectRel, AuthDeployment
+from raven.fathom.server.models.user import UserRole
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.user_management import UserManager
 
@@ -53,6 +54,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             )
         )
         self.assertEqual(stored_user.state, UserState.ONBOARDING)
+        self.assertEqual(stored_user.role, UserRole.USER)
         permission = self.db.users().find_permission(stored_user)
         self.assertFalse(permission.is_admin)
 
@@ -89,8 +91,32 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(user.state, UserState.ONBOARDING)
         stored_user = self.db.users().find_by_identifier("admin-user")
         assert stored_user is not None
+        self.assertEqual(stored_user.role, UserRole.ADMINISTRATOR)
         permission = self.db.users().find_permission(stored_user)
         self.assertTrue(permission.is_admin)
+
+    def test_can_create_system_user_during_setup(self):
+        self.db.users().delete_by_identifier("test-user-1")
+        user = User(
+            identifier="system-user",
+            name="System User",
+            password="secret-password",
+        )
+
+        UserManager().create_system_user(user)
+
+        stored_user = self.db.users().find_by_identifier("system-user")
+        assert stored_user is not None
+        self.assertEqual(stored_user.role, UserRole.SYSTEM)
+        self.assertEqual(stored_user.state, UserState.ACTIVE)
+
+    def test_cannot_create_second_system_user(self):
+        with self.assertRaises(ValueError) as raised:
+            UserManager().create_system_user(
+                User(identifier="system-user", password="secret-password")
+            )
+
+        self.assertIn("already been set up", str(raised.exception))
 
     def test_list_users_returns_admin_state(self):
         user = User(
@@ -111,14 +137,37 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(users[1].state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):
-        user = User(identifier="test-user-1")
+        user = User(
+            identifier="test-user-2",
+            name="Test User 2",
+            state=UserState.ONBOARDING,
+        )
+        UserManager().create_user(user)
+        UserManager().assign_user_to_project(
+            User(identifier="test-user-2"),
+            Project(identifier="test-project-1"),
+        )
+        user_record_id = self.db.users().find_by_identifier(
+            "test-user-2"
+        ).id # type: ignore
         UserManager().delete_user(user)
 
-        self.assertIsNone(self.db.users().find_by_identifier("test-user-1"))
+        deleted_user_record = self.db.users().find_by_identifier("test-user-2")
+        self.assertIsNone(deleted_user_record)
+        self.assertEqual(UserPermission.select().where(
+            UserPermission.user == user_record_id
+        ).count(), 0)
+        self.assertEqual(UserProjectRel.select().where(
+            UserProjectRel.user == user_record_id
+        ).count(), 0)
         # pylint: disable=no-value-for-parameter
-        self.assertEqual(UserPermission.select().count(), 0)
-        self.assertEqual(UserProjectRel.select().count(), 0)
-        self.assertEqual(AuthDeployment.select().count(), 0)
+        self.assertEqual(AuthDeployment.select().count(), 1) # type: ignore
+
+    def test_delete_rejects_system_user(self):
+        with self.assertRaises(ValueError) as raised:
+            UserManager().delete_user(User(identifier="test-user-1"))
+
+        self.assertIn("system user cannot be changed", str(raised.exception))
 
     def test_can_assign_user_to_project(self):
         UserManager().assign_user_to_project(

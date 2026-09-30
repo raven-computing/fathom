@@ -160,6 +160,48 @@ def _confirm_admin_privileges():
         raise ValueError("Administrative privileges are required.")
 
 
+def _ensure_connected_to_database():
+    db = DatabaseManager().get_database()
+    if not db.is_connected():
+        db.connect()
+
+
+def _require_server_setup():
+    _ensure_connected_to_database()
+
+    if UserManager().is_setup_complete():
+        return
+
+    raise ValueError(
+        "The server has not been set up yet. Run 'fathom-server setup' first."
+    )
+
+
+def _run_setup_command() -> int:
+    prompt = InputPrompt.instance()
+    identifier = prompt.read("System user: ")
+    if not identifier:
+        raise ValueError("System user identifier is required.")
+
+    password = prompt.read("Password: ", secret=True)
+    if not password:
+        raise ValueError("Password must not be empty.")
+
+    confirmation = prompt.read("Confirm password: ", secret=True)
+    if password != confirmation:
+        raise ValueError("Password confirmation does not match.")
+
+    user = User(
+        identifier=identifier,
+        name=identifier,
+        password=password,
+    )
+    _ensure_connected_to_database()
+    UserManager().create_system_user(user)
+    LOG.i("Configured system user '%s'.", user.identifier)
+    return 0
+
+
 def _run_fathom_server_application(args: "AppArgs", config: Configuration):
     port = config[ServerConfiguration.SERVER.PORT_LISTEN]
     LOG.i("Starting Fathom server on port %d", port)
@@ -195,7 +237,7 @@ def _run_user_command(args: "AppArgs") -> int:
                 state=UserState.ONBOARDING,
             )
             manager.create_user(user)
-            role = "admin" if user.is_admin else "regular"
+            role = "admin" if user.is_admin else "user"
             LOG.i(
                 "Created user '%s' (%s, %s).",
                 user.identifier, role, user.state
@@ -204,7 +246,7 @@ def _run_user_command(args: "AppArgs") -> int:
 
         if args.user_command == "list":
             for user in manager.list_users():
-                role = "admin" if user.is_admin else "regular"
+                role = manager.get_user_role(user.identifier).value
                 LOG.i(
                     "User: '%s'\tName: '%s'\tRole: '%s'\tState: '%s'",
                     user.identifier, user.name, role, user.state
@@ -284,6 +326,10 @@ def run(args: "AppArgs") -> int:
         cm.load_configs(args)
         config = cm.get_server_config()
         _setup_application(args, config)
+        if args.command == "setup":
+            return _run_setup_command()
+
+        _require_server_setup()
         if args.command == "user":
             return _run_user_command(args)
         if args.command == "project":

@@ -21,6 +21,7 @@ from raven.fathom.base import UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
+from raven.fathom.server.models import UserRole
 from raven.fathom.server.security import UserAuthenticator
 
 
@@ -31,6 +32,53 @@ class UserManager:
         """Initializes a new `UserManager` instance."""
         self._ds = DataAccess.instance()
         self._authenticator = UserAuthenticator()
+
+    def is_setup_complete(self) -> bool:
+        """Indicates whether the server bootstrap has been completed."""
+        return self.find_system_user_record() is not None
+
+    def find_system_user_record(self) -> UserModel | None:
+        """Returns the configured system user record, if one exists."""
+        for user in self._ds.users().read_all():
+            if UserRole(str(user.role)) == UserRole.SYSTEM:
+                return user
+
+        return None
+
+    def get_user_role(self, identifier: str) -> UserRole:
+        """Resolves the stored role of a managed user."""
+        user = self._ds.users().find_by_identifier(identifier)
+        if user is None:
+            raise ValueError(f"User '{identifier}' does not exist")
+
+        return UserRole(str(user.role))
+
+    def create_system_user(self, user: User):
+        """Creates the one-time system user for the server bootstrap."""
+        TypeCheck.require_arg(user.identifier, str)
+        TypeCheck.require_arg(user.password, str)
+        if not user.identifier:
+            raise ValueError("User identifier must not be empty")
+
+        if not user.password:
+            raise ValueError("User password must not be empty")
+
+        if self.is_setup_complete():
+            raise ValueError("The server has already been set up")
+
+        user_record = UserModel(
+            identifier=user.identifier,
+            name=user.name or user.identifier,
+            password=user.password,
+            role=UserRole.SYSTEM,
+            state=UserState.ACTIVE,
+        )
+        self._authenticator.constitute_password_authentication(user_record)
+        self._ds.users().create_new_user(user_record, admin_privileges=True)
+        user.name = str(user_record.name)
+        user.password = ""
+        user.is_admin = True
+        user.state = UserState.ACTIVE
 
     def create_user(self, user: User):
         """Creates a new Fathom user on the server.
@@ -60,8 +108,12 @@ class UserManager:
 
         user_record = UserModel(
             identifier=user.identifier,
-            name=user.name,
+            name=name,
             password=self._ds.settings().find_server_settings().shared_secret,
+            role=(
+                UserRole.ADMINISTRATOR
+                if user.is_admin else UserRole.USER
+            ),
             state=str(UserState.ONBOARDING),
         )
         self._authenticator.constitute_password_authentication(user_record)
@@ -104,10 +156,9 @@ class UserManager:
         user_record.state = UserState.ACTIVE
         self._authenticator.constitute_password_authentication(user_record)
         self._ds.users().update(user_record)
-        permission = self._ds.users().find_permission(user_record)
         user.name = user_record.name
         user.password = "" # Evict
-        user.is_admin = permission.is_admin
+        user.is_admin = self._role_has_admin_privileges(user_record.role)
         user.state = UserState.ACTIVE
 
     def list_users(self) -> list[User]:
@@ -118,12 +169,12 @@ class UserManager:
         """
         result = []
         for user in self._ds.users().read_all():
-            permission = self._ds.users().find_permission(user)
+            role = UserRole(str(user.role))
             result.append(
                 User(
                     identifier=str(user.identifier),
                     name=str(user.name),
-                    is_admin=bool(permission.is_admin),
+                    is_admin=self._role_has_admin_privileges(role),
                     state=UserState(str(user.state)),
                 )
             )
@@ -145,11 +196,26 @@ class UserManager:
             raise ValueError("User identifier must not be empty")
 
         try:
+            user_record = self._ds.users().find_by_identifier(user.identifier)
+            if user_record is None:
+                raise ValueError(
+                    f"Failed to delete user '{user.identifier}'"
+                )
+
+            if UserRole(str(user_record.role)) == UserRole.SYSTEM:
+                raise ValueError(
+                    "The system user cannot be changed after setup"
+                )
+
             self._ds.users().delete_by_identifier(user.identifier)
         except FailedDeleteQueryException as ex:
             raise ValueError(
                 f"Failed to delete user '{user.identifier}'"
             ) from ex
+
+    def _role_has_admin_privileges(self, role: UserRole | str) -> bool:
+        role = UserRole(str(role))
+        return role.has_administrative_privileges()
 
     def assign_user_to_project(self, user: User, project: Project):
         """Assigns an existing user to an existing project.

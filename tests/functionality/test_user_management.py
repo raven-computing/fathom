@@ -43,6 +43,9 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
+            "fathom\tFathom System User\tadmin\tactive"
+        )
+        self.assertClientStdoutContains(
             "alpha\tAlphanet Administrator\tadmin\tactive"
         )
         self.assertClientStdoutContains(
@@ -70,6 +73,16 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.assertClientStdoutContains(
             "alpha\tAlphanet Administrator\tadmin\tactive"
         )
+
+    def test_system_user_is_rejected_for_remote_management(self):
+        config = self.configuration_user
+        self.client.set_authentication_in(config, "fathom", "fathom")
+        self.client.save_user_configuration(config)
+
+        self.client.execute("manage", "user", "list")
+
+        self.assertClientExitStatus(ClientExitStatus.FAILURE)
+        self.assertClientStdoutContains("Invalid username or password.")
 
     def test_admin_client_can_assign_and_unassign_users_to_projects(self):
         self.client.execute(
@@ -140,24 +153,22 @@ class TestServerUserManagementCLI(TestCase):
     AUTO_START_SERVER = False
 
     def test_server_cli_setup_creates_system_user(self):
-        self.server.stdin = [
-            "system-user", "secret-password", "secret-password"
-        ]
+        self.server.stdin = ["secret-password", "secret-password"]
 
         self.server.execute("setup")
 
         self.assertServerSuccess()
         self.assertIn(
-            "Configured system user 'system-user'.",
+            "Configured system user 'fathom'.",
             self.server.stdout
         )
 
-        self.server.stdin = ["system-user", "secret-password"]
+        self.server.stdin = ["fathom", "secret-password"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
         self.assertIn(
-            "User: 'system-user'\tName: 'system-user'"
+            "User: 'fathom'\tName: 'Fathom System User'"
             "\tRole: 'system'\tState: 'active'",
             self.server.stdout
         )
@@ -166,7 +177,7 @@ class TestServerUserManagementCLI(TestCase):
         """Tests an entire cycle of creating, listing and deleting
         an admin user.
         """
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute(
             "user", "create", "local-admin",
             "--name", "Local Admin", "--admin"
@@ -178,7 +189,7 @@ class TestServerUserManagementCLI(TestCase):
             self.server.stdout
         )
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
@@ -188,13 +199,13 @@ class TestServerUserManagementCLI(TestCase):
             self.server.stdout
         )
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("user", "delete", "local-admin")
 
         self.assertServerSuccess()
         self.assertIn("Deleted user 'local-admin'.", self.server.stdout)
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
@@ -242,10 +253,7 @@ class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
         self.server.execute("user", "list")
 
         self.assertNotEqual(0, self.server.command_exit_status)
-        self.assertIn(
-            "Administrative privileges are required.",
-            self.server.stdout
-        )
+        self.assertIn("Incorrect username or password.", self.server.stdout)
 
 
 if __name__ == "__main__":

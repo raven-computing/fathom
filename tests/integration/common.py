@@ -126,9 +126,9 @@ class DatabaseIntegrationTestCase(TestCase):
             active=True,
         )
         test_user_id = User.create(
-            identifier="test-user-1",
-            name="Test User 1",
-            password="123456",
+            identifier="fathom",
+            name="Fathom System User",
+            password="fathom",
             role=UserRole.SYSTEM,
             state="active",
         )
@@ -136,6 +136,18 @@ class DatabaseIntegrationTestCase(TestCase):
             user=test_user_id,
             allow_overwrite=True,
             is_admin=True,
+        )
+        regular_user_id = User.create(
+            identifier="test-user-1",
+            name="Test User 1",
+            password="123456",
+            role=UserRole.USER,
+            state="active",
+        )
+        UserPermission.create(
+            user=regular_user_id,
+            allow_overwrite=True,
+            is_admin=False,
         )
         test_project_id = Project.create(
             identifier="test-project-1",
@@ -145,7 +157,7 @@ class DatabaseIntegrationTestCase(TestCase):
             is_published=True,
         )
         UserProjectRel.create(
-            user=test_user_id,
+            user=regular_user_id,
             project=test_project_id,
         )
         Project.create(
@@ -158,7 +170,7 @@ class DatabaseIntegrationTestCase(TestCase):
         AuthDeployment.create(
             token=string.ascii_lowercase + string.digits,
             expiration_time=datetime(2999, 12, 31),
-            user=test_user_id,
+            user=regular_user_id,
             project=test_project_id,
             project_version=test_project_id.latest_version,
             allow_overwrite=True,

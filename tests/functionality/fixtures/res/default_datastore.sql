@@ -6,7 +6,8 @@ INSERT INTO "settings" (organisation_name, shared_secret, active) VALUES
     ("Test Org 1", "secret", 1);
 
 INSERT INTO "user" (identifier, name, password, role, state) VALUES
-    ('alpha', 'Alphanet Administrator', 'alpha', 'system', 'active'),
+    ('fathom', 'Fathom System User', 'fathom', 'system', 'active'),
+    ('alpha', 'Alphanet Administrator', 'alpha', 'admin', 'active'),
     ('test-user-1', 'Test User 1', '123456', 'user', 'active');
 
 INSERT INTO "project" (identifier, name, description, latest_version, time_created, is_published) VALUES
@@ -16,8 +17,10 @@ INSERT INTO "project_version" (project_id, version_sequence, version_identifier,
     (1, 1, '1.0.0', datetime('now'), 1);
 
 INSERT INTO "user_project_rel" (user_id, project_id) VALUES
-    (1, 1);
+    (1, 1),
+    (2, 1);
 
 INSERT INTO "user_permission" (user_id, allow_overwrite, is_admin) VALUES
     (1, 1, 1),
-    (2, 0, 0);
+    (2, 1, 1),
+    (3, 0, 0);

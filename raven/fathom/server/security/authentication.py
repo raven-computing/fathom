@@ -24,6 +24,7 @@ from raven.fathom.base import EntropySource
 from raven.fathom.base import ProcessingException
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import User
+from raven.fathom.server.models import UserRole
 from raven.fathom.server.security._hash import PasswordHasher
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.security._hash import PasswordValidation
@@ -184,7 +185,7 @@ class UserAuthenticator:
             request.authentication.username
         )
         is_authenticated = False
-        if self._active_user_record_has_password_set(user):
+        if self._active_non_system_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
@@ -196,6 +197,25 @@ class UserAuthenticator:
         if is_authenticated:
             assert user is not None
             self._set_authenticated_client(request, user)
+
+        return UserAuthentication(user, is_authenticated)
+
+    def authenticate_system_user(
+        self,
+        authentication: ClientAuthentication
+    ) -> UserAuthentication:
+        """Authenticates the local Fathom system user for server CLI usage."""
+        _check_auth_types(authentication)
+        user = self._ds.users().find_by_identifier(authentication.username)
+        is_authenticated = False
+        if self._active_system_user_record_has_password_set(user):
+            assert user is not None
+            user = self._validate_user_authentication_by(
+                user,
+                authentication.username,
+                authentication.password
+            )
+            is_authenticated = user is not None
 
         return UserAuthentication(user, is_authenticated)
 
@@ -229,6 +249,26 @@ class UserAuthenticator:
             and user_record.password is not None
             and str(user_record.password) != ""
             and UserState(user_record.state) == UserState.ACTIVE
+        )
+
+    def _active_non_system_user_record_has_password_set(
+        self,
+        user_record: Optional[User]
+    ) -> bool:
+        return (
+            self._active_user_record_has_password_set(user_record)
+            and user_record is not None
+            and UserRole(str(user_record.role)) != UserRole.SYSTEM
+        )
+
+    def _active_system_user_record_has_password_set(
+        self,
+        user_record: Optional[User]
+    ) -> bool:
+        return (
+            self._active_user_record_has_password_set(user_record)
+            and user_record is not None
+            and UserRole(str(user_record.role)) == UserRole.SYSTEM
         )
 
     def _onboarding_user_record_has_password_set(

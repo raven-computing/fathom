@@ -14,6 +14,8 @@
 #
 """Management of dedicated application users."""
 
+from typing import Final
+
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
 from raven.fathom.base import User
@@ -23,6 +25,11 @@ from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.security import UserAuthenticator
+
+
+SYSTEM_USER_IDENTIFIER: Final[str] = "fathom"
+
+SYSTEM_USER_NAME: Final[str] = "Fathom System User"
 
 
 class UserManager:
@@ -55,11 +62,7 @@ class UserManager:
 
     def create_system_user(self, user: User):
         """Creates the one-time system user for the server bootstrap."""
-        TypeCheck.require_arg(user.identifier, str)
         TypeCheck.require_arg(user.password, str)
-        if not user.identifier:
-            raise ValueError("User identifier must not be empty")
-
         if not user.password:
             raise ValueError("User password must not be empty")
 
@@ -67,14 +70,15 @@ class UserManager:
             raise ValueError("The server has already been set up")
 
         user_record = UserModel(
-            identifier=user.identifier,
-            name=user.name or user.identifier,
+            identifier=SYSTEM_USER_IDENTIFIER,
+            name=SYSTEM_USER_NAME,
             password=user.password,
             role=UserRole.SYSTEM,
             state=UserState.ACTIVE,
         )
         self._authenticator.constitute_password_authentication(user_record)
         self._ds.users().create_new_user(user_record, admin_privileges=True)
+        user.identifier = SYSTEM_USER_IDENTIFIER
         user.name = str(user_record.name)
         user.password = ""
         user.is_admin = True

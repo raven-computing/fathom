@@ -149,10 +149,23 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         )
         self.client.save_user_configuration(config)
 
-        self.client.execute("--user", "alpha", "--password", "alpha", "deploy")
+        self.client.execute(
+            "--user", "alpha", "--password", "alpha", "deploy"
+        )
 
         self.assertClientSuccess()
         self.assertProjectIsDeployedOnServer(self.project)
+
+    def test_client_cannot_deploy_using_system_user_credentials(self):
+        config = self.configuration_user
+        self.client.set_authentication_in(
+            config, "fathom", "fathom"
+        )
+        self.client.save_user_configuration(config)
+
+        self.client.execute("deploy")
+
+        self.assertClientExitStatus(ExitStatus.FAILURE)
 
 
 if __name__ == "__main__":

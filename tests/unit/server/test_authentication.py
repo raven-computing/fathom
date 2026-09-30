@@ -20,6 +20,7 @@ from raven.fathom.base.user import UserState
 from raven.fathom.base.testing import EntropySourceMock
 from raven.fathom.server.security import UserAuthenticator, UserAuthentication
 from raven.fathom.server.models import User
+from raven.fathom.server.models import UserRole
 
 from tests.unit import TestCase
 from tests.unit.server.mocks import DataAccessMock
@@ -47,6 +48,7 @@ class TestUserAuthentication(TestCase):
             identifier=self.user_signup.identifier,
             name=self.user_signup.name,
             password=self.known_user_password_hash,
+            role=UserRole.USER,
             state=self.user_signup.state,
         )
         self.client_request = ClientRequest(
@@ -154,6 +156,28 @@ class TestUserAuthentication(TestCase):
             self.client_request.authentication.password,
             self.user_signup.password,
         )
+
+    def test_system_user_is_rejected_for_remote_client_authentication(self):
+        self.user_stored.role = UserRole.SYSTEM
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+
+        auth = UserAuthenticator().authenticate_client(self.client_request)
+
+        self.assertFalse(auth.is_authenticated())
+        self.assertIsNotNone(auth.user_record)
+
+    def test_system_user_can_authenticate_for_local_server_commands(self):
+        self.user_stored.role = UserRole.SYSTEM
+        authentication = ClientAuthentication(
+            username=str(self.user_signup.identifier),
+            password=str(self.user_signup.password),
+        )
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+
+        auth = UserAuthenticator().authenticate_system_user(authentication)
+
+        self.assertTrue(auth.is_authenticated())
+        self.assertIs(auth.user_record, self.user_stored)
 
     def test_authenticate_client_without_auth_raises_processing_ex(self):
         self.client_request.authentication = None

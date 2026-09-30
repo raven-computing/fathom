@@ -96,24 +96,26 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertTrue(permission.is_admin)
 
     def test_can_create_system_user_during_setup(self):
-        self.db.users().delete_by_identifier("test-user-1")
+        self.db.users().delete_by_identifier("fathom")
         user = User(
-            identifier="system-user",
-            name="System User",
-            password="secret-password",
+            identifier="ignored",
+            name="Ignored",
+            password="secret-password"
         )
 
         UserManager().create_system_user(user)
 
-        stored_user = self.db.users().find_by_identifier("system-user")
+        stored_user = self.db.users().find_by_identifier("fathom")
         assert stored_user is not None
+        self.assertEqual(stored_user.identifier, "fathom")
+        self.assertEqual(stored_user.name, "Fathom System User")
         self.assertEqual(stored_user.role, UserRole.SYSTEM)
         self.assertEqual(stored_user.state, UserState.ACTIVE)
 
     def test_cannot_create_second_system_user(self):
         with self.assertRaises(ValueError) as raised:
             UserManager().create_system_user(
-                User(identifier="system-user", password="secret-password")
+                User(password="secret-password", identifier="ignored")
             )
 
         self.assertIn("already been set up", str(raised.exception))
@@ -129,12 +131,14 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
         self.assertEqual(
             [user.identifier for user in users],
-            ["test-user-1", "test-user-2"]
+            ["fathom", "test-user-1", "test-user-2"]
         )
         self.assertTrue(users[0].is_admin)
         self.assertFalse(users[1].is_admin)
+        self.assertFalse(users[2].is_admin)
         self.assertEqual(users[0].state, UserState.ACTIVE)
-        self.assertEqual(users[1].state, UserState.ONBOARDING)
+        self.assertEqual(users[1].state, UserState.ACTIVE)
+        self.assertEqual(users[2].state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):
         user = User(
@@ -165,31 +169,35 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
     def test_delete_rejects_system_user(self):
         with self.assertRaises(ValueError) as raised:
-            UserManager().delete_user(User(identifier="test-user-1"))
+            UserManager().delete_user(User(identifier="fathom"))
 
         self.assertIn("system user cannot be changed", str(raised.exception))
 
     def test_can_assign_user_to_project(self):
         UserManager().assign_user_to_project(
-            User(identifier="test-user-1"),
+            User(identifier="fathom"),
             Project(identifier="test-project-2"),
         )
 
-        user = self.db.users().find_by_identifier("test-user-1")
+        user = self.db.users().find_by_identifier("fathom")
         assert user is not None
         assigned_projects = self.db.projects().find_all_assigned_to_user(user)
         self.assertEqual(
             sorted(project.identifier for project in assigned_projects),
-            ["test-project-1", "test-project-2"],
+            ["test-project-2"],
         )
 
     def test_can_unassign_user_from_project(self):
+        UserManager().assign_user_to_project(
+            User(identifier="fathom"),
+            Project(identifier="test-project-1"),
+        )
         UserManager().unassign_user_from_project(
-            User(identifier="test-user-1"),
+            User(identifier="fathom"),
             Project(identifier="test-project-1"),
         )
 
-        user = self.db.users().find_by_identifier("test-user-1")
+        user = self.db.users().find_by_identifier("fathom")
         assert user is not None
         assigned_projects = self.db.projects().find_all_assigned_to_user(user)
         self.assertEqual(assigned_projects, [])

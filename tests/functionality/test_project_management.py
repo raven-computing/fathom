@@ -92,7 +92,7 @@ class TestServerProjectManagementCLI(TestCase):
 
     def test_server_cli_can_create_list_and_delete_project(self):
         self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute(
             "project", "create", "local-project",
             "--name", "Local Project",
@@ -102,7 +102,7 @@ class TestServerProjectManagementCLI(TestCase):
         self.assertServerSuccess()
         self.assertIn("Created project 'local-project'.", self.server.stdout)
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("project", "list")
 
         self.assertServerSuccess()
@@ -112,13 +112,13 @@ class TestServerProjectManagementCLI(TestCase):
             self.server.stdout
         )
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("project", "delete", "local-project")
 
         self.assertServerSuccess()
         self.assertIn("Deleted project 'local-project'.", self.server.stdout)
 
-        self.server.stdin = ["alpha", "alpha"]
+        self.server.stdin = ["fathom", "fathom"]
         self.server.execute("project", "list")
 
         self.assertNotIn("'local-project'", self.server.stdout)
@@ -130,10 +130,7 @@ class TestServerProjectManagementCLI(TestCase):
         self.server.execute("project", "list")
 
         self.assertNotEqual(0, self.server.command_exit_status)
-        self.assertIn(
-            "Administrative privileges are required.",
-            self.server.stdout
-        )
+        self.assertIn("Incorrect username or password.", self.server.stdout)
 
 
 if __name__ == "__main__":

@@ -87,6 +87,11 @@ class UserManager:
     def create_user(self, user: User):
         """Creates a new Fathom user on the server.
 
+        The role of the new user is determined by the attributes of
+        the `User` object. If `is_admin` is `True`, the user will be
+        created with the administrator role, otherwise the user will
+        have a regular user role.
+
         Args:
             user (User): The User object to create in the server backend.
 
@@ -110,10 +115,18 @@ class UserManager:
                 f"initial state {UserState.ONBOARDING} in order to be created"
             )
 
+        settings = self._ds.settings().find_server_settings()
+        if not settings.shared_secret:
+            raise ValueError(
+                "Cannot create new user. "
+                "No shared secret set "
+                f"for organisation '{settings.organisation_name}'"
+            )
+
         user_record = UserModel(
             identifier=user.identifier,
             name=name,
-            password=self._ds.settings().find_server_settings().shared_secret,
+            password=settings.shared_secret,
             role=(
                 UserRole.ADMINISTRATOR
                 if user.is_admin else UserRole.USER
@@ -174,14 +187,15 @@ class UserManager:
         result = []
         for user in self._ds.users().read_all():
             role = UserRole(str(user.role))
-            result.append(
-                User(
-                    identifier=str(user.identifier),
-                    name=str(user.name),
-                    is_admin=self._role_has_admin_privileges(role),
-                    state=UserState(str(user.state)),
+            if role != UserRole.SYSTEM:
+                result.append(
+                    User(
+                        identifier=str(user.identifier),
+                        name=str(user.name),
+                        is_admin=self._role_has_admin_privileges(role),
+                        state=UserState(str(user.state)),
+                    )
                 )
-            )
 
         return result
 
@@ -207,9 +221,7 @@ class UserManager:
                 )
 
             if UserRole(str(user_record.role)) == UserRole.SYSTEM:
-                raise ValueError(
-                    "The system user cannot be changed after setup"
-                )
+                raise ValueError("The system user cannot be deleted")
 
             self._ds.users().delete_by_identifier(user.identifier)
         except FailedDeleteQueryException as ex:

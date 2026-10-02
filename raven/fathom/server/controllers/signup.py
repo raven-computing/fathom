@@ -51,12 +51,9 @@ class SignupController:
                 }
 
             request_body = cherrypy.request.json
-            # REVIEW: get("set_password") returns None when absent
-            # sign_up_user will then receive None for password, causing
-            # an opaque 500 instead of a 400.
             user = User(
                 identifier=client_authentication.username,
-                password=request_body.get("set_password"),
+                password=request_body.get("set_password", ""),
                 state=UserState.ONBOARDING,
             )
             UserManager(authenticator).sign_up_user(user)

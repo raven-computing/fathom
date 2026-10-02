@@ -20,6 +20,7 @@ from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import UserProjectRel, AuthDeployment
 from raven.fathom.server.models.user import UserRole
+from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.user_management import UserManager
 
@@ -39,7 +40,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             state=UserState.ONBOARDING,
             name="Test User 2",
         )
-        UserManager().create_user(user)
+        UserManager(UserAuthenticator()).create_user(user)
 
         self.assertEqual(user.identifier, "test-user-2")
         self.assertEqual(user.name, "Test User 2")
@@ -64,9 +65,9 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             state=UserState.ONBOARDING,
             name="Test User 2",
         )
-        UserManager().create_user(user)
+        UserManager(UserAuthenticator()).create_user(user)
         user.password = "secret-password"
-        UserManager().sign_up_user(user)
+        UserManager(UserAuthenticator()).sign_up_user(user)
 
         self.assertEqual(user.identifier, "test-user-2")
         self.assertEqual(user.state, UserState.ACTIVE)
@@ -85,7 +86,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             state=UserState.ONBOARDING,
             is_admin=True,
         )
-        UserManager().create_user(user)
+        UserManager(UserAuthenticator()).create_user(user)
 
         self.assertTrue(user.is_admin)
         self.assertEqual(user.state, UserState.ONBOARDING)
@@ -103,7 +104,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             password="secret-password"
         )
 
-        UserManager().create_system_user(user)
+        UserManager(UserAuthenticator()).create_system_user(user)
 
         stored_user = self.db.users().find_by_identifier("fathom")
         assert stored_user is not None
@@ -114,7 +115,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
     def test_cannot_create_second_system_user(self):
         with self.assertRaises(ValueError) as raised:
-            UserManager().create_system_user(
+            UserManager(UserAuthenticator()).create_system_user(
                 User(password="secret-password", identifier="ignored")
             )
 
@@ -125,9 +126,9 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             identifier="test-user-2",
             state=UserState.ONBOARDING,
         )
-        UserManager().create_user(user)
+        UserManager(UserAuthenticator()).create_user(user)
 
-        users = UserManager().list_users()
+        users = UserManager(UserAuthenticator()).list_users()
 
         self.assertEqual(
             [user.identifier for user in users],
@@ -146,15 +147,15 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             name="Test User 2",
             state=UserState.ONBOARDING,
         )
-        UserManager().create_user(user)
-        UserManager().assign_user_to_project(
+        UserManager(UserAuthenticator()).create_user(user)
+        UserManager(UserAuthenticator()).assign_user_to_project(
             User(identifier="test-user-2"),
             Project(identifier="test-project-1"),
         )
         user_record_id = self.db.users().find_by_identifier(
             "test-user-2"
         ).id # type: ignore
-        UserManager().delete_user(user)
+        UserManager(UserAuthenticator()).delete_user(user)
 
         deleted_user_record = self.db.users().find_by_identifier("test-user-2")
         self.assertIsNone(deleted_user_record)
@@ -169,12 +170,14 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
     def test_delete_rejects_system_user(self):
         with self.assertRaises(ValueError) as raised:
-            UserManager().delete_user(User(identifier="fathom"))
+            UserManager(UserAuthenticator()).delete_user(
+                User(identifier="fathom")
+            )
 
         self.assertIn("system user cannot be changed", str(raised.exception))
 
     def test_can_assign_user_to_project(self):
-        UserManager().assign_user_to_project(
+        UserManager(UserAuthenticator()).assign_user_to_project(
             User(identifier="fathom"),
             Project(identifier="test-project-2"),
         )
@@ -188,11 +191,11 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         )
 
     def test_can_unassign_user_from_project(self):
-        UserManager().assign_user_to_project(
+        UserManager(UserAuthenticator()).assign_user_to_project(
             User(identifier="fathom"),
             Project(identifier="test-project-1"),
         )
-        UserManager().unassign_user_from_project(
+        UserManager(UserAuthenticator()).unassign_user_from_project(
             User(identifier="fathom"),
             Project(identifier="test-project-1"),
         )

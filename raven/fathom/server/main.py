@@ -169,7 +169,7 @@ def _ensure_connected_to_database():
 def _require_server_setup():
     _ensure_connected_to_database()
 
-    if UserManager().is_setup_complete():
+    if UserManager(UserAuthenticator()).is_setup_complete():
         return
 
     raise ValueError(
@@ -192,7 +192,7 @@ def _run_setup_command() -> int:
         password=password,
     )
     _ensure_connected_to_database()
-    UserManager().create_system_user(user)
+    UserManager(UserAuthenticator()).create_system_user(user)
     LOG.i("Configured system user '%s'.", SYSTEM_USER_IDENTIFIER)
     return 0
 
@@ -223,7 +223,7 @@ def _run_user_command(args: "AppArgs") -> int:
 
     try:
         _confirm_admin_privileges()
-        manager = UserManager()
+        manager = UserManager(UserAuthenticator())
         if args.user_command == "create":
             user = User(
                 identifier=args.user_identifier,

@@ -35,10 +35,16 @@ SYSTEM_USER_NAME: Final[str] = "Fathom System User"
 class UserManager:
     """Provides methods to manage application users."""
 
-    def __init__(self):
-        """Initializes a new `UserManager` instance."""
+    def __init__(self, authenticator: UserAuthenticator):
+        """Initializes a new `UserManager` instance.
+
+        Args:
+            authenticator (UserAuthenticator): The object to be used
+                for delegating the handling of security-related authentication
+                details to.
+        """
         self._ds = DataAccess.instance()
-        self._authenticator = UserAuthenticator()
+        self._authenticator = authenticator
 
     def is_setup_complete(self) -> bool:
         """Indicates whether the server bootstrap has been completed."""

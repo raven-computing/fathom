@@ -20,6 +20,7 @@ from raven.fathom.base import ClientRequest, Interaction
 from raven.fathom.base import SystemClock
 from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
+from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.deployment import DeploymentManager
 from raven.fathom.server.user_management import UserManager
 from raven.fathom.server.project_management import ProjectManager
@@ -71,15 +72,30 @@ class HandlerFactory:
                 DeploymentManager(ConfigurationManager().get_server_config())
             )
         elif client_action == Interaction.CREATE_USER:
-            handler = UserCreateHandler(UserAuthorizer(), UserManager())
+            handler = UserCreateHandler(
+                UserAuthorizer(),
+                UserManager(UserAuthenticator())
+            )
         elif client_action == Interaction.LIST_USERS:
-            handler = UserListHandler(UserAuthorizer(), UserManager())
+            handler = UserListHandler(
+                UserAuthorizer(),
+                UserManager(UserAuthenticator())
+            )
         elif client_action == Interaction.DELETE_USER:
-            handler = UserDeleteHandler(UserAuthorizer(), UserManager())
+            handler = UserDeleteHandler(
+                UserAuthorizer(),
+                UserManager(UserAuthenticator())
+            )
         elif client_action == Interaction.ASSIGN_USER:
-            handler = UserAssignHandler(UserAuthorizer(), UserManager())
+            handler = UserAssignHandler(
+                UserAuthorizer(),
+                UserManager(UserAuthenticator())
+            )
         elif client_action == Interaction.UNASSIGN_USER:
-            handler = UserUnassignHandler(UserAuthorizer(), UserManager())
+            handler = UserUnassignHandler(
+                UserAuthorizer(),
+                UserManager(UserAuthenticator())
+            )
         elif client_action == Interaction.CREATE_PROJECT:
             handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())
         elif client_action == Interaction.LIST_PROJECTS:

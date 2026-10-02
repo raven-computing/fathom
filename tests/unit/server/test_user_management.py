@@ -34,9 +34,7 @@ class TestUserManager(TestCase):
         self.ds = DataAccessMock.instance()
         DataAccessMock.reset()
         self.authenticator = Mock(spec_set=UserAuthenticator)
-        self.manager = UserManager()
-        # REVIEW: Should be injected in the initializer
-        self.manager._authenticator = self.authenticator
+        self.manager = UserManager(self.authenticator)
         self.settings = Settings(
             organisation_name = "Test Org",
             shared_secret = "shared-secret",

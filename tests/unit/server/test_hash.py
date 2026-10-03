@@ -72,8 +72,8 @@ class TestHashPBKDF2(TestCase):
         hash_value = hasher.digest(password, salt)
         self.assertEqual(
             hash_value.hex(),
-            "d71200452829738dff7f99b90a223a33c8008d71a9dea43d5b538eeb86d38735"
-            "fe68022d763e5fd8a6ef0908f49f66cb12e24ca670e0bce7861119c8db58b98d"
+            "b2ca30d1bd573fbd00332fc2cbc21251bf4fd59e5e58c9b6933e3e333059096c"
+            "906d43102ab5da7063c5212708a207fb8e51714913fab17fac137044f0cc9a79"
         )
 
 
@@ -123,8 +123,8 @@ class TestPasswordValidation(TestCase):
         stored_hash = StoredPasswordHash(
             PasswordHasher.by_spec(HashPBKDF2.NAME).specification(),
             "fedcba9876543210",
-            "bb1df9c306b75fb2bec119f29269b5c38b26876415ca2bb5e24d9517d41f68ce8"
-            "8e1b20154479eb31fe356a996c10d0eb834b82716488ecc970e7b1aeeb3df8d",
+            "ad791ee3c18ae36cb90c8c5ee2a5e867c29c1f05edbfa3903ffdcb3ae0f064ca"
+            "0b3abe2ed15ee4d7ba26df48709eee2a091dfc5e2cc78dfbd32aaf3328af4e06",
         )
         self.assertTrue(
             PasswordValidation.validate_equality(password, stored_hash)

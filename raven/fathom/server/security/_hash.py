@@ -29,7 +29,8 @@ PASSWORD_ENCODING: Final = "UTF-8"
 
 PBKDF2_HASH_FUNCTION: Final = "sha512"
 
-PBKDF2_ROUNDS: Final = 2048
+# REVIEW: Default rounds?
+PBKDF2_ROUNDS: Final = 800_000
 
 REGEX_STORED_HASH_REPR: Final = re.compile(
     r"^([a-z0-9\-_]+):([a-f0-9]+):([a-f0-9]+)$"
@@ -73,6 +74,7 @@ class PasswordHasher(ABC):
         if HashPBKDF2.is_available():
             return HashPBKDF2(PBKDF2_HASH_FUNCTION, PBKDF2_ROUNDS)
 
+        # REVIEW: Really use BLAKE2b as fallback? Log a warning message?
         return HashBLAKE2b()
 
 

@@ -185,6 +185,9 @@ class UserAuthenticator:
             request.authentication.username
         )
         is_authenticated = False
+        # REVIEW: Hash comparison is skipped entirely for unknown/inactive
+        # users. Response time difference enables user enumeration
+        # via timing attack.
         if self._active_non_system_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
@@ -289,6 +292,7 @@ class UserAuthenticator:
         request.authenticated_user = BaseUser(
             user.identifier,
             user.name,
+            is_admin=UserRole(user.role).has_administrative_privileges(),
             state=UserState(str(user.state)),
         )
         assert request.authentication is not None

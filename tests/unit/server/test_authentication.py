@@ -39,10 +39,9 @@ class TestUserAuthentication(TestCase):
         )
         salt_byte = EntropySourceMock.instance().next_byte.hex()
         self.known_user_password_hash: str = (
-            f"pbkdf2-hmac-sha512-2048:{salt_byte * 16}:"
-            "a6434b3447272736cb57107aa22818637765992c39061f884da4f18d7"
-            "1042431d2f84a97e35f832a859743b161b57992a917c8de5685dcdfc1"
-            "d759a1d35136d1"
+            f"pbkdf2-hmac-sha512-800000:{salt_byte * 16}:"
+            "6fe536e044ce8936e2639e6fe7ac10f8ab7c35e3b92a001c2d9941e545c6be324"
+            "fa8e1d5f8a043da055977befbfb5c993a6d3fb28acba069680105392dbe323c"
         )
         self.user_stored = User(
             identifier=self.user_signup.identifier,

@@ -155,6 +155,12 @@ class DeploymentAuthorizer:
                 auth.expiration_time
             )
 
+        if auth.is_revoked:
+            return DeploymentAuthorization.deny(
+                _Status.INVALID_TOKEN,
+                auth.expiration_time
+            )
+
         return self._create_deployment_auth_from_stored(auth)
 
     def _is_user_assigned_to_project(

@@ -132,14 +132,12 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
         self.assertEqual(
             [user.identifier for user in users],
-            ["fathom", "test-user-1", "test-user-2"]
+            ["test-user-1", "test-user-2"]
         )
-        self.assertTrue(users[0].is_admin)
+        self.assertFalse(users[0].is_admin)
         self.assertFalse(users[1].is_admin)
-        self.assertFalse(users[2].is_admin)
         self.assertEqual(users[0].state, UserState.ACTIVE)
-        self.assertEqual(users[1].state, UserState.ACTIVE)
-        self.assertEqual(users[2].state, UserState.ONBOARDING)
+        self.assertEqual(users[1].state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):
         user = User(
@@ -174,7 +172,10 @@ class TestUserManagement(DatabaseIntegrationTestCase):
                 User(identifier="fathom")
             )
 
-        self.assertIn("system user cannot be changed", str(raised.exception))
+        self.assertIn(
+            "The system user cannot be deleted",
+            str(raised.exception)
+        )
 
     def test_can_assign_user_to_project(self):
         UserManager(UserAuthenticator()).assign_user_to_project(

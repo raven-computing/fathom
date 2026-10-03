@@ -42,9 +42,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "user", "list")
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains(
-            "fathom\tFathom System User\tadmin\tactive"
-        )
+        self.assertNotIn("Fathom System User", self.client.stdout)
         self.assertClientStdoutContains(
             "alpha\tAlphanet Administrator\tadmin\tactive"
         )
@@ -167,11 +165,7 @@ class TestServerUserManagementCLI(TestCase):
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
-        self.assertIn(
-            "User: 'fathom'\tName: 'Fathom System User'"
-            "\tRole: 'system'\tState: 'active'",
-            self.server.stdout
-        )
+        self.assertNotIn("Fathom System User", self.server.stdout)
 
     def server_cli_can_create_list_and_delete_admin_user(self):
         """Tests an entire cycle of creating, listing and deleting

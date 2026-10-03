@@ -57,8 +57,6 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         )
         self.assertEqual(stored_user.state, UserState.ONBOARDING)
         self.assertEqual(stored_user.role, UserRole.USER)
-        permission = self.db.users().find_permission(stored_user)
-        self.assertFalse(permission.is_admin)
 
     def test_can_setup_onboarding_user(self):
         user = User(
@@ -94,8 +92,6 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         stored_user = self.db.users().find_by_identifier("admin-user")
         assert stored_user is not None
         self.assertEqual(stored_user.role, UserRole.ADMINISTRATOR)
-        permission = self.db.users().find_permission(stored_user)
-        self.assertTrue(permission.is_admin)
 
     def test_can_create_system_user_during_setup(self):
         self.db.users().delete_by_identifier("fathom")

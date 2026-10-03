@@ -20,7 +20,7 @@ INSERT INTO "user_project_rel" (user_id, project_id) VALUES
     (1, 1),
     (2, 1);
 
-INSERT INTO "user_permission" (user_id, allow_overwrite, is_admin) VALUES
-    (1, 1, 1),
-    (2, 1, 1),
-    (3, 0, 0);
+INSERT INTO "user_permission" (user_id, allow_overwrite) VALUES
+    (1, 1),
+    (2, 1),
+    (3, 0);

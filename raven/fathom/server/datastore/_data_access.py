@@ -23,6 +23,7 @@ from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.dao import UserDAO, ProjectDAO, SettingsDAO
 from raven.fathom.server.models import User, Project, ProjectVersion
+from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import StagingAllocation
@@ -66,12 +67,17 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
         super().__init__(User)
 
     def create_new_user(self, record, admin_privileges=False):
+        # REVIEW: Refactor this!
+        if record.role != UserRole.SYSTEM:
+            record.role = str(
+                UserRole.ADMINISTRATOR if admin_privileges else UserRole.USER
+            )
+
         self.create(record)
         self.create(
             UserPermission(
                 user=record,
                 allow_overwrite=False,
-                is_admin=admin_privileges,
             )
         )
 

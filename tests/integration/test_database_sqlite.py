@@ -63,9 +63,6 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.db.users().create_new_user(user, admin_privileges=True)
         created_user = self.db.users().find_by_identifier("super-admin-user")
         self.assertIsNotNone(created_user)
-        assert created_user is not None
-        permissions = self.db.users().find_permission(created_user)
-        self.assertTrue(permissions.is_admin)
 
     def test_query_can_find_user_by_identifier(self):
         user = self.db.users().find_by_identifier("test-user-1")
@@ -93,7 +90,6 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertIsNotNone(permission)
         self.assertEqual(permission.user, user)
         self.assertTrue(permission.allow_overwrite)
-        self.assertFalse(permission.is_admin)
 
     def test_query_to_find_user_permission_for_unknown_user_raises_ex(self):
         user = User.create(

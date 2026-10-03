@@ -135,7 +135,6 @@ class DatabaseIntegrationTestCase(TestCase):
         UserPermission.create(
             user=test_user_id,
             allow_overwrite=True,
-            is_admin=True,
         )
         regular_user_id = User.create(
             identifier="test-user-1",
@@ -147,7 +146,6 @@ class DatabaseIntegrationTestCase(TestCase):
         UserPermission.create(
             user=regular_user_id,
             allow_overwrite=True,
-            is_admin=False,
         )
         test_project_id = Project.create(
             identifier="test-project-1",

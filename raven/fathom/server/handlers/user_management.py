@@ -90,46 +90,6 @@ class UserCreateHandler(ActionHandler):
         response.users = [user]
 
 
-class UserSetupHandler(ActionHandler):
-    """Handles remote user onboarding setup requests."""
-
-    def __init__(self, manager: UserManager):
-        self._manager = manager
-
-    def handle(self, request: ClientRequest, response: ServerResponse):
-        user = request.user
-        if user is None or not user.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
-                )
-            )
-            return
-
-        if not user.password:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user password provided.",
-                )
-            )
-            return
-
-        try:
-            self._manager.sign_up_user(user)
-        except ValueError as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text=str(ex),
-                )
-            )
-            return
-
-        response.users = [user]
-
-
 class UserListHandler(ActionHandler):
     """Handles remote user listing requests."""
 

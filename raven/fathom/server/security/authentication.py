@@ -158,7 +158,6 @@ class UserAuthenticator:
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
-                authentication.username,
                 authentication.password
             )
             is_authenticated = user is not None
@@ -197,7 +196,6 @@ class UserAuthenticator:
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
-                request.authentication.username,
                 request.authentication.password
             )
             is_authenticated = user is not None
@@ -220,7 +218,6 @@ class UserAuthenticator:
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
-                authentication.username,
                 authentication.password
             )
             is_authenticated = user is not None
@@ -230,20 +227,20 @@ class UserAuthenticator:
     def _validate_user_authentication_by(
         self,
         user: User,
-        username: str,
         password: str
     ) -> Optional[User]:
         assert user is not None
-        if not StoredPasswordHash.is_stored_representation(
-            str(user.password)
-        ):
-            self.constitute_password_authentication(user)
-            self._ds.users().update(user)
+        if not StoredPasswordHash.is_stored_representation(str(user.password)):
+            self._store_hashed_password_for(user)
 
         stored = StoredPasswordHash.from_compact_string(
             user.password # type: ignore
         )
+
         if PasswordValidation.validate_equality(password, stored):
+            if stored.rounds != self.hasher.rounds:
+                self._store_hashed_password_for(user)
+
             return user
 
         return None
@@ -289,6 +286,10 @@ class UserAuthenticator:
             and str(user_record.password) != ""
             and UserState(user_record.state) == UserState.ONBOARDING
         )
+
+    def _store_hashed_password_for(self, user: User):
+        self.constitute_password_authentication(user)
+        self._ds.users().update(user)
 
     def _assign_password(self, user: User, hash_value: StoredPasswordHash):
         user.password = str(hash_value) # type: ignore

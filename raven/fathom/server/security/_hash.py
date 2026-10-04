@@ -29,7 +29,6 @@ PASSWORD_ENCODING: Final = "UTF-8"
 
 PBKDF2_HASH_FUNCTION: Final = "sha512"
 
-# REVIEW: Default rounds?
 PBKDF2_ROUNDS: Final = 800_000
 
 REGEX_STORED_HASH_REPR: Final = re.compile(

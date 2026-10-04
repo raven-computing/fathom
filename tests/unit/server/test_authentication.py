@@ -19,6 +19,7 @@ from raven.fathom.base import Interaction, ProcessingException
 from raven.fathom.base.user import UserState
 from raven.fathom.base.testing import EntropySourceMock
 from raven.fathom.server.security import UserAuthenticator, UserAuthentication
+from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.models import User
 from raven.fathom.server.models import UserRole
 
@@ -32,7 +33,8 @@ class TestUserAuthentication(TestCase):
     def setUp(self):
         super().setUp()
         self.authenticator = UserAuthenticator()
-        self.authenticator.hasher.rounds = 2048
+        self.hash_rounds = 2048
+        self.authenticator.hasher.rounds = self.hash_rounds
         self.user_signup = User(
             identifier="test-user-1",
             name="The Test User 1",
@@ -40,8 +42,10 @@ class TestUserAuthentication(TestCase):
             state=UserState.ACTIVE,
         )
         salt_byte = EntropySourceMock.instance().next_byte.hex()
+        self.known_user_password_salt: str = salt_byte * 16
         self.known_user_password_hash: str = (
-            f"pbkdf2-hmac-sha512-2048:{salt_byte * 16}:"
+            f"pbkdf2-hmac-sha512-{self.hash_rounds}"
+            f":{self.known_user_password_salt}:"
             "a6434b3447272736cb57107aa22818637765992c39061f884da4f18d71042431"
             "d2f84a97e35f832a859743b161b57992a917c8de5685dcdfc1d759a1d35136d1"
         )
@@ -118,6 +122,36 @@ class TestUserAuthentication(TestCase):
             self.known_user_password_hash,
             "Password should be hashed after successful authentication"
         )
+
+    def test_password_is_rehashed_on_successful_auth_when_rounds_change(self):
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.authenticator.hasher.rounds += 1
+
+        auth = self.authenticator.authenticate_client(self.client_request)
+
+        self.assertTrue(auth.is_authenticated())
+        self.dao.users().update.assert_called_once_with(self.user_stored)
+        rehashed = StoredPasswordHash.from_compact_string(
+            str(self.user_stored.password)
+        )
+        self.assertEqual(rehashed.rounds, self.authenticator.hasher.rounds)
+        self.assertNotEqual(rehashed.hash_value, self.known_user_password_hash)
+        self.assertEqual(rehashed.salt, self.known_user_password_salt)
+
+    def test_password_is_not_rehashed_on_unsuccessful_auth(self):
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.authenticator.hasher.rounds += 1
+        assert self.client_request.authentication is not None
+        self.client_request.authentication.password = "wrong-password"
+
+        auth = self.authenticator.authenticate_client(self.client_request)
+
+        self.assertFalse(auth.is_authenticated())
+        self.dao.users().update.assert_not_called()
+        hashed = StoredPasswordHash.from_compact_string(
+            str(self.user_stored.password)
+        )
+        self.assertEqual(self.known_user_password_hash, str(hashed))
 
     def test_client_auth_is_exchanged_to_authenticated_user_on_success(self):
         self.dao.users().find_by_identifier.return_value = self.user_signup

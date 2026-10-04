@@ -29,6 +29,7 @@ from raven.fathom.server.defaults import SERVER_ROOT_PATH_V1
 from raven.fathom.server.controllers import PublicController
 from raven.fathom.server.controllers import SignupController
 from raven.fathom.server.controllers import InteractionController
+from raven.fathom.server.models import Settings
 from raven.fathom.server.staging import StagingArea
 from raven.fathom.server.deployment import DeploymentSite
 from raven.fathom.server.datastore import DatabaseManager
@@ -193,6 +194,11 @@ def _run_setup_command() -> int:
     )
     _ensure_connected_to_database()
     UserManager(UserAuthenticator()).create_system_user(user)
+    Settings.create(
+        organisation_name="System",
+        shared_secret="whatever",
+        active=True,
+    )
     LOG.i("Configured system user '%s'.", SYSTEM_USER_IDENTIFIER)
     return 0
 

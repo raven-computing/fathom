@@ -138,6 +138,20 @@ class TestUserAuthentication(TestCase):
         self.assertNotEqual(rehashed.hash_value, self.known_user_password_hash)
         self.assertEqual(rehashed.salt, self.known_user_password_salt)
 
+    def test_can_authenticate_with_old_password_when_stored_is_rehashed(self):
+        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.authenticator.hasher.rounds += 1
+        # Cause password rehash
+        auth = self.authenticator.authenticate_client(self.client_request)
+        self.assertTrue(auth.is_authenticated())
+
+        assert self.client_request.authentication is not None
+        assert self.user_signup.password is not None
+        self.client_request.authentication.password = self.user_signup.password
+        auth = self.authenticator.authenticate_client(self.client_request)
+
+        self.assertTrue(auth.is_authenticated())
+
     def test_password_is_not_rehashed_on_unsuccessful_auth(self):
         self.dao.users().find_by_identifier.return_value = self.user_stored
         self.authenticator.hasher.rounds += 1

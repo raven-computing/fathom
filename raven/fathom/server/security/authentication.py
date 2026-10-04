@@ -239,6 +239,7 @@ class UserAuthenticator:
 
         if PasswordValidation.validate_equality(password, stored):
             if stored.rounds != self.hasher.rounds:
+                user.password = password
                 self._store_hashed_password_for(user)
 
             return user

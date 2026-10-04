@@ -36,9 +36,21 @@ REGEX_STORED_HASH_REPR: Final = re.compile(
     r"^([a-z0-9\-_]+):([a-f0-9]+):([a-f0-9]+)$"
 )
 
+REGEX_PBKDF2_SPEC_REPR: Final = re.compile(
+    r"^pbkdf2-hmac-([a-z0-9]+)-([0-9]+)$"
+)
+
 
 class PasswordHasher(ABC):
-    """Abstract base class for password hashers."""
+    """Abstract base class for password hashers.
+
+    Attributes:
+        rounds (int): The number of hash rounds to use. Implementations are
+            not requires to use this attribute.
+    """
+
+    def __init__(self, rounds: int):
+        self.rounds: int = rounds
 
     @abstractmethod
     def specification(self) -> str:
@@ -59,7 +71,17 @@ class PasswordHasher(ABC):
                     f"Password hash function '{hash_function_spec}' is "
                     "not available on this system."
                 )
-            return HashPBKDF2(PBKDF2_HASH_FUNCTION, PBKDF2_ROUNDS)
+
+            match = REGEX_PBKDF2_SPEC_REPR.match(hash_function_spec)
+            if not bool(match):
+                raise ValueError(
+                    f"Password hash function '{hash_function_spec}' is not "
+                    "a valid PBKDF2 hash function specification"
+                )
+
+            hash_function_name = match.group(1)
+            rounds = match.group(2)
+            return HashPBKDF2(hash_function_name, int(rounds))
 
         if hash_function_spec.startswith(HashBLAKE2b.NAME):
             return HashBLAKE2b()
@@ -83,6 +105,9 @@ class HashBLAKE2b(PasswordHasher):
 
     NAME: Final = "blake2b"
 
+    def __init__(self):
+        super().__init__(1)
+
     def specification(self):
         return HashBLAKE2b.NAME
 
@@ -98,8 +123,8 @@ class HashPBKDF2(PasswordHasher):
     _IS_AVAILABLE = None
 
     def __init__(self, hmac_hash: str, rounds: int):
+        super().__init__(rounds)
         self.hmac_hash: str = hmac_hash
-        self.rounds: int = rounds
 
     def specification(self):
         return f"{HashPBKDF2.NAME}-{self.hmac_hash}-{self.rounds}"
@@ -134,6 +159,11 @@ class StoredPasswordHash:
         self.hash_function_name: str = hash_function_name
         self.hash_value: str = hash_value
         self.salt: str = salt
+
+    @property
+    def rounds(self) -> int:
+        """The number of rounds to be applied when hashing."""
+        return PasswordHasher.by_spec(self.hash_function_name).rounds
 
     def __str__(self):
         return (
@@ -188,6 +218,7 @@ class PasswordValidation:
         the expected stored password hash.
         """
         hasher = PasswordHasher.by_spec(stored_password.hash_function_name)
+        hasher.rounds = stored_password.rounds
         salt = bytes.fromhex(stored_password.salt)
         hash_bytes = hasher.digest(password.encode(PASSWORD_ENCODING), salt)
         stored_hash_bytes = bytes.fromhex(stored_password.hash_value)

@@ -112,6 +112,7 @@ class UserAuthenticator:
         """Initializes a new `UserAuthenticator` instance."""
         self.hasher = PasswordHasher.get_default()
         self._ds = DataAccess.instance()
+        self._dummy_hash = self._build_dummy_password_hash()
 
     def constitute_password_authentication(self, user: User):
         """Sets up authentication via a password for the given user.
@@ -164,6 +165,8 @@ class UserAuthenticator:
                 authentication.password
             )
             is_authenticated = user is not None
+        else:
+            self._spin_authentication_process(authentication.password)
 
         return UserAuthentication(user, is_authenticated)
 
@@ -192,9 +195,6 @@ class UserAuthenticator:
             request.authentication.username
         )
         is_authenticated = False
-        # REVIEW: Hash comparison is skipped entirely for unknown/inactive
-        # users. Response time difference enables user enumeration
-        # via timing attack.
         if self._active_non_system_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
@@ -202,6 +202,8 @@ class UserAuthenticator:
                 request.authentication.password
             )
             is_authenticated = user is not None
+        else:
+            self._spin_authentication_process(request.authentication.password)
 
         if is_authenticated:
             assert user is not None
@@ -224,6 +226,8 @@ class UserAuthenticator:
                 authentication.password
             )
             is_authenticated = user is not None
+        else:
+            self._spin_authentication_process(authentication.password)
 
         return UserAuthentication(user, is_authenticated)
 
@@ -319,3 +323,26 @@ class UserAuthenticator:
 
     def _generate_password_salt(self) -> bytes:
         return EntropySource.instance().get_bytes(PASSWORD_SALT_LENGTH)
+
+    def _build_dummy_password_hash(self) -> StoredPasswordHash:
+        dummy_password = "fathom-authentication-dummy-password"
+        dummy_password_salt = b"\x00" * PASSWORD_SALT_LENGTH
+        dummy_hash = self.hasher.digest(
+            dummy_password.encode(PASSWORD_ENCODING),
+            dummy_password_salt
+        )
+        return StoredPasswordHash(
+            self.hasher.specification(),
+            dummy_password_salt.hex(),
+            dummy_hash.hex()
+        )
+
+    def _spin_authentication_process(self, password: str):
+        """Performs a password validation against a dummy password hash.
+
+        This is used to simulate password verification for a dummy user.
+        It helps prevent timing attacks by ensuring that the authentication
+        process takes an approximately consistent amount of time, even for
+        non-existent users.
+        """
+        PasswordValidation.validate_equality(password, self._dummy_hash)

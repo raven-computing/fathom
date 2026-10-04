@@ -25,10 +25,13 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import User
 from raven.fathom.server.models import UserRole
+from raven.fathom.server.logging import Logger
 from raven.fathom.server.security._hash import PasswordHasher
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.security._hash import PasswordValidation
 
+
+LOG = Logger.get()
 
 PASSWORD_ENCODING: Final = "UTF-8"
 
@@ -231,6 +234,10 @@ class UserAuthenticator:
     ) -> Optional[User]:
         assert user is not None
         if not StoredPasswordHash.is_stored_representation(str(user.password)):
+            LOG.i(
+                "Hashing found plain-text password for user %s",
+                user.identifier
+            )
             self._store_hashed_password_for(user)
 
         stored = StoredPasswordHash.from_compact_string(
@@ -239,6 +246,11 @@ class UserAuthenticator:
 
         if PasswordValidation.validate_equality(password, stored):
             if stored.rounds != self.hasher.rounds:
+                LOG.i(
+                    "Rehashing password for user %s due to changed "
+                    "hash rounds",
+                    user.identifier
+                )
                 user.password = password
                 self._store_hashed_password_for(user)
 

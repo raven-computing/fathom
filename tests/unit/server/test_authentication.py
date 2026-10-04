@@ -31,6 +31,8 @@ class TestUserAuthentication(TestCase):
 
     def setUp(self):
         super().setUp()
+        self.authenticator = UserAuthenticator()
+        self.authenticator.hasher.rounds = 2048
         self.user_signup = User(
             identifier="test-user-1",
             name="The Test User 1",
@@ -39,9 +41,9 @@ class TestUserAuthentication(TestCase):
         )
         salt_byte = EntropySourceMock.instance().next_byte.hex()
         self.known_user_password_hash: str = (
-            f"pbkdf2-hmac-sha512-800000:{salt_byte * 16}:"
-            "6fe536e044ce8936e2639e6fe7ac10f8ab7c35e3b92a001c2d9941e545c6be324"
-            "fa8e1d5f8a043da055977befbfb5c993a6d3fb28acba069680105392dbe323c"
+            f"pbkdf2-hmac-sha512-2048:{salt_byte * 16}:"
+            "a6434b3447272736cb57107aa22818637765992c39061f884da4f18d71042431"
+            "d2f84a97e35f832a859743b161b57992a917c8de5685dcdfc1d759a1d35136d1"
         )
         self.user_stored = User(
             identifier=self.user_signup.identifier,
@@ -62,7 +64,7 @@ class TestUserAuthentication(TestCase):
 
     def test_can_constitute_password_authentication_for_user_record(self):
         user = self.user_signup
-        UserAuthenticator().constitute_password_authentication(user)
+        self.authenticator.constitute_password_authentication(user)
         self.assertEqual(user.identifier, "test-user-1")
         self.assertEqual(user.name, "The Test User 1")
         self.assertEqual(
@@ -74,7 +76,7 @@ class TestUserAuthentication(TestCase):
 
     def test_correct_username_password_combination_authenticates_user(self):
         self.dao.users().find_by_identifier.return_value = self.user_stored
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
         self.assertTrue(auth.is_authenticated())
         self.assertIsInstance(auth.user_record, User)
@@ -83,7 +85,7 @@ class TestUserAuthentication(TestCase):
     def test_wrong_username_in_client_request_denies_user_authentication(self):
         self.user_stored.identifier = "an-unknown-user" # type: ignore
         self.dao.users().find_by_identifier.return_value = None
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
         self.assertFalse(auth.is_authenticated())
         self.assertIsNone(auth.user_record)
@@ -94,7 +96,7 @@ class TestUserAuthentication(TestCase):
         wrong_password = str(self.user_signup.password) + "A"
         assert self.client_request.authentication is not None
         self.client_request.authentication.password = wrong_password
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
         self.assertFalse(auth.is_authenticated())
         self.assertIsNone(auth.user_record)
@@ -102,14 +104,14 @@ class TestUserAuthentication(TestCase):
     def test_onboarding_user_is_not_authenticated_with_matching_password(self):
         self.user_stored.state = UserState.ONBOARDING # type: ignore
         self.dao.users().find_by_identifier.return_value = self.user_stored
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
         self.assertFalse(auth.is_authenticated())
         self.assertIsNotNone(auth.user_record)
 
     def test_cleartext_password_is_hashed_on_successful_authentication(self):
         self.dao.users().find_by_identifier.return_value = self.user_signup
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertTrue(auth.is_authenticated())
         self.assertEqual(
             self.user_signup.password,
@@ -119,7 +121,7 @@ class TestUserAuthentication(TestCase):
 
     def test_client_auth_is_exchanged_to_authenticated_user_on_success(self):
         self.dao.users().find_by_identifier.return_value = self.user_signup
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertTrue(auth.is_authenticated())
         assert self.client_request.authentication is not None
         self.assertEqual(
@@ -144,7 +146,7 @@ class TestUserAuthentication(TestCase):
 
     def test_client_authentication_is_not_exchanged_on_failed_auth(self):
         self.dao.users().find_by_identifier.return_value = None
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
         self.assertFalse(auth.is_authenticated())
         assert self.client_request.authentication is not None
         self.assertEqual(
@@ -160,7 +162,7 @@ class TestUserAuthentication(TestCase):
         self.user_stored.role = UserRole.SYSTEM
         self.dao.users().find_by_identifier.return_value = self.user_stored
 
-        auth = UserAuthenticator().authenticate_client(self.client_request)
+        auth = self.authenticator.authenticate_client(self.client_request)
 
         self.assertFalse(auth.is_authenticated())
         self.assertIsNotNone(auth.user_record)
@@ -173,7 +175,7 @@ class TestUserAuthentication(TestCase):
         )
         self.dao.users().find_by_identifier.return_value = self.user_stored
 
-        auth = UserAuthenticator().authenticate_system_user(authentication)
+        auth = self.authenticator.authenticate_system_user(authentication)
 
         self.assertTrue(auth.is_authenticated())
         self.assertIs(auth.user_record, self.user_stored)
@@ -181,7 +183,7 @@ class TestUserAuthentication(TestCase):
     def test_authenticate_client_without_auth_raises_processing_ex(self):
         self.client_request.authentication = None
         with self.assertRaises(ProcessingException) as raised:
-            UserAuthenticator().authenticate_client(self.client_request)
+            self.authenticator.authenticate_client(self.client_request)
 
         self.assertEqual(
             "Client has no authentication set",
@@ -192,7 +194,7 @@ class TestUserAuthentication(TestCase):
         assert self.client_request.authentication is not None
         self.client_request.authentication.username = ""
         with self.assertRaises(ProcessingException) as raised:
-            UserAuthenticator().authenticate_client(self.client_request)
+            self.authenticator.authenticate_client(self.client_request)
 
         self.assertIn("username must not be empty", str(raised.exception))
 
@@ -200,14 +202,14 @@ class TestUserAuthentication(TestCase):
         assert self.client_request.authentication is not None
         self.client_request.authentication.password = ""
         with self.assertRaises(ProcessingException) as raised:
-            UserAuthenticator().authenticate_client(self.client_request)
+            self.authenticator.authenticate_client(self.client_request)
 
         self.assertIn("password must not be empty", str(raised.exception))
 
     def test_constitute_password_with_empty_identifier_raises_ex(self):
         user = User(identifier="", name="User", password="password")
         with self.assertRaises(ProcessingException) as raised:
-            UserAuthenticator().constitute_password_authentication(user)
+            self.authenticator.constitute_password_authentication(user)
 
         self.assertIn(
             "User identifier must not be empty",
@@ -217,7 +219,7 @@ class TestUserAuthentication(TestCase):
     def test_constitute_password_with_empty_password_raises_ex(self):
         user = User(identifier="user", name="User", password="")
         with self.assertRaises(ProcessingException) as raised:
-            UserAuthenticator().constitute_password_authentication(user)
+            self.authenticator.constitute_password_authentication(user)
 
         self.assertIn("User password must not be empty", str(raised.exception))
 

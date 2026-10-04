@@ -98,10 +98,16 @@ class UserAuthentication:
 
 
 class UserAuthenticator:
-    """Handles user authentication."""
+    """Handles user authentication.
+
+    Attributes:
+        hasher (PasswordHasher): The `PasswordHasher` object used by
+            the authenticator.
+    """
 
     def __init__(self):
         """Initializes a new `UserAuthenticator` instance."""
+        self.hasher = PasswordHasher.get_default()
         self._ds = DataAccess.instance()
 
     def constitute_password_authentication(self, user: User):
@@ -115,16 +121,15 @@ class UserAuthenticator:
                 identifier or password set.
         """
         _check_user_record_types(user)
-        hasher = PasswordHasher.get_default()
         salt = self._generate_password_salt()
-        password_hash = hasher.digest(
+        password_hash = self.hasher.digest(
             user.password.encode(PASSWORD_ENCODING), # type: ignore
             salt
         )
         self._assign_password(
             user,
             StoredPasswordHash(
-                hasher.specification(),
+                self.hasher.specification(),
                 salt.hex(),
                 password_hash.hex()
             )

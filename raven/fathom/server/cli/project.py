@@ -17,7 +17,6 @@
 from raven.fathom.base import Project
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.cli.command import require_database
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.project_management import ProjectManager
 
@@ -28,7 +27,6 @@ LOG = Logger.get()
 class ProjectCreateCommand(ServerCommand):
     """Implementation of `project create`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = ProjectManager()
@@ -45,7 +43,6 @@ class ProjectCreateCommand(ServerCommand):
 class ProjectListCommand(ServerCommand):
     """Implementation of `project list`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = ProjectManager()
@@ -62,7 +59,6 @@ class ProjectListCommand(ServerCommand):
 class ProjectDeleteCommand(ServerCommand):
     """Implementation of `project delete`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = ProjectManager()

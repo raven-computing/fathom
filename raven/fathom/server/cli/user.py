@@ -17,7 +17,6 @@
 from raven.fathom.base import User, UserState
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.cli.command import require_database
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.user_management import UserManager
@@ -29,7 +28,6 @@ LOG = Logger.get()
 class UserCreateCommand(ServerCommand):
     """Implementation of `user create`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = UserManager(UserAuthenticator())
@@ -53,7 +51,6 @@ class UserCreateCommand(ServerCommand):
 class UserListCommand(ServerCommand):
     """Implementation of `user list`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = UserManager(UserAuthenticator())
@@ -72,7 +69,6 @@ class UserListCommand(ServerCommand):
 class UserDeleteCommand(ServerCommand):
     """Implementation of `user delete`."""
 
-    @require_database
     @require_privileges
     def execute(self) -> int:
         manager = UserManager(UserAuthenticator())

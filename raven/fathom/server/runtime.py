@@ -110,9 +110,6 @@ def _setup_post_update():
             LOG.e(str(ex), exc_info=ex)
             raise
 
-    LOG.d("Disconnecting from database after setup procedures")
-    db.disconnect()
-
 
 def _apply_args_to_config(args: "AppArgs", config: Configuration):
     if args.port is not None:

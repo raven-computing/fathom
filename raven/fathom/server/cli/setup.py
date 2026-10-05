@@ -15,7 +15,6 @@
 """CLI command handling for setup actions."""
 
 from raven.fathom.base import InputPrompt, User
-from raven.fathom.server.cli.command import require_database
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.models import Settings
@@ -30,7 +29,6 @@ LOG = Logger.get()
 class SetupCommand(ServerCommand):
     """Implementation of the `setup` server command."""
 
-    @require_database
     def execute(self) -> int:
         prompt = InputPrompt.instance()
         password = prompt.read("Password: ", secret=True)

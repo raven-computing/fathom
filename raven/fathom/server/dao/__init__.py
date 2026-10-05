@@ -22,6 +22,7 @@ queries and manipulations.
 
 from .api import DataAccess
 from .api import DatastoreException
+from .api import IllegalQueryException
 from .api import FailedQueryException
 from .api import FailedCreateQueryException
 from .api import FailedReadQueryException

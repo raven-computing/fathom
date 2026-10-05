@@ -83,7 +83,7 @@ class UserManager:
             state=UserState.ACTIVE,
         )
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().create_new_user(user_record, admin_privileges=True)
+        self._ds.users().create_new_user(user_record)
         user.identifier = SYSTEM_USER_IDENTIFIER
         user.name = str(user_record.name)
         user.password = ""
@@ -140,10 +140,7 @@ class UserManager:
             state=str(UserState.ONBOARDING),
         )
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().create_new_user(
-            user_record,
-            admin_privileges=user.is_admin
-        )
+        self._ds.users().create_new_user(user_record)
 
     def sign_up_user(self, user: User):
         """Sets the initial password for an onboarding user.

@@ -37,6 +37,12 @@ class DatastoreException(FathomServerException):
     """
 
 
+class IllegalQueryException(DatastoreException):
+    """A query made to the datastore is invalid, a precondition was not met
+    or executing the query would lead to an incoherent state.
+    """
+
+
 class FailedQueryException(DatastoreException):
     """A query made to the datastore has failed exceptionally."""
 

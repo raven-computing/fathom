@@ -17,9 +17,11 @@
 from datetime import datetime
 
 from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.dao import IllegalQueryException
 from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.models import User, Project
+from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
 from raven.fathom.server.datastore._sqlite import DatabaseSQLite
@@ -49,6 +51,7 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             identifier="test-user-2",
             name="Test User 2",
             password="567890",
+            role=UserRole.USER,
         )
         self.db.users().create_new_user(user)
         created_user = self.db.users().find_by_identifier("test-user-2")
@@ -59,10 +62,24 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             identifier="super-admin-user",
             name="Super Admin User",
             password="567890",
+            role=UserRole.ADMINISTRATOR,
         )
-        self.db.users().create_new_user(user, admin_privileges=True)
+        self.db.users().create_new_user(user)
         created_user = self.db.users().find_by_identifier("super-admin-user")
         self.assertIsNotNone(created_user)
+
+    def test_cannot_create_second_system_user(self):
+        user = User.create(
+            identifier="second-system-user",
+            name="Second System User",
+            password="567890",
+            role=UserRole.SYSTEM,
+        )
+
+        with self.assertRaises(IllegalQueryException) as raised:
+            self.db.users().create_new_user(user)
+
+        self.assertIn("A system user already exists", str(raised.exception))
 
     def test_query_can_find_user_by_identifier(self):
         user = self.db.users().find_by_identifier("test-user-1")

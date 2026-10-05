@@ -20,6 +20,7 @@ from typing import cast, Type, TypeVar
 
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
+from raven.fathom.server.dao import IllegalQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.dao import UserDAO, ProjectDAO, SettingsDAO
 from raven.fathom.server.models import User, Project, ProjectVersion
@@ -66,12 +67,15 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
     def __init__(self):
         super().__init__(User)
 
-    def create_new_user(self, record, admin_privileges=False):
-        # REVIEW: Refactor this!
-        if record.role != UserRole.SYSTEM:
-            record.role = str(
-                UserRole.ADMINISTRATOR if admin_privileges else UserRole.USER
-            )
+    def create_new_user(self, record):
+        if record.role == UserRole.SYSTEM:
+            has_system_user = User.select().where(
+                User.role == UserRole.SYSTEM
+            ).exists()
+            if has_system_user:
+                raise IllegalQueryException(
+                    "A system user already exists and cannot be created again"
+                )
 
         self.create(record)
         self.create(

@@ -21,9 +21,13 @@ import re
 from abc import ABC, abstractmethod
 from typing import Final
 
+from raven.fathom.server.logging import Logger
+
 if "blake2b" not in hashlib.algorithms_guaranteed:
     raise ImportError("Fatal: Required hash algorithm 'blake2b' not available")
 
+
+LOG = Logger.get()
 
 PASSWORD_ENCODING: Final = "UTF-8"
 
@@ -95,7 +99,6 @@ class PasswordHasher(ABC):
         if HashPBKDF2.is_available():
             return HashPBKDF2(PBKDF2_HASH_FUNCTION, PBKDF2_ROUNDS)
 
-        # REVIEW: Really use BLAKE2b as fallback? Log a warning message?
         return HashBLAKE2b()
 
 
@@ -137,10 +140,21 @@ class HashPBKDF2(PasswordHasher):
         is available on this system.
         """
         if HashPBKDF2._IS_AVAILABLE is None:
-            HashPBKDF2._IS_AVAILABLE = (
+            is_available = (
                 hasattr(hashlib, "pbkdf2_hmac")
                 and callable(getattr(hashlib, "pbkdf2_hmac"))
             )
+            if not is_available:
+                LOG.w(
+                    "The password hashing function PBKDF2 "
+                    "is not available on this system."
+                )
+                LOG.w(
+                    "Using a fallback password hashing function instead, "
+                    "which might be less secure."
+                )
+
+            HashPBKDF2._IS_AVAILABLE = is_available
 
         return HashPBKDF2._IS_AVAILABLE
 

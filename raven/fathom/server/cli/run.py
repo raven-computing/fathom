@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""The Fathom server command line interface (CLI)."""
+"""CLI command handling for server runtime actions."""
 
-__all__ = [
-    "AppArgs",
-    "ServerCommand",
-    "ExitStatus",
-    "command_with_args",
-    "main",
-]
+from raven.fathom.server.cli.command import ServerCommand
+from raven.fathom.server.runtime import run_server_application
 
-from .arguments import AppArgs
-from .command import ServerCommand
-from .status import ExitStatus
-from .registry import command_with_args
-from .application import main
+
+class RunServerCommand(ServerCommand):
+    """Implementation of the default command that starts the HTTP server."""
+
+    def execute(self) -> int:
+        return run_server_application(self.args)

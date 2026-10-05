@@ -15,15 +15,13 @@
 """The Fathom client command line interface (CLI)."""
 
 __all__ = [
-    "Command",
+    "ClientCommand",
     "ArgumentsCLI",
     "ExitStatus",
-    "SetupCommand",
     "main",
 ]
 
-from .command import Command
+from .command import ClientCommand
 from .arguments import ArgumentsCLI
 from .status import ExitStatus
-from .setup import SetupCommand
 from .application import main

@@ -23,14 +23,14 @@ from raven.fathom.client.deployment import FathomDeployment
 from raven.fathom.client.locator import load_server_locator
 from raven.fathom.client.authentication import load_client_authentication
 from raven.fathom.client.project import load_client_project
-from raven.fathom.client.cli.command import Command
+from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.status import ExitStatus
 
 
 LOG = Logger.get()
 
 
-class DeployCommand(Command):
+class DeployCommand(ClientCommand):
     """Implementation of the 'deploy' CLI command."""
 
     def execute(self):

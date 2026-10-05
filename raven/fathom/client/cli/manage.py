@@ -24,14 +24,14 @@ from raven.fathom.client.connection import (
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.locator import load_management_server_locator
 from raven.fathom.client.authentication import load_client_authentication
-from raven.fathom.client.cli.command import Command
+from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.status import ExitStatus
 
 
 LOG = Logger.get()
 
 
-class ManageCommand(Command):
+class ManageCommand(ClientCommand):
     """Implementation of the `manage` CLI command."""
 
     def execute(self):

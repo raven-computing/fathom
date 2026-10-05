@@ -15,7 +15,7 @@
 """CLI command registry."""
 
 from raven.fathom.client.cli.arguments import ArgumentsCLI
-from raven.fathom.client.cli.command import Command
+from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.deploy import DeployCommand
 from raven.fathom.client.cli.manage import ManageCommand
 from raven.fathom.client.cli.setup import SetupCommand
@@ -25,7 +25,7 @@ from raven.fathom.client.logging import Logger
 LOG = Logger.get()
 
 
-def command_with_args(args: ArgumentsCLI) -> Command | None:
+def command_with_args(args: ArgumentsCLI) -> ClientCommand | None:
     """Creates a concrete Command from parsed CLI arguments.
 
     Args:

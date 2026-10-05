@@ -55,6 +55,7 @@ from .archive import ArchiveFileMember
 from .archive import ArchiveFileIOException
 from .arguments import ArgumentParser
 from .authentication import ClientAuthentication
+from .command import Command
 from .config import ConfigurationSection
 from .config import Configuration
 from .config import ConfigurationLoader

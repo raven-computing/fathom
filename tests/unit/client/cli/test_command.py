@@ -14,7 +14,7 @@
 #
 """Unit tests for the command handling infrastructure."""
 
-from raven.fathom.client.cli.command import Command, run
+from raven.fathom.client.cli.command import ClientCommand, run
 from raven.fathom.client.cli.arguments import ArgumentsCLI
 from raven.fathom.client.cli.registry import command_with_args
 from raven.fathom.client.cli.deploy import DeployCommand
@@ -34,8 +34,8 @@ class TestCommand(TestCase):
         self.assertEqual(ExitStatus.NO_COMMAND_PROVIDED, status)
 
     def test_run_ret_error_when_command_does_not_return_exit_status_type(self):
-        class _MyCommand(Command):
-            def execute(self): # type: ignore
+        class _MyCommand(ClientCommand):
+            def execute(self):
                 return 42
 
         command = _MyCommand(ArgumentsCLI())
@@ -43,7 +43,7 @@ class TestCommand(TestCase):
         self.assertEqual(ExitStatus.INTERNAL_ERROR, status)
 
     def test_run_captures_keyboard_interrupt_and_calls_cancel(self):
-        class _MyCommand(Command):
+        class _MyCommand(ClientCommand):
             def __init__(self, args):
                 super().__init__(args)
                 self.cancel_called = False
@@ -58,7 +58,7 @@ class TestCommand(TestCase):
         self.assertTrue(command.cancel_called)
 
     def test_run_catches_bare_exception(self):
-        class _MyCommand(Command):
+        class _MyCommand(ClientCommand):
             def __init__(self, args):
                 super().__init__(args)
                 self.cancel_called = False

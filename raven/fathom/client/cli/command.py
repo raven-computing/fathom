@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""CLI command handling."""
+"""Client CLI command handling."""
 
-from abc import ABC, abstractmethod
-
+from raven.fathom.base import Command
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import InvalidConfigurationException
 from raven.fathom.client.cli.arguments import ArgumentsCLI
@@ -25,40 +24,20 @@ from raven.fathom.client.cli.status import ExitStatus
 LOG = Logger.get()
 
 
-class Command(ABC):
-    """Abstract base class for all CLI commands.
+class ClientCommand(Command):
+    """Base class for all client CLI commands.
 
     Attributes:
-        args (ArgumentsCLI): The `ArgumentsCLI` object used by the
-            underlying CLI application.
-        name (str): The name of the command, as a str.
+        args (ArgumentsCLI): The `ArgumentsCLI` object used by
+            the underlying CLI application.
     """
 
     def __init__(self, args: ArgumentsCLI):
         self.args = args
-        self.name = args.command
-
-    @abstractmethod
-    def execute(self) -> ExitStatus:
-        """Executes this command.
-        
-        Returns:
-            ExitStatus: The exit status of the command, convertible to an int.
-        """
-
-    def cancel(self):
-        """Lifecycle hook for command cancellation.
-
-        This method is called when the command execution is interrupted,
-        for example, by a user pressing Ctrl+C. Concrete commands may override
-        this method to implement custom cancellation logic. It is not called in
-        case of an encountered exception during command execution.
-        An implementation must not raise any exceptions.
-        The default implementation does nothing.
-        """
+        super().__init__(args.command)
 
 
-def run(command: Command | None) -> ExitStatus:
+def run(command: ClientCommand | None) -> ExitStatus:
     """Runs the given Command.
 
     Args:
@@ -72,18 +51,18 @@ def run(command: Command | None) -> ExitStatus:
         LOG.e("No command specified")
         return ExitStatus.NO_COMMAND_PROVIDED
 
+    exit_status = None
     try:
         exit_status = command.execute()
-        if not isinstance(exit_status, ExitStatus):
-            LOG.e(
-                "Command %s returned invalid exit status. "
-                "Expected value of type ExitStatus but found %s",
-                command,
-                type(exit_status)
-            )
-            exit_status = ExitStatus.INTERNAL_ERROR
-
-        return exit_status
+        return ExitStatus(exit_status)
+    except ValueError:
+        LOG.e(
+            "Command %s returned invalid exit status. "
+            "Expected value of ExitStatus but found %s",
+            command,
+            exit_status
+        )
+        return ExitStatus.INTERNAL_ERROR
     except KeyboardInterrupt:
         LOG.i("Cancelling...")
         command.cancel()

@@ -50,8 +50,7 @@ class _DummyHashState:
 _DUMMY_HASH_STATE = _DummyHashState()
 
 
-def _build_dummy_password_hash() -> StoredPasswordHash:
-    hasher = PasswordHasher.get_default()
+def _build_dummy_password_hash(hasher: PasswordHasher) -> StoredPasswordHash:
     LOG.d(
         "Building dummy password hash with %s",
         hasher.specification()
@@ -367,7 +366,7 @@ class UserAuthenticator:
             with _AUTH_LOCK:
                 dummy_hash = _DUMMY_HASH_STATE.value
                 if dummy_hash is None:
-                    dummy_hash = _build_dummy_password_hash()
+                    dummy_hash = _build_dummy_password_hash(self.hasher)
                     _DUMMY_HASH_STATE.value = dummy_hash
 
         PasswordValidation.validate_equality(password, dummy_hash)

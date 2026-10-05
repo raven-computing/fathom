@@ -14,6 +14,7 @@
 #
 """Authentication facilities."""
 
+from threading import RLock
 from typing import Optional, Final
 
 from raven.fathom.base import TypeCheck
@@ -36,6 +37,36 @@ LOG = Logger.get()
 PASSWORD_ENCODING: Final = "UTF-8"
 
 PASSWORD_SALT_LENGTH: Final = 16
+
+_AUTH_LOCK = RLock()
+
+
+class _DummyHashState:
+
+    def __init__(self):
+        self.value: Optional[StoredPasswordHash] = None
+
+
+_DUMMY_HASH_STATE = _DummyHashState()
+
+
+def _build_dummy_password_hash() -> StoredPasswordHash:
+    hasher = PasswordHasher.get_default()
+    LOG.d(
+        "Building dummy password hash with %s",
+        hasher.specification()
+    )
+    dummy_password = "fathom-authentication-dummy-password"
+    dummy_password_salt = b"\x00" * PASSWORD_SALT_LENGTH
+    dummy_hash = hasher.digest(
+        dummy_password.encode(PASSWORD_ENCODING),
+        dummy_password_salt
+    )
+    return StoredPasswordHash(
+        hasher.specification(),
+        dummy_password_salt.hex(),
+        dummy_hash.hex()
+    )
 
 
 def _check_auth_types(auth: ClientAuthentication):
@@ -112,7 +143,6 @@ class UserAuthenticator:
         """Initializes a new `UserAuthenticator` instance."""
         self.hasher = PasswordHasher.get_default()
         self._ds = DataAccess.instance()
-        self._dummy_hash = self._build_dummy_password_hash()
 
     def constitute_password_authentication(self, user: User):
         """Sets up authentication via a password for the given user.
@@ -324,19 +354,6 @@ class UserAuthenticator:
     def _generate_password_salt(self) -> bytes:
         return EntropySource.instance().get_bytes(PASSWORD_SALT_LENGTH)
 
-    def _build_dummy_password_hash(self) -> StoredPasswordHash:
-        dummy_password = "fathom-authentication-dummy-password"
-        dummy_password_salt = b"\x00" * PASSWORD_SALT_LENGTH
-        dummy_hash = self.hasher.digest(
-            dummy_password.encode(PASSWORD_ENCODING),
-            dummy_password_salt
-        )
-        return StoredPasswordHash(
-            self.hasher.specification(),
-            dummy_password_salt.hex(),
-            dummy_hash.hex()
-        )
-
     def _spin_authentication_process(self, password: str):
         """Performs a password validation against a dummy password hash.
 
@@ -345,4 +362,12 @@ class UserAuthenticator:
         process takes an approximately consistent amount of time, even for
         non-existent users.
         """
-        PasswordValidation.validate_equality(password, self._dummy_hash)
+        dummy_hash = _DUMMY_HASH_STATE.value
+        if dummy_hash is None:
+            with _AUTH_LOCK:
+                dummy_hash = _DUMMY_HASH_STATE.value
+                if dummy_hash is None:
+                    dummy_hash = _build_dummy_password_hash()
+                    _DUMMY_HASH_STATE.value = dummy_hash
+
+        PasswordValidation.validate_equality(password, dummy_hash)

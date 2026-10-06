@@ -16,8 +16,6 @@
 
 import sys
 
-from typing import Optional
-
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import File
 
@@ -28,7 +26,7 @@ from raven.fathom.server.context import determine_server_working_directory
 from raven.fathom.server.cli.arguments import parse_args
 from raven.fathom.server.cli.utils import show_version
 from raven.fathom.server.cli.status import ExitStatus
-from raven.fathom.server.main import run
+from raven.fathom.server.run import run_server
 
 
 def _check_version_option(args) -> ExitStatus | None:
@@ -39,19 +37,15 @@ def _check_version_option(args) -> ExitStatus | None:
     return None
 
 
-def main(argv: Optional[list[str]] = None) -> ExitStatus:
+def main(argv: list[str]) -> ExitStatus:
     """Main function of the Fathom server application.
 
     Args:
-        argv (list): The list of str program arguments. If left as `None`,
-            then the arguments are taken from `sys.argv`.
+        argv (list): The list of str program arguments.
 
     Returns:
         ExitStatus: The exit status of the program.
     """
-    if argv is None:
-        argv = sys.argv
-
     args = parse_args(argv)
     work_dir = None
     if args.working_directory:
@@ -80,7 +74,7 @@ def main(argv: Optional[list[str]] = None) -> ExitStatus:
                 return status
 
             setup_server_logging(args)
-            return ExitStatus(run(args))
+            return run_server(args)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log_stderr(f"Error: {ex}")
             return ExitStatus.FAILURE

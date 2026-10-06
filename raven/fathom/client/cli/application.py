@@ -16,8 +16,6 @@
 
 import sys
 
-from typing import Optional
-
 from raven.fathom.base import ApplicationContext
 from raven.fathom.client.logging import setup_cli_logger, setup_file_logger
 from raven.fathom.client.logging import shutdown_loggers
@@ -48,19 +46,15 @@ def _setup_client(args: ArgumentsCLI):
         setup_file_logger(args)
 
 
-def main(argv: Optional[list[str]] = None) -> ExitStatus:
+def main(argv: list[str]) -> ExitStatus:
     """Main function of the Fathom client CLI application.
 
     Args:
-        argv (list): The list of str program arguments. If left as `None`,
-            then the arguments are taken from `sys.argv`.
+        argv (list): The list of str program arguments.
 
     Returns:
         ExitStatus: The exit status of the program.
     """
-    if argv is None:
-        argv = sys.argv
-
     args = parse_args(argv)
 
     app_mode = determine_client_application_mode()

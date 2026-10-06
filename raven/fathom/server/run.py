@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.server.cli.registry import command_with_args
+from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.logging import Logger
 from raven.fathom.server.runtime import require_server_setup
@@ -30,14 +31,14 @@ if TYPE_CHECKING:
 LOG = Logger.get()
 
 
-def run(args: "AppArgs") -> int:
+def run_server(args: "AppArgs") -> ExitStatus:
     """Runs the Fathom server application.
 
     Args:
         args (AppArgs): The application arguments to be used.
 
     Returns:
-        int: The exit status code of the server.
+        ExitStatus: The exit status code of the server.
     """
     app_mode = ApplicationContext.instance().get_application_mode()
     if app_mode == ApplicationMode.DEVELOPMENT:
@@ -52,9 +53,9 @@ def run(args: "AppArgs") -> int:
         if args.command != "setup":
             require_server_setup()
 
-        return command.execute()
+        return ExitStatus(command.execute())
     except Exception as ex:  # pylint: disable=broad-exception-caught
         LOG.e("Failed to run Fathom server")
         LOG.e(str(ex))
         LOG.d(str(ex), exc_info=True)
-        return 1
+        return ExitStatus.FAILURE

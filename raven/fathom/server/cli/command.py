@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, TypeVar, TypeAlias
 
 from raven.fathom.base import Command
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.runtime import confirm_system_privileges
+from raven.fathom.server.startup import confirm_system_privileges
 
 if TYPE_CHECKING:
     from raven.fathom.server.cli.arguments import AppArgs

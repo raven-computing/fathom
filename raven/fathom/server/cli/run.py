@@ -15,7 +15,7 @@
 """CLI command handling for server runtime actions."""
 
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.runtime import run_server_application
+from raven.fathom.server.startup import run_server_application
 
 
 class RunServerCommand(ServerCommand):

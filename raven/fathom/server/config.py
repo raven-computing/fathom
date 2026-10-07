@@ -32,7 +32,7 @@ from raven.fathom.base import ConfigurationWriteException
 from raven.fathom.base import File, FileSize, FileSizeUnit
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base.decorators import singleton
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 
 if TYPE_CHECKING:

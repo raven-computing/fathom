@@ -22,8 +22,8 @@ from typing import Optional
 
 import peewee
 
-from raven.fathom.server.version import Version
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.version import Version
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore.database import Database
 from raven.fathom.server.updates import UpdateProcedure
 from raven.fathom.server.updates import FailedUpdateProcedureException

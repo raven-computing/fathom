@@ -20,7 +20,7 @@ from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.server.cli.registry import command_with_args
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.config import ConfigurationManager
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.startup import require_server_setup
 from raven.fathom.server.startup import setup_application
 

@@ -16,7 +16,7 @@
 
 from unittest.mock import patch
 
-from raven.fathom.server.version import Version
+from raven.fathom.server.core.version import Version
 from raven.fathom.server.updates.manager import (
     UpdateManager,
     FailedApplicationUpdateException,

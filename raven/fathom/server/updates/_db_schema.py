@@ -27,8 +27,8 @@ from playhouse.migrate import migrate
 from playhouse.migrate import Database
 from playhouse.migrate import SqliteMigrator
 
-from raven.fathom.server.logging import Logger
-from raven.fathom.server.version import Version
+from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.core.version import Version
 from raven.fathom.server.models import *
 
 

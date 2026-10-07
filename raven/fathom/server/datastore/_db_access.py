@@ -23,7 +23,7 @@ import peewee
 from raven.fathom.base import File
 from raven.fathom.base import LogFormatterCLI
 from raven.fathom.base import LogHandlerCLI
-from raven.fathom.server.logging import Logger, FathomLogHandlerFile
+from raven.fathom.server.core.logging import Logger, FathomLogHandlerFile
 from raven.fathom.server.datastore.database import (
     DatabaseInitializationException,
 )

@@ -37,10 +37,10 @@ from raven.fathom.base import ClientAuthentication
 from raven.fathom.base.http import HTTP_HEADER_CLIENT_AUTHENTICATION
 from raven.fathom.base.http import ClientAuthenticationHeader
 from raven.fathom.base.http import HTTPDecodeException
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.parcel import ParcelValidatorJSON
-from raven.fathom.server.parcel import ParcelValidationException
+from raven.fathom.server.core.parcel import ParcelValidatorJSON
+from raven.fathom.server.core.parcel import ParcelValidationException
 from raven.fathom.server.schemas import SchemaLoaderJSON
 
 

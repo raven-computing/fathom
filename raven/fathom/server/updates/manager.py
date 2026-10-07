@@ -19,9 +19,9 @@ from collections.abc import Generator
 
 from raven.fathom.base import ApplicationContext, FileIOException
 from raven.fathom.base import write_version_file
-from raven.fathom.server.logging import Logger
-from raven.fathom.server.version import Version
-from raven.fathom.server.exceptions import FathomServerException
+from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.core.version import Version
+from raven.fathom.server.core.exceptions import FathomServerException
 from raven.fathom.server.datastore.database import Database, DatabaseException
 from raven.fathom.server.updates.procedure import (
     FailedUpdateProcedureException

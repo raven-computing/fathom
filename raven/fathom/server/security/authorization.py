@@ -24,7 +24,7 @@ from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import User, Project, ProjectVersion
 from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import User as StoredUser
 from raven.fathom.server.models import UserRole

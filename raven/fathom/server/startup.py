@@ -32,7 +32,7 @@ from raven.fathom.server.net.http import assign
 from raven.fathom.server.net.http import HTTPServerStartException
 from raven.fathom.server.net.http import ServerApplication
 from raven.fathom.server.net.http import ServerHTTP
-from raven.fathom.server.logging import LogLevel, Logger
+from raven.fathom.server.core.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.staging import StagingArea
 from raven.fathom.server.updates import FailedApplicationUpdateException

@@ -15,7 +15,7 @@
 """Fathom server CLI utilities."""
 
 from raven.fathom.base.context import APPLICATION_NAME
-from raven.fathom.server.version import Version
+from raven.fathom.server.core.version import Version
 
 
 def show_version(short_version: bool) -> bool:

@@ -17,7 +17,7 @@ info queries.
 """
 
 from raven.fathom.server.handlers import ActionHandler
-from raven.fathom.server.version import Version
+from raven.fathom.server.core.version import Version
 
 
 class ServerInfoHandler(ActionHandler):

@@ -23,7 +23,7 @@ import peewee
 
 from raven.fathom.base import File
 from raven.fathom.base import TypeCheck
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore.database import DatabaseConnectionException
 from raven.fathom.server.datastore._db import DatabaseImpl
 

@@ -21,7 +21,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Final
 
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 
 if "blake2b" not in hashlib.algorithms_guaranteed:
     raise ImportError("Fatal: Required hash algorithm 'blake2b' not available")

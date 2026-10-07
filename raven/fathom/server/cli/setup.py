@@ -16,7 +16,7 @@
 
 from raven.fathom.base import InputPrompt, User
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.models import Settings
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.user_management import SYSTEM_USER_IDENTIFIER

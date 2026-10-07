@@ -33,8 +33,8 @@ from raven.fathom.base import SystemEnvironment, OperatingSystem
 from raven.fathom.base import Configuration
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.server.config import ServerConfiguration
-from raven.fathom.server.logging import ServerLogger
-from raven.fathom.server.exceptions import FathomServerException
+from raven.fathom.server.core.logging import ServerLogger
+from raven.fathom.server.core.exceptions import FathomServerException
 
 
 LOG = ServerLogger.get()

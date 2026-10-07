@@ -28,7 +28,7 @@ from raven.fathom.server.dao.user import UserDAO
 from raven.fathom.server.dao.project import ProjectDAO
 from raven.fathom.server.dao.settings import SettingsDAO
 from raven.fathom.server.datastore.orm.model import Model
-from raven.fathom.server.exceptions import FathomServerException
+from raven.fathom.server.core.exceptions import FathomServerException
 
 
 class DatastoreException(FathomServerException):

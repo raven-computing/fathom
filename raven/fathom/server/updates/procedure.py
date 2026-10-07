@@ -19,8 +19,8 @@ Declares an ABC that must be implemented by all application update procedures.
 
 from abc import ABC, abstractmethod
 
-from raven.fathom.server.version import Version
-from raven.fathom.server.exceptions import FathomServerException
+from raven.fathom.server.core.version import Version
+from raven.fathom.server.core.exceptions import FathomServerException
 
 
 class FailedUpdateProcedureException(FathomServerException):

@@ -21,7 +21,7 @@ from typing import Final
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.base import DeploymentMessage
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
 from raven.fathom.server.deployment import DeploymentManager

@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Type, TYPE_CHECKING
 from collections.abc import Generator
 
-from raven.fathom.server.exceptions import FathomServerException
+from raven.fathom.server.core.exceptions import FathomServerException
 
 if TYPE_CHECKING:
     from raven.fathom.server.datastore.orm.model import Model

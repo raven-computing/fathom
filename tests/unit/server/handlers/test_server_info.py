@@ -17,7 +17,7 @@
 from unittest.mock import patch
 
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
-from raven.fathom.server.version import Version
+from raven.fathom.server.core.version import Version
 from raven.fathom.server.handlers.server_info import ServerInfoHandler
 
 from tests.unit import TestCase

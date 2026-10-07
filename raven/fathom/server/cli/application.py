@@ -19,14 +19,14 @@ import sys
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import File
 
-from raven.fathom.server.logging import setup_server_logging, log_stderr
-from raven.fathom.server.logging import shutdown_loggers
-from raven.fathom.server.context import determine_server_application_mode
-from raven.fathom.server.context import determine_server_working_directory
+from raven.fathom.server.core.logging import setup_server_logging, log_stderr
+from raven.fathom.server.core.logging import shutdown_loggers
+from raven.fathom.server.core.context import determine_server_application_mode
+from raven.fathom.server.core.context import determine_server_working_directory
 from raven.fathom.server.cli.arguments import parse_args
 from raven.fathom.server.cli.utils import show_version
 from raven.fathom.server.cli.status import ExitStatus
-from raven.fathom.server.run import run_server
+from raven.fathom.server.core.run import run_server
 
 
 def _check_version_option(args) -> ExitStatus | None:

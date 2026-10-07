@@ -19,7 +19,7 @@ from typing import Optional
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import File, FileIOException
 from raven.fathom.base.decorators import singleton
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore.database import Database
 from raven.fathom.server.datastore._db_access import DatabaseAccess
 

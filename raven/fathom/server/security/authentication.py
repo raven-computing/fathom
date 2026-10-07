@@ -26,7 +26,7 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import User
 from raven.fathom.server.models import UserRole
-from raven.fathom.server.logging import Logger
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security._hash import PasswordHasher
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.security._hash import PasswordValidation

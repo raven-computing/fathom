@@ -18,7 +18,7 @@ from raven.fathom.base import Dependencies as _Dependencies
 
 from .cli.application import main
 
-from ._provider import ServerProvider as _ProviderImpl
+from .core._provider import ServerProvider as _ProviderImpl
 
 _Dependencies.register(_ProviderImpl())
 del _ProviderImpl

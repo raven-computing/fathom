@@ -23,7 +23,7 @@ working directories, and environment variables independently.
 from raven.fathom.base.provider import Namespace
 from raven.fathom.base.system import SystemEnvironment
 from raven.fathom.client._provider import ClientProvider
-from raven.fathom.server._provider import ServerProvider
+from raven.fathom.server.core._provider import ServerProvider
 
 from tests.functionality._env import ClientEnvironment, ServerEnvironment
 

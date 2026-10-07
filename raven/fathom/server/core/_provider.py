@@ -14,7 +14,7 @@
 #
 """Implementation of `Provider` for the server package."""
 
-from raven.fathom.base import AbstractProvider, DirectImplementation
+from raven.fathom.base import AbstractProvider, DirectImplementation, Namespace
 from raven.fathom.base import ServerInteraction
 from raven.fathom.server.interaction import ServerInteractionImpl
 from raven.fathom.server.dao import DataAccess
@@ -32,6 +32,9 @@ class ServerInteractionBinding(DirectImplementation):
 
 class ServerProvider(AbstractProvider):
     """Server-specific `Provider` implementation."""
+
+    def namespace(self):
+        return Namespace("raven.fathom.server")
 
     def initialize_bindings(self):
         self.bind_export(

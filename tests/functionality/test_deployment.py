@@ -18,7 +18,7 @@ from raven.fathom.base import File
 from raven.fathom.base import Project
 from raven.fathom.client.cli import ExitStatus
 from raven.fathom.client.config import ProjectConfiguration
-from raven.fathom.server.config import ServerConfiguration
+from raven.fathom.server.core.config import ServerConfiguration
 
 from tests.functionality import TestCase
 from tests.fixtures import ProjectFixture, ConfigurationFixture

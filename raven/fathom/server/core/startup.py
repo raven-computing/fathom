@@ -20,8 +20,8 @@ from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import Configuration
 from raven.fathom.base import InputPrompt
-from raven.fathom.server.config import ServerConfiguration
-from raven.fathom.server.config import ConfigurationManager
+from raven.fathom.server.core.config import ServerConfiguration
+from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.controllers import InteractionController
 from raven.fathom.server.controllers import PublicController
 from raven.fathom.server.controllers import SignupController

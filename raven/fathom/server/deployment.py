@@ -26,7 +26,7 @@ from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.config import ServerConfiguration
+from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import FathomServerException
 from raven.fathom.server.staging import StagingArea, StagingAreaException
 

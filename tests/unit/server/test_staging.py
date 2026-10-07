@@ -16,7 +16,7 @@
 
 from raven.fathom.base import File, FilePermission, FileAccess
 from raven.fathom.base import Package
-from raven.fathom.server.config import ServerConfiguration
+from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.models import ProjectVersion, StagingAllocation
 from raven.fathom.server.staging import StagingArea, StagingSpot
 from raven.fathom.server.staging import StagingAreaException

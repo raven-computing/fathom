@@ -18,7 +18,7 @@ from raven.fathom.base import File, FilePermission, FileAccess
 from raven.fathom.base import Configuration
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import ClientDeploymentIntent
-from raven.fathom.server.config import ServerConfiguration
+from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.deployment import DeploymentSite
 from raven.fathom.server.deployment import DeploymentExecutor
 from raven.fathom.server.deployment import DeploymentManager, DeploymentResult

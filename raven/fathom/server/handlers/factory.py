@@ -18,7 +18,7 @@ from typing import Optional
 
 from raven.fathom.base import ClientRequest, Interaction
 from raven.fathom.base import SystemClock
-from raven.fathom.server.config import ConfigurationManager
+from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.deployment import DeploymentManager

@@ -18,7 +18,7 @@ from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.base import ConfigurationLoader
 from raven.fathom.base import File
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
-from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
+from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 
 from tests.common import FathomTestFixture
 

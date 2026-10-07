@@ -21,9 +21,9 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode
 from raven.fathom.server.logging import Logger
-from raven.fathom.server.http_tools import fathom_client_request
-from raven.fathom.server.http_tools import fathom_server_response
-from raven.fathom.server.http_tools import expose
+from raven.fathom.server.net.http_tools import fathom_client_request
+from raven.fathom.server.net.http_tools import fathom_server_response
+from raven.fathom.server.net.http_tools import expose
 
 
 LOG = Logger.get()

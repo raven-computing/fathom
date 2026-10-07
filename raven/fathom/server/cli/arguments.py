@@ -22,7 +22,7 @@ from multiprocessing.synchronize import Event
 
 from raven.fathom.base import ArgumentParser
 from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
-from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
+from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 
 
 def port_type(arg: str) -> int:

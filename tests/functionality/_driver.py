@@ -40,8 +40,8 @@ from raven.fathom.server.cli import main as server_main
 from raven.fathom.server.config import ConfigurationManager
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.dao.api import DataAccess
-from raven.fathom.server.defaults import DEFAULT_SERVER_PORT
-from raven.fathom.server.defaults import SERVER_ROOT_PATH_V1
+from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
+from raven.fathom.server.net.defaults import SERVER_ROOT_PATH_V1
 
 from tests.functionality._env import ClientEnvironment, ServerEnvironment
 

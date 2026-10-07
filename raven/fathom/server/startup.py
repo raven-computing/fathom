@@ -26,12 +26,12 @@ from raven.fathom.server.controllers import InteractionController
 from raven.fathom.server.controllers import PublicController
 from raven.fathom.server.controllers import SignupController
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.defaults import SERVER_ROOT_PATH_V1
+from raven.fathom.server.net.defaults import SERVER_ROOT_PATH_V1
 from raven.fathom.server.deployment import DeploymentSite
-from raven.fathom.server.http import assign
-from raven.fathom.server.http import HTTPServerStartException
-from raven.fathom.server.http import ServerApplication
-from raven.fathom.server.http import ServerHTTP
+from raven.fathom.server.net.http import assign
+from raven.fathom.server.net.http import HTTPServerStartException
+from raven.fathom.server.net.http import ServerApplication
+from raven.fathom.server.net.http import ServerHTTP
 from raven.fathom.server.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.staging import StagingArea

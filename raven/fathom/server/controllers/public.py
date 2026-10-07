@@ -22,7 +22,7 @@ import cherrypy
 
 from raven.fathom.base import MethodHTTP
 from raven.fathom.server.logging import Logger
-from raven.fathom.server.http_tools import expose, output_json
+from raven.fathom.server.net.http_tools import expose, output_json
 from raven.fathom.server.version import Version
 
 

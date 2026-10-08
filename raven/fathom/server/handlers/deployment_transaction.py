@@ -21,6 +21,7 @@ from typing import Final
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.base import DeploymentMessage
+from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
@@ -42,7 +43,7 @@ class DeploymentTransactionHandler(ActionHandler):
         self._authorizer = auth
         self._deployment_manager = manager
 
-    def handle(self, request, response):
+    def handle(self, request: ClientRequest, response: ServerResponse):
         authorization = self._check_authorization(request, response)
         if authorization is AUTHORIZATION_CHECK_FAILED:
             return

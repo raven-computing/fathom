@@ -18,7 +18,7 @@ to be used for testing purposes.
 
 import json
 
-from raven.fathom.base.file import FileIOException
+from raven.fathom.base.file import File, FileIOException
 from raven.fathom.base.archive import ArchiveFileIO
 from raven.fathom.base.archive import ArchiveFileMember, ArchiveFileIOException
 
@@ -32,7 +32,7 @@ class JsonArchiveFileIO(ArchiveFileIO):
     intended to be used in production. This implementation is not performant.
     """
 
-    def extract(self, archive, dest):
+    def extract(self, archive: File, dest: File):
         archive_files = self._read_archive(archive).get("files")
         try:
             dest.create_directory_tree()
@@ -64,7 +64,7 @@ class JsonArchiveFileIO(ArchiveFileIO):
                 member_file.get_parent_directory().create_directory_tree()
                 member_file.write_all(bytes.fromhex(member_data))
 
-    def compress(self, members, archive):
+    def compress(self, members: list[ArchiveFileMember], archive: File):
         archive_files = dict()
         archive_file_data = {
             "format": "JSON",
@@ -78,7 +78,7 @@ class JsonArchiveFileIO(ArchiveFileIO):
 
         archive.write_all(json.dumps(archive_file_data))
 
-    def read_packed_members(self, archive):
+    def read_packed_members(self, archive: File) -> list[ArchiveFileMember]:
         return [
             ArchiveFileMember(member_name)
             for member_name in self._read_archive(archive).get("files").keys()

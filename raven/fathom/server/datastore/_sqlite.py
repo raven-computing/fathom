@@ -52,7 +52,7 @@ class DatabaseSQLite(DatabaseImpl):
         """The `File` of this SQLite database instance. May be `None`."""
         return self._file
 
-    def type_name(self):
+    def type_name(self) -> str:
         return "SQLite"
 
     def connect(self):

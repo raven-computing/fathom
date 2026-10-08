@@ -19,6 +19,7 @@ Implements the `InputPrompt` interface.
 
 import sys
 import getpass
+from typing import Optional
 
 from raven.fathom.base.system import InputPrompt, InputReadException
 from raven.fathom.base.logging import LogFormatterCLI
@@ -32,7 +33,12 @@ class SystemInputPromptStdIn(InputPrompt):
         self.stream_in = sys.stdin
         self.stream_out = sys.stdout
 
-    def read(self, prompt=None, default_value="", secret=False):
+    def read(
+        self,
+        prompt: Optional[str] = None,
+        default_value: str = "",
+        secret: bool = False
+    ) -> str:
         if prompt is not None:
             print(
                 LogFormatterCLI.format_message_info(prompt),

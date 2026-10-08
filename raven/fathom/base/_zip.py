@@ -24,12 +24,13 @@ from pathlib import Path
 
 from raven.fathom.base.archive import ArchiveFileIO, ArchiveFileIOException
 from raven.fathom.base.archive import ArchiveFileMember
+from raven.fathom.base.file import File
 
 
 class ZipArchiveFileIO(ArchiveFileIO):
     """ZIP file I/O implementation."""
 
-    def extract(self, archive, dest):
+    def extract(self, archive: File, dest: File):
         try:
             self._extract_packed_zip(archive, dest)
         except IOError as error:
@@ -38,7 +39,7 @@ class ZipArchiveFileIO(ArchiveFileIO):
                 f"Failed to extract ZIP archive file '{archive}' to '{dest}'"
             ) from error
 
-    def compress(self, members, archive):
+    def compress(self, members: list[ArchiveFileMember], archive: File):
         try:
             self._compress_to_zip_archive(members, archive)
         except IOError as error:
@@ -47,7 +48,7 @@ class ZipArchiveFileIO(ArchiveFileIO):
                 f"Failed to compress ZIP archive to file '{archive.path}'"
             ) from error
 
-    def read_packed_members(self, archive):
+    def read_packed_members(self, archive: File) -> list[ArchiveFileMember]:
         try:
             return self._read_members_from_packed_zip(archive)
         except IOError as error:

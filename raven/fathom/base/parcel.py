@@ -155,10 +155,10 @@ class RequestParcelJSON(Parcel):
 
         self._validator = validator
 
-    def content_type(self):
+    def content_type(self) -> str:
         return MIME_TYPE_JSON
 
-    def encode(self):
+    def encode(self) -> bytes:
         TypeCheck.require(self._request, ClientRequest)
         try:
             self._request = self._encode_obj_structure()
@@ -173,7 +173,7 @@ class RequestParcelJSON(Parcel):
 
         return self._encode_json_obj()
 
-    def decode(self) -> ClientRequest:
+    def decode(self) -> Any:
         TypeCheck.require(self._request, (bytes, str))
         try:
             self._request = self._decode_obj_structure()
@@ -496,10 +496,10 @@ class ResponseParcelJSON(Parcel):
 
         self._validator = validator
 
-    def content_type(self):
+    def content_type(self) -> str:
         return MIME_TYPE_JSON
 
-    def encode(self):
+    def encode(self) -> bytes:
         TypeCheck.require(self._response, ServerResponse)
         try:
             self._response = self._encode_obj_structure()
@@ -514,7 +514,7 @@ class ResponseParcelJSON(Parcel):
 
         return self._encode_json_obj()
 
-    def decode(self) -> ServerResponse:
+    def decode(self) -> Any:
         TypeCheck.require(self._response, (bytes, str))
         try:
             self._response = self._decode_obj_structure()

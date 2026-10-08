@@ -17,6 +17,7 @@ inputs and prompts.
 """
 
 from collections import deque
+from typing import Optional
 
 from raven.fathom.base.system import InputPrompt
 
@@ -30,7 +31,12 @@ class SystemInputPromptMock(InputPrompt):
         self.inputs = deque()
         self.secret_reads: int = 0
 
-    def read(self, prompt=None, default_value="", secret=False):
+    def read(
+        self,
+        prompt: Optional[str] = None,
+        default_value: str = "",
+        secret: bool = False
+    ) -> str:
         if prompt is not None:
             self.prompts.append(prompt)
 

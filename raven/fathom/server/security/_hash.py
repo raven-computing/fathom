@@ -110,10 +110,10 @@ class HashBLAKE2b(PasswordHasher):
     def __init__(self):
         super().__init__(1)
 
-    def specification(self):
+    def specification(self) -> str:
         return HashBLAKE2b.NAME
 
-    def digest(self, password, salt):
+    def digest(self, password: bytes, salt: bytes) -> bytes:
         return hashlib.blake2b(password, salt=salt).digest()
 
 
@@ -128,10 +128,10 @@ class HashPBKDF2(PasswordHasher):
         super().__init__(rounds)
         self.hmac_hash: str = hmac_hash
 
-    def specification(self):
+    def specification(self) -> str:
         return f"{HashPBKDF2.NAME}-{self.hmac_hash}-{self.rounds}"
 
-    def digest(self, password, salt):
+    def digest(self, password: bytes, salt: bytes) -> bytes:
         return hashlib.pbkdf2_hmac(self.hmac_hash, password, salt, self.rounds)
 
     @staticmethod

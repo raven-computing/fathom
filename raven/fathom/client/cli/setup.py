@@ -35,7 +35,7 @@ LOG = Logger.get()
 class SetupCommand(ClientCommand):
     """Implementation of the `setup` CLI command."""
 
-    def execute(self):
+    def execute(self) -> int:
         try:
             return self._setup()
         except ConfigurationWriteException as ex:

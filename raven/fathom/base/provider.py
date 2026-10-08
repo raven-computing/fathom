@@ -286,7 +286,7 @@ class DirectImplementation(VariableImplementation):
         super().__init__()
         self._implementation_class = implementation
 
-    def provide(self, *args, **kwargs):
+    def provide(self, *args, **kwargs) -> Optional[Type[Interface]]:
         return self._implementation_class
 
 
@@ -512,17 +512,32 @@ class AbstractProvider(Provider):
             override=True
         )
 
-    def get_implementation_class(self, interface, exported, *args, **kwargs):
+    def get_implementation_class(
+        self,
+        interface: Type[I],
+        exported: bool,
+        *args,
+        **kwargs
+    ) -> Optional[Type[I]]:
         impl_class = self._impls.get(interface)
         if impl_class is not None:
             if exported and not impl_class.exported:
                 return None
 
-            return impl_class.implementation.provide(*args, **kwargs)
+            return cast(
+                Optional[Type[I]],
+                impl_class.implementation.provide(*args, **kwargs)
+            )
 
         return None
 
-    def instantiate_class(self, interface, implementation, *args, **kwargs):
+    def instantiate_class(
+        self,
+        interface: Type[I],
+        implementation: Type[I],
+        *args,
+        **kwargs
+    ) -> I:
         impl_class = self._impls.get(interface)
         assert impl_class is not None
         forwarded_args = impl_class.implementation.forward_arguments(

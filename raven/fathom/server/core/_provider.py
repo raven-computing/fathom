@@ -14,6 +14,8 @@
 #
 """Implementation of `Provider` for the server package."""
 
+from typing import Optional
+
 from raven.fathom.base import AbstractProvider, DirectImplementation, Namespace
 from raven.fathom.base import ServerInteraction
 from raven.fathom.server.interaction import ServerInteractionImpl
@@ -26,14 +28,14 @@ from raven.fathom.server.handlers import HandlerFactory
 class ServerInteractionBinding(DirectImplementation):
     """Injects dependencies into the `ServerInteractionImpl` initializer."""
 
-    def forward_arguments(self, *args, **kwargs):
+    def forward_arguments(self, *args, **kwargs) -> Optional[tuple]:
         return UserAuthenticator(), HandlerFactory()
 
 
 class ServerProvider(AbstractProvider):
     """Server-specific `Provider` implementation."""
 
-    def namespace(self):
+    def namespace(self) -> Optional[Namespace]:
         return Namespace("raven.fathom.server")
 
     def initialize_bindings(self):

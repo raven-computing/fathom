@@ -33,7 +33,7 @@ LOG = Logger.get()
 class DeployCommand(ClientCommand):
     """Implementation of the 'deploy' CLI command."""
 
-    def execute(self):
+    def execute(self) -> int:
         try:
             return self._deploy()
         except ServerConnectionException as ex:

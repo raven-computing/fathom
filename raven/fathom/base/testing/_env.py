@@ -40,37 +40,41 @@ class TestEnvironment(SystemEnvironment):
         self.text_encoding: str = "UTF-8"
         self.file_system_encoding: str = "UTF-8"
 
-    def get_user_id(self):
+    def get_user_id(self) -> Optional[int]:
         return 1000
 
-    def get_user_name(self):
+    def get_user_name(self) -> Optional[str]:
         return "User"
 
-    def get_home_path(self):
+    def get_home_path(self) -> Optional[PurePath]:
         return PurePath(self.env_vars.get("HOME", "."))
 
-    def get_current_working_directory(self):
+    def get_current_working_directory(self) -> PurePath:
         return PurePath(self.env_vars.get("CWD", "/"))
 
-    def get_operating_system(self):
+    def get_operating_system(self) -> OperatingSystem:
         if self.operating_system is not None:
             return self.operating_system
 
         return HostSystemEnvironment().get_operating_system()
 
-    def get_line_separator(self):
+    def get_line_separator(self) -> str:
         if self.line_separator is not None:
             return self.line_separator
 
         return HostSystemEnvironment().get_line_separator()
 
-    def get_text_encoding(self):
+    def get_text_encoding(self) -> str:
         return self.text_encoding
 
-    def get_file_system_encoding(self):
+    def get_file_system_encoding(self) -> str:
         return self.file_system_encoding
 
-    def get_variable(self, name, default=None):
+    def get_variable(
+        self,
+        name: str,
+        default: Optional[str] = None
+    ) -> Optional[str]:
         return self.env_vars.get(name, default)
 
 
@@ -93,19 +97,23 @@ class FunctionalityTestEnvironment(HostSystemEnvironment):
         self.cwd: PurePath = _UNSET # type: ignore
         self.env_vars: dict[str, str] = dict()
 
-    def get_home_path(self):
+    def get_home_path(self) -> Optional[PurePath]:
         if self.home is _UNSET:
             return super().get_home_path()
 
         return self.home
 
-    def get_current_working_directory(self):
+    def get_current_working_directory(self) -> PurePath:
         if self.cwd is _UNSET:
             return super().get_current_working_directory()
 
         return self.cwd
 
-    def get_variable(self, name, default=None):
+    def get_variable(
+        self,
+        name: str,
+        default: Optional[str] = None
+    ) -> Optional[str]:
         if name == "HOME" and self.home is not _UNSET:
             return str(self.home)
 

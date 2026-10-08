@@ -65,7 +65,7 @@ class ConnectionHTTPMock(ConnectionHTTP):
         self.raise_on_send: Optional[ConnectionException] = None
         self.sent_requests: list[RequestHTTP] = []
 
-    def send(self, request):
+    def send(self, request: RequestHTTP) -> ResponseHTTP:
         self.sent_requests.append(request)
 
         if self.raise_on_send is not None:

@@ -22,7 +22,7 @@ import datetime
 import platform
 
 from pathlib import PurePath, PurePosixPath, PureWindowsPath
-from typing import Optional, Final, Union
+from typing import Optional, Final, Union, Any, Generator
 
 from raven.fathom.base.system import FileSystem
 from raven.fathom.base.file import FileMode, FileType
@@ -206,10 +206,10 @@ class VirtualFileSystem(FileSystem):
         self._cwd = PurePosixPath(_INTERNAL_ROOT_POSIX)
         self.flush_system()
 
-    def init_path(self, path):
+    def init_path(self, path) -> PurePath:
         return _from_posix(_to_posix(path))
 
-    def check_exists(self, path, check_symlink=True):
+    def check_exists(self, path: PurePath, check_symlink = True) -> bool:
         fs_path = _to_posix(path)
         try:
             fs_path = self._resolve_symlinks_in_path(fs_path, head=False)
@@ -221,7 +221,7 @@ class VirtualFileSystem(FileSystem):
         except SymbolicLinkResolutionException:
             return not check_symlink
 
-    def check_is_hidden(self, path):
+    def check_is_hidden(self, path: PurePath) -> bool:
         fs_path = _to_posix(path)
         if not self.check_exists(fs_path, check_symlink=False):
             raise FileNotFoundException(
@@ -232,7 +232,7 @@ class VirtualFileSystem(FileSystem):
 
         return str(fs_path.name).startswith(".")
 
-    def set_hidden(self, path, hidden):
+    def set_hidden(self, path: PurePath, hidden: bool) -> PurePath:
         fs_path = _to_posix(path)
         if self.check_exists(fs_path, check_symlink=False):
             is_hidden = self.check_is_hidden(fs_path)
@@ -250,11 +250,11 @@ class VirtualFileSystem(FileSystem):
 
         return _from_posix(fs_path)
 
-    def get_parent_path(self, path):
+    def get_parent_path(self, path: PurePath) -> PurePath:
         fs_path = _to_posix(path)
         return _from_posix(fs_path.parent)
 
-    def get_size(self, path):
+    def get_size(self, path: PurePath) -> int:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks=True)
         if vf is None:
@@ -276,7 +276,7 @@ class VirtualFileSystem(FileSystem):
 
         return 4096  # For other file types
 
-    def check_is_empty(self, path):
+    def check_is_empty(self, path: PurePath) -> bool:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks=True)
         if vf is None:
@@ -295,7 +295,7 @@ class VirtualFileSystem(FileSystem):
 
         return False  # For other file types
 
-    def get_type(self, path, follow_symlinks=True):
+    def get_type(self, path: PurePath, follow_symlinks = True) -> FileType:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -307,7 +307,7 @@ class VirtualFileSystem(FileSystem):
 
         return (vf and vf.file_type) or FileType.UNKNOWN
 
-    def open_file_object(self, path, mode):
+    def open_file_object(self, path: PurePath, mode: FileMode) -> Any:
         fs_path = _to_posix(path)
         if not isinstance(mode, FileMode):
             raise InvalidFileModeException(
@@ -366,7 +366,7 @@ class VirtualFileSystem(FileSystem):
 
         return _VirtualFileHandle(vf, mode)
 
-    def close_file_object(self, handle):
+    def close_file_object(self, handle: Any):
         try:
             self.flush_file_object(handle)
         except FileWriteException as ex:
@@ -377,7 +377,7 @@ class VirtualFileSystem(FileSystem):
 
         handle.is_open = False
 
-    def read_from_file_object(self, handle, n_bytes=-1):
+    def read_from_file_object(self, handle: Any, n_bytes = -1) -> bytes:
         if not handle.is_open:
             raise FileReadException(
                 str(handle.file.path),
@@ -414,7 +414,11 @@ class VirtualFileSystem(FileSystem):
 
         return read_data
 
-    def write_to_file_object(self, handle, data):
+    def write_to_file_object(
+        self,
+        handle: Any,
+        data: Union[bytes, bytearray]
+    ) -> int:
         if not handle.is_open:
             raise FileWriteException(
                 str(handle.file.path),
@@ -448,7 +452,7 @@ class VirtualFileSystem(FileSystem):
         handle.pos += n_bytes
         return n_bytes
 
-    def flush_file_object(self, handle):
+    def flush_file_object(self, handle: Any):
         if not handle.is_open:
             raise FileWriteException(
                 str(handle.file.path),
@@ -458,7 +462,7 @@ class VirtualFileSystem(FileSystem):
 
         handle.file.data = handle.buffer.copy()
 
-    def get_file_object_position(self, handle):
+    def get_file_object_position(self, handle: Any) -> int:
         if not handle.is_open:
             raise FilePositioningException(
                 str(handle.file.path),
@@ -468,7 +472,7 @@ class VirtualFileSystem(FileSystem):
 
         return handle.pos
 
-    def set_file_object_position(self, handle, new_pos):
+    def set_file_object_position(self, handle: Any, new_pos: int):
         if not handle.is_open:
             raise FilePositioningException(
                 str(handle.file.path),
@@ -485,7 +489,7 @@ class VirtualFileSystem(FileSystem):
 
         handle.pos = new_pos
 
-    def rewind_file_object_position(self, handle):
+    def rewind_file_object_position(self, handle: Any):
         if not handle.is_open:
             raise FilePositioningException(
                 str(handle.file.path),
@@ -495,7 +499,7 @@ class VirtualFileSystem(FileSystem):
 
         handle.pos = 0
 
-    def resize_file_object(self, handle, size=None):
+    def resize_file_object(self, handle: Any, size: Optional[int] = None):
         if not handle.is_open:
             raise FileWriteException(
                 str(handle.file.path),
@@ -527,7 +531,11 @@ class VirtualFileSystem(FileSystem):
 
         self.flush_file_object(handle)
 
-    def check_file_access(self, path, follow_symlinks=True):
+    def check_file_access(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> FileAccess:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -545,7 +553,11 @@ class VirtualFileSystem(FileSystem):
             executable=user_perms.can_execute
         )
 
-    def get_file_permissions(self, path, follow_symlinks=True):
+    def get_file_permissions(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> FilePermission:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -564,7 +576,12 @@ class VirtualFileSystem(FileSystem):
             other=FileAccess.of(ot.can_read, ot.can_write, ot.can_execute)
         )
 
-    def set_file_permissions(self, path, permissions, follow_symlinks=True):
+    def set_file_permissions(
+        self,
+        path: PurePath,
+        permissions: FilePermission,
+        follow_symlinks = True
+    ):
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -593,7 +610,7 @@ class VirtualFileSystem(FileSystem):
             )
         )
 
-    def get_file_owner_uid(self, path, follow_symlinks=True):
+    def get_file_owner_uid(self, path: PurePath, follow_symlinks = True) -> int:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -605,7 +622,11 @@ class VirtualFileSystem(FileSystem):
 
         return vf.uid
 
-    def get_file_owner_name(self, path, follow_symlinks=True):
+    def get_file_owner_name(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> str:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -617,7 +638,7 @@ class VirtualFileSystem(FileSystem):
 
         return vf.owner
 
-    def get_file_group_gid(self, path, follow_symlinks=True):
+    def get_file_group_gid(self, path: PurePath, follow_symlinks = True) -> int:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -629,7 +650,11 @@ class VirtualFileSystem(FileSystem):
 
         return vf.gid
 
-    def get_file_group_name(self, path, follow_symlinks=True):
+    def get_file_group_name(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> str:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -641,7 +666,11 @@ class VirtualFileSystem(FileSystem):
 
         return vf.group
 
-    def get_file_last_modification_time(self, path, follow_symlinks=True):
+    def get_file_last_modification_time(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> datetime.datetime:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -653,7 +682,7 @@ class VirtualFileSystem(FileSystem):
 
         return vf.t_last_mod
 
-    def create_regular_file(self, path):
+    def create_regular_file(self, path: PurePath):
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks=False)
         if vf is not None and vf.file_type != FileType.REGULAR_FILE:
@@ -666,7 +695,7 @@ class VirtualFileSystem(FileSystem):
 
         self._add_node(fs_path, FileType.REGULAR_FILE, data=bytearray())
 
-    def create_directory(self, path):
+    def create_directory(self, path: PurePath):
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path)
         if vf is not None and vf.file_type != FileType.DIRECTORY:
@@ -694,7 +723,7 @@ class VirtualFileSystem(FileSystem):
                 "Parent file already exists but is not a directory"
             ) from None
 
-    def create_directories(self, path):
+    def create_directories(self, path: PurePath):
         fs_path = _to_posix(path)
         parts = fs_path.parts
         if len(parts) > 0 and parts[0] == _INTERNAL_ROOT_POSIX:
@@ -721,7 +750,7 @@ class VirtualFileSystem(FileSystem):
                     "File already exists but is not a directory"
                 )
 
-    def create_symbolic_link(self, path, target):
+    def create_symbolic_link(self, path: PurePath, target: PurePath):
         fs_path = _to_posix(path)
         posix_target = _to_posix(target)
         if self._get_node(fs_path, follow_symlinks=False) is not None:
@@ -733,7 +762,11 @@ class VirtualFileSystem(FileSystem):
 
         self._add_node(fs_path, FileType.SYMBOLIC_LINK, data=posix_target)
 
-    def get_symbolic_link_target(self, path, absolute=False):
+    def get_symbolic_link_target(
+        self,
+        path: PurePath,
+        absolute = False
+    ) -> PurePath:
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks=False)
         if self._is_virtual_symlink(vf):
@@ -747,11 +780,11 @@ class VirtualFileSystem(FileSystem):
 
         return path
 
-    def resolve_symbolic_links(self, path):
+    def resolve_symbolic_links(self, path: PurePath) -> PurePath:
         resolved = self._resolve_symlinks_in_path(path)
         return _from_posix(_to_posix(resolved))
 
-    def touch_file(self, path):
+    def touch_file(self, path: PurePath):
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path)
         if vf is None:
@@ -765,7 +798,7 @@ class VirtualFileSystem(FileSystem):
                     f"Failed to touch file '{path}': {ex}"
                 ) from None
 
-    def move(self, source, target, follow_symlinks=True):
+    def move(self, source: PurePath, target: PurePath, follow_symlinks = True):
         fs_source = _to_posix(source)
         fs_target = _to_posix(target)
         vf = self._get_node(fs_source, follow_symlinks)
@@ -796,7 +829,7 @@ class VirtualFileSystem(FileSystem):
             vf_child.path = PurePosixPath(target_base + child_relative)
             self._link_vf(vf_child)
 
-    def copy(self, source, target, follow_symlinks=True):
+    def copy(self, source: PurePath, target: PurePath, follow_symlinks = True):
         fs_source = _to_posix(source)
         fs_target = _to_posix(target)
         vf_source = self._get_node(fs_source, follow_symlinks)
@@ -868,7 +901,7 @@ class VirtualFileSystem(FileSystem):
                 assert isinstance(vf_source.data, bytearray)
                 vf_target.data = vf_source.data.copy()
 
-    def remove(self, path, follow_symlinks=True):
+    def remove(self, path: PurePath, follow_symlinks = True):
         fs_path = _to_posix(path)
         vf = self._get_node(fs_path, follow_symlinks)
         if vf is None:
@@ -888,7 +921,11 @@ class VirtualFileSystem(FileSystem):
         if follow_symlinks and remove_vf_symlink:
             self._delete_node(vf_symlink)
 
-    def list_files_of_directory(self, path, recursive=False):
+    def list_files_of_directory(
+        self,
+        path: PurePath,
+        recursive = False
+    ) -> Generator[PurePath, None, None]:
         fs_path = _to_posix(path)
         vf_dir = self._get_node(fs_path)
         if vf_dir is None:
@@ -923,7 +960,11 @@ class VirtualFileSystem(FileSystem):
         if _IS_OS_WINDOWS:
             self.create_directory(PurePosixPath(_INTERNAL_ROOT_WINDOWS))
 
-    def get_lock_file_path(self, path, follow_symlinks=True):
+    def get_lock_file_path(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> PurePath:
         fs_path = _to_posix(path)
         if follow_symlinks:
             fs_path = _to_posix(self.resolve_symbolic_links(fs_path))
@@ -933,7 +974,7 @@ class VirtualFileSystem(FileSystem):
         )
         return _from_posix(lock_path)
 
-    def lock_file(self, path, follow_symlinks=True):
+    def lock_file(self, path: PurePath, follow_symlinks = True):
         fs_path = _to_posix(path)
         if follow_symlinks:
             fs_path = _to_posix(self.resolve_symbolic_links(fs_path))
@@ -968,7 +1009,7 @@ class VirtualFileSystem(FileSystem):
 
         self._add_node(lock_file_path, FileType.REGULAR_FILE, data=bytearray())
 
-    def unlock_file(self, path, follow_symlinks=True):
+    def unlock_file(self, path: PurePath, follow_symlinks = True):
         fs_path = _to_posix(path)
         if follow_symlinks:
             fs_path = _to_posix(self.resolve_symbolic_links(fs_path))
@@ -980,7 +1021,12 @@ class VirtualFileSystem(FileSystem):
         if vf_lock is not None:
             self._delete_node(vf_lock)
 
-    def create_temp_file(self, directory=None, prefix=None, suffix=None):
+    def create_temp_file(
+        self,
+        directory: Optional[Union[PurePath, str]] = None,
+        prefix: Optional[str] = None,
+        suffix: Optional[str] = None
+    ) -> PurePath:
         prefix = prefix or ""
         suffix = suffix or ""
         if directory is None:
@@ -1009,7 +1055,11 @@ class VirtualFileSystem(FileSystem):
         self._temp_file_counter += 1
         return _from_posix(tmpvf_path)
 
-    def create_temp_dir(self, prefix=None, suffix=None):
+    def create_temp_dir(
+        self,
+        prefix: Optional[str] = None,
+        suffix: Optional[str] = None
+    ) -> PurePath:
         prefix = prefix or ""
         suffix = suffix or ""
         tmpvf_name = prefix + str(self._temp_file_counter) + suffix

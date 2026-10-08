@@ -18,6 +18,7 @@ for client deployment intents.
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import ResponseMessage, ResponseCode
+from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
 
@@ -29,7 +30,7 @@ class DeploymentIntentHandler(ActionHandler):
         TypeCheck.require_arg(authorizer, DeploymentAuthorizer)
         self._authorizer = authorizer
 
-    def handle(self, request, response):
+    def handle(self, request: ClientRequest, response: ServerResponse):
         intent = request.deployment_intent
         if intent is None:
             response.add_error(

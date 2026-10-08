@@ -21,6 +21,9 @@ import inspect
 import importlib
 import pkgutil
 
+from collections.abc import Generator
+from typing import Type
+
 from raven.fathom.server import models
 from raven.fathom.server.datastore.orm import Model
 from raven.fathom.server.datastore.database import DatabaseSchema
@@ -30,7 +33,7 @@ from raven.fathom.server.datastore._schema_updates import DatabaseSchemaUpdate
 class DatabaseSchemaImpl(DatabaseSchema):
     """Implementation of `DatabaseSchema`."""
 
-    def get_models(self):
+    def get_models(self) -> list[Type["Model"]]:
         model_classes = []
         package_path = models.__path__
         package_name = models.__name__
@@ -53,5 +56,5 @@ class DatabaseSchemaImpl(DatabaseSchema):
 
         return model_classes
 
-    def get_update_procedures(self):
+    def get_update_procedures(self) -> Generator["DatabaseSchemaUpdate"]:
         return DatabaseSchemaUpdate.get_all_procedures()

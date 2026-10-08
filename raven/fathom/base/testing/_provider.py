@@ -14,12 +14,15 @@
 #
 """Implementation of `Provider` to be used in unit tests."""
 
+from typing import Optional, Type
+
 from raven.fathom.base.provider import Namespace
 from raven.fathom.base._provider import BaseProvider
 from raven.fathom.base.system import SystemEnvironment, FileSystem, InputPrompt
 from raven.fathom.base.entropy import EntropySource
 from raven.fathom.base.http import ConnectionHTTP
 from raven.fathom.base.archive import ArchiveFileIO
+from raven.fathom.base.typing import Interface
 from raven.fathom.base.testing._vfs import VirtualFileSystem
 from raven.fathom.base.testing._input import SystemInputPromptMock
 from raven.fathom.base.testing._http import ConnectionHTTPMock
@@ -31,10 +34,10 @@ from raven.fathom.base.testing._varchive import JsonArchiveFileIO
 class UnitTestProvider(BaseProvider):
     """A `Provider` implementation to be used in unit tests."""
 
-    def namespace(self):
+    def namespace(self) -> Optional[Namespace]:
         return Namespace("raven.fathom.base")
 
-    def reusables(self):
+    def reusables(self) -> Optional[list[Type[Interface]]]:
         return [
             TestEnvironment,
             SystemInputPromptMock,

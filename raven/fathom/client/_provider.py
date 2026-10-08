@@ -14,6 +14,8 @@
 #
 """Implementation of `Provider` for the client package."""
 
+from typing import Optional
+
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import AbstractProvider, DirectImplementation
 from raven.fathom.base import ServerInteraction
@@ -33,7 +35,7 @@ class ServerConnImpl(DirectImplementation):
         f"positional argument of type {ServerLocator}"
     )
 
-    def forward_arguments(self, *args, **kwargs):
+    def forward_arguments(self, *args, **kwargs) -> Optional[tuple]:
         if len(args) != 1:
             raise TypeError(ServerConnImpl._ERR_HINT)
 

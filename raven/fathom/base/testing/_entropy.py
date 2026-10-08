@@ -16,7 +16,12 @@
 a mock for testing.
 """
 
+from typing import Sequence, TypeVar
+
 from raven.fathom.base.entropy import EntropySource
+
+
+T = TypeVar("T")
 
 
 class EntropySourceMock(EntropySource):
@@ -36,14 +41,14 @@ class EntropySourceMock(EntropySource):
         self.next_int32: int = 1
         self.choose_sequence_index: int = 0
 
-    def get_bytes(self, count):
+    def get_bytes(self, count: int) -> bytes:
         return self.next_byte * count
 
-    def get_next_int32(self):
+    def get_next_int32(self) -> int:
         return self.next_int32
 
-    def choose_one(self, sequence):
+    def choose_one(self, sequence: Sequence[T]) -> T:
         return sequence[self.choose_sequence_index]
 
-    def is_random(self):
+    def is_random(self) -> bool:
         return False

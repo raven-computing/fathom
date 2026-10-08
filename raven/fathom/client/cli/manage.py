@@ -35,7 +35,7 @@ LOG = Logger.get()
 class ManageCommand(ClientCommand):
     """Implementation of the `manage` CLI command."""
 
-    def execute(self):
+    def execute(self) -> int:
         try:
             return self._manage()
         except ServerConnectionException as ex:

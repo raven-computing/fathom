@@ -16,7 +16,7 @@
 using query builders from the peewee ORM.
 """
 
-from typing import cast, Type, TypeVar
+from typing import cast, Type, TypeVar, Optional, Union
 
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
@@ -43,22 +43,22 @@ M = TypeVar("M", bound=Model)
 class DataAccessObjectRDBMS(DataAccessObject[M]):
     """Implementation of the `DataAccessObject` ABC for RDBMS persistence."""
 
-    def __init__(self, model: Type[Model]):
+    def __init__(self, model: Type[M]):
         super().__init__()
         self._model = model
 
-    def create(self, record):
+    def create(self, record: M):
         CreateQuery(record).execute()
 
-    def read_all(self):
+    def read_all(self) -> list[M]:
         return ReadQuery[M](
             self._model.select().order_by(self._model.id.asc()) # type: ignore
         ).execute()
 
-    def update(self, record):
+    def update(self, record: M):
         UpdateQuery(record).execute()
 
-    def delete(self, record):
+    def delete(self, record: M):
         DeleteQuery(record).execute()
 
 
@@ -67,7 +67,7 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
     def __init__(self):
         super().__init__(User)
 
-    def create_new_user(self, record):
+    def create_new_user(self, record: User):
         if record.role == UserRole.SYSTEM:
             has_system_user = User.select().where(
                 User.role == UserRole.SYSTEM
@@ -85,12 +85,12 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
             )
         )
 
-    def find_by_identifier(self, identifier):
+    def find_by_identifier(self, identifier: str) -> Optional[User]:
         return ReadQuery[User](
             User.select().where(User.identifier == identifier)
         ).find_one()
 
-    def delete_by_identifier(self, identifier):
+    def delete_by_identifier(self, identifier: str):
         user= self.find_by_identifier(identifier)
         if user is None:
             raise FailedDeleteQueryException(
@@ -108,7 +108,7 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
         ).execute()
         self.delete(user)
 
-    def find_permission(self, user):
+    def find_permission(self, user: User) -> UserPermission:
         permission = ReadQuery[UserPermission](
             UserPermission.select().where(UserPermission.user == user)
         ).find_one()
@@ -121,7 +121,10 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
         return permission
 
-    def find_deployment_authorization_by_token(self, token: str):
+    def find_deployment_authorization_by_token(
+        self,
+        token: str
+    ) -> Optional[AuthDeployment]:
         return ReadQuery[AuthDeployment](
             AuthDeployment.select().where(AuthDeployment.token == token)
         ).find_one()
@@ -132,12 +135,16 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
     def __init__(self):
         super().__init__(Project)
 
-    def find_by_identifier(self, identifier):
+    def find_by_identifier(self, identifier: str) -> Optional[Project]:
         return ReadQuery[Project](
             Project.select().where(Project.identifier == identifier)
         ).find_one()
 
-    def find_version_by_identifier(self, project, identifier):
+    def find_version_by_identifier(
+        self,
+        project: Union[Project, str],
+        identifier: str
+    ) -> Optional[ProjectVersion]:
         if isinstance(project, str):
             project_selection = Project.identifier == project
         else:
@@ -150,7 +157,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             )
         ).find_one()
 
-    def find_all_assigned_to_user(self, user):
+    def find_all_assigned_to_user(self, user: User) -> list[Project]:
         user_id = user.id # type: ignore
         return [
             cast(Project, user_project_rel.project)
@@ -159,7 +166,10 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             ).execute()
         ]
 
-    def find_all_users_assigned_to_project(self, project):
+    def find_all_users_assigned_to_project(
+        self,
+        project: Project
+    ) -> list[User]:
         project_id = project.id # type: ignore
         return [
             cast(User, user_project_rel.user)
@@ -170,13 +180,13 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             ).execute()
         ]
 
-    def assign_user_to_project(self, user, project):
+    def assign_user_to_project(self, user: User, project: Project):
         UserProjectRel.create(
             user=user,
             project=project,
         )
 
-    def unassign_user_from_project(self, user, project):
+    def unassign_user_from_project(self, user: User, project: Project):
         DeleteQuery[UserProjectRel](
             UserProjectRel.delete().where(
                 (UserProjectRel.user == user)
@@ -184,7 +194,10 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             )
         ).execute()
 
-    def find_staging_allocations(self, project):
+    def find_staging_allocations(
+        self,
+        project: Project
+    ) -> list[StagingAllocation]:
         if isinstance(project, str):
             project_selection = ProjectVersion.project.identifier == project
         else:
@@ -194,14 +207,17 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             StagingAllocation.select().where(project_selection)
         ).execute()
 
-    def find_staging_allocation(self, project):
+    def find_staging_allocation(
+        self,
+        project: ProjectVersion
+    ) -> Optional[StagingAllocation]:
         return ReadQuery[StagingAllocation](
             StagingAllocation.select().where(
                 StagingAllocation.project_version == project
             )
         ).find_one()
 
-    def delete_staging_allocation(self, project):
+    def delete_staging_allocation(self, project: ProjectVersion):
         # Ignore spurious warning
         # pylint: disable=no-value-for-parameter
         DeleteQuery[StagingAllocation](
@@ -216,7 +232,7 @@ class _SettingsDAOImpl(DataAccessObjectRDBMS, SettingsDAO):
     def __init__(self):
         super().__init__(Settings)
 
-    def find_server_settings(self):
+    def find_server_settings(self) -> Settings:
         record = ReadQuery[Settings](
             Settings.select().where(Settings.active)
         ).find_one()
@@ -231,13 +247,13 @@ class _SettingsDAOImpl(DataAccessObjectRDBMS, SettingsDAO):
 class DataAccessRDBMS(DataAccess):
     """Implementation of the `DataAccess` interface for RDBMS persistence."""
 
-    def data(self, model):
-        return DataAccessObjectRDBMS[Model](model)
+    def data(self, model: Type[M]) -> DataAccessObject[M]:
+        return DataAccessObjectRDBMS[M](model)
 
-    def users(self):
+    def users(self) -> UserDAO:
         return _UserDAOImpl()
 
-    def projects(self):
+    def projects(self) -> ProjectDAO:
         return _ProjectDAOImpl()
 
     def settings(self) -> SettingsDAO:

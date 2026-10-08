@@ -14,10 +14,12 @@
 #
 """Implementation of the database API using peewee."""
 
+from typing import Any
+
 import peewee
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.server.datastore.database import Database
+from raven.fathom.server.datastore.database import Database, DatabaseSchema
 from raven.fathom.server.datastore.database import DatabaseConnectionException
 from raven.fathom.server.datastore.database import DatabaseCommandException
 from raven.fathom.server.datastore._schema import DatabaseSchemaImpl
@@ -46,13 +48,13 @@ class DatabaseImpl(Database):
                 "Failed to close database connection"
             ) from ex
 
-    def is_connected(self):
+    def is_connected(self) -> bool:
         return not self._db.is_closed() and self._db.is_connection_usable()
 
-    def get_schema(self):
+    def get_schema(self) -> DatabaseSchema:
         return DatabaseSchemaImpl()
 
-    def run_command(self, command, *args, **kwargs):
+    def run_command(self, command: str, *args, **kwargs) -> Any:
         try:
             return self._db.connection().executescript(command)
         except peewee.PeeweeException as ex:
@@ -60,7 +62,7 @@ class DatabaseImpl(Database):
                 f"Error while executing database command: {command}"
             ) from ex
 
-    def get_orm_provider(self):
+    def get_orm_provider(self) -> Any:
         return self._db
 
     def __enter__(self):

@@ -24,7 +24,7 @@ from raven.fathom.base.http import ConnectionException
 class ConnectionHTTPImpl(ConnectionHTTP):
     """Implementation of `ConnectionHTTP` using urllib."""
 
-    def send(self, request):
+    def send(self, request: RequestHTTP) -> ResponseHTTP:
         try:
             return self._send(request)
         except urllib.error.HTTPError as error:

@@ -42,7 +42,7 @@ class TarArchiveFileIO(ArchiveFileIO):
         self._environment = HostSystemEnvironment()
         self._clock = SystemClock()
 
-    def extract(self, archive, dest):
+    def extract(self, archive: File, dest: File):
         try:
             self._extract_packed_tar(archive, dest)
         except tarfile.TarError as error:
@@ -51,7 +51,7 @@ class TarArchiveFileIO(ArchiveFileIO):
                 f"Failed to extract TAR archive file '{archive}' to '{dest}'"
             ) from error
 
-    def compress(self, members, archive):
+    def compress(self, members: list[ArchiveFileMember], archive: File):
         try:
             self._compress_to_tar_archive(members, archive)
         except tarfile.TarError as error:
@@ -60,7 +60,7 @@ class TarArchiveFileIO(ArchiveFileIO):
                 f"Failed to compress TAR archive to file '{archive.path}'"
             ) from error
 
-    def read_packed_members(self, archive):
+    def read_packed_members(self, archive: File) -> list[ArchiveFileMember]:
         try:
             return self._read_members_from_packed_tar(archive)
         except tarfile.TarError as error:

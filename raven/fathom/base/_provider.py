@@ -14,8 +14,11 @@
 #
 """Implementation of `Provider` for the base package."""
 
+from typing import Optional, Type
+
 from raven.fathom.base.provider import AbstractProvider, VariableImplementation
 from raven.fathom.base.system import SystemEnvironment, FileSystem, InputPrompt
+from raven.fathom.base.typing import Interface
 from raven.fathom.base._env import HostSystemEnvironment
 from raven.fathom.base._fs import HostFileSystem
 from raven.fathom.base._input import SystemInputPromptStdIn
@@ -34,7 +37,7 @@ class VariableImplementationArchiveFileIO(VariableImplementation):
     on a given `ArchiveFile.Format`.
     """
 
-    def provide(self, *args, **kwargs):
+    def provide(self, *args, **kwargs) -> Optional[Type[Interface]]:
         file_format = args[0]
         if file_format == ArchiveFile.Format.ZIP:
             return ZipArchiveFileIO

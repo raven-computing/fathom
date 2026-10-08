@@ -41,7 +41,7 @@ class Clock(ABC):
 class SystemClock(Clock):
     """Implementation of `Clock` using the underlying system clock."""
 
-    def current_time(self):
+    def current_time(self) -> datetime:
         return datetime.now(timezone.utc)
 
 
@@ -61,5 +61,5 @@ class ConstantClock(Clock):
         super().__init__()
         self._const_time = const_time.replace(tzinfo=timezone.utc)
 
-    def current_time(self):
+    def current_time(self) -> datetime:
         return self._const_time

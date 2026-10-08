@@ -16,7 +16,12 @@
 
 import random
 
+from typing import Sequence, TypeVar
+
 from raven.fathom.base.entropy import EntropySource
+
+
+T = TypeVar("T")
 
 
 class SystemRandomEntropySource(EntropySource):
@@ -30,14 +35,14 @@ class SystemRandomEntropySource(EntropySource):
     def __init__(self):
         self._random = random.SystemRandom()
 
-    def get_bytes(self, count):
+    def get_bytes(self, count: int) -> bytes:
         return self._random.randbytes(count)
 
-    def get_next_int32(self):
+    def get_next_int32(self) -> int:
         return self._random.getrandbits(32)
 
-    def choose_one(self, sequence):
+    def choose_one(self, sequence: Sequence[T]) -> T:
         return self._random.choice(sequence)
 
-    def is_random(self):
+    def is_random(self) -> bool:
         return True

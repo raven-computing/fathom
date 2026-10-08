@@ -14,6 +14,8 @@
 #
 """A Fathom documentation package."""
 
+from typing import Iterable, Union
+
 from raven.fathom.base import File
 from raven.fathom.base import Package
 from raven.fathom.base import PackageableResource
@@ -34,10 +36,10 @@ class PackageableDocsFile(PackageableResource):
         super().__init__()
         self._docs_file = docs_file
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self._docs_file.name
 
-    def get_data(self):
+    def get_data(self) -> Union[bytes, File]:
         return (
             bytes()
             if self._docs_file.path is None
@@ -61,7 +63,7 @@ class DocumentationPackage(PackageableResourceCollection):
         super().__init__()
         self._docs_resource = docs_resource
 
-    def get_resources(self):
+    def get_resources(self) -> Iterable[PackageableResource]:
         for resource in self._docs_resource:
             yield PackageableDocsFile(resource)
 

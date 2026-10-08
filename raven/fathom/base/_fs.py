@@ -28,7 +28,7 @@ import datetime
 import threading
 
 from pathlib import PurePath, Path
-from typing import IO, Any, Optional
+from typing import IO, Any, Optional, Generator, Union
 
 from raven.fathom.base.system import FileSystem, OperatingSystem
 from raven.fathom.base.file import FileType, FileMode
@@ -186,10 +186,10 @@ class HostFileSystem(FileSystem):
     the actual host's FS.
     """
 
-    def init_path(self, path):
+    def init_path(self, path) -> PurePath:
         return PurePath(path)
 
-    def check_exists(self, path, check_symlink=True):
+    def check_exists(self, path: PurePath, check_symlink = True) -> bool:
         path = Path(path)
         try:
             if not check_symlink:
@@ -203,14 +203,14 @@ class HostFileSystem(FileSystem):
                 f"file '{path}'{_oserr_msg(error)}"
             ) from None
 
-    def check_is_hidden(self, path):
+    def check_is_hidden(self, path: PurePath) -> bool:
         path = Path(path)
         if _host_os() == OperatingSystem.MS_WINDOWS:
             return self._check_is_hidden_win32(path)
 
         return self._check_is_hidden_linux(path)
 
-    def set_hidden(self, path, hidden):
+    def set_hidden(self, path: PurePath, hidden: bool) -> PurePath:
         path = Path(path)
         if _host_os() == OperatingSystem.MS_WINDOWS:
             return self._set_hidden_win32(path, hidden)
@@ -236,10 +236,10 @@ class HostFileSystem(FileSystem):
 
         return adjusted_path
 
-    def get_parent_path(self, path):
+    def get_parent_path(self, path: PurePath) -> PurePath:
         return path.parent
 
-    def get_size(self, path):
+    def get_size(self, path: PurePath) -> int:
         path = Path(self.resolve_symbolic_links(path))
         try:
             if path.is_dir():
@@ -254,7 +254,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def check_is_empty(self, path):
+    def check_is_empty(self, path: PurePath) -> bool:
         path = Path(self.resolve_symbolic_links(path))
         try:
             stat_res = path.stat()
@@ -272,7 +272,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_type(self, path, follow_symlinks=True):
+    def get_type(self, path: PurePath, follow_symlinks = True) -> FileType:
         path = Path(path)
         file_type = 0
         try:
@@ -306,7 +306,7 @@ class HostFileSystem(FileSystem):
             return FileType.BLOCK_DEVICE
         return FileType.UNKNOWN
 
-    def open_file_object(self, path, mode):
+    def open_file_object(self, path: PurePath, mode: FileMode) -> Any:
         path = Path(self.resolve_symbolic_links(path))
         try:
             # pylint: disable=consider-using-with
@@ -334,7 +334,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def close_file_object(self, handle):
+    def close_file_object(self, handle: Any):
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             if handle.is_open:
@@ -346,7 +346,7 @@ class HostFileSystem(FileSystem):
                 f"Failed to close file{_oserr_msg(error)}"
             ) from None
 
-    def read_from_file_object(self, handle, n_bytes=-1):
+    def read_from_file_object(self, handle: Any, n_bytes = -1) -> bytes:
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             return handle.file.read(n_bytes)
@@ -359,7 +359,11 @@ class HostFileSystem(FileSystem):
                 f"file '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def write_to_file_object(self, handle, data):
+    def write_to_file_object(
+        self,
+        handle: Any,
+        data: Union[bytes, bytearray]
+    ) -> int:
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             return handle.file.write(data)
@@ -373,7 +377,7 @@ class HostFileSystem(FileSystem):
                 f"file '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def flush_file_object(self, handle):
+    def flush_file_object(self, handle: Any):
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             handle.file.flush()
@@ -383,7 +387,7 @@ class HostFileSystem(FileSystem):
                 f"Failed to flush file{_oserr_msg(error)}"
             ) from None
 
-    def get_file_object_position(self, handle):
+    def get_file_object_position(self, handle: Any) -> int:
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             return handle.file.tell()
@@ -394,7 +398,7 @@ class HostFileSystem(FileSystem):
                 f"at '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def set_file_object_position(self, handle, new_pos):
+    def set_file_object_position(self, handle: Any, new_pos: int):
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         if new_pos < 0:
             raise FilePositioningException(
@@ -412,7 +416,7 @@ class HostFileSystem(FileSystem):
                 f"at '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def rewind_file_object_position(self, handle):
+    def rewind_file_object_position(self, handle: Any):
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         try:
             handle.file.seek(0, os.SEEK_SET)
@@ -423,7 +427,7 @@ class HostFileSystem(FileSystem):
                 f"at '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def resize_file_object(self, handle, size=None):
+    def resize_file_object(self, handle: Any, size: Optional[int] = None):
         assert isinstance(handle, _FileHandle), "Invalid file handle type"
         if size is not None and size < 0:
             raise FileWriteException(
@@ -446,7 +450,11 @@ class HostFileSystem(FileSystem):
                 f"at '{handle.path}'{_oserr_msg(error)}"
             ) from None
 
-    def check_file_access(self, path, follow_symlinks=True):
+    def check_file_access(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> FileAccess:
         path = Path(path)
         if follow_symlinks:
             path = self.resolve_symbolic_links(path)
@@ -456,7 +464,11 @@ class HostFileSystem(FileSystem):
 
         return self._check_file_access_linux(path)
 
-    def get_file_permissions(self, path, follow_symlinks=True):
+    def get_file_permissions(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> FilePermission:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -488,7 +500,12 @@ class HostFileSystem(FileSystem):
 
         return FilePermission(prot_bits)
 
-    def set_file_permissions(self, path, permissions, follow_symlinks=True):
+    def set_file_permissions(
+        self,
+        path: PurePath,
+        permissions: FilePermission,
+        follow_symlinks = True
+    ):
         # pylint: disable=too-many-locals
         path = Path(path)
         if follow_symlinks:
@@ -528,7 +545,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_file_owner_uid(self, path, follow_symlinks=True):
+    def get_file_owner_uid(self, path: PurePath, follow_symlinks = True) -> int:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -543,7 +560,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_file_owner_name(self, path, follow_symlinks=True):
+    def get_file_owner_name(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> str:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -578,7 +599,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_file_group_gid(self, path, follow_symlinks=True):
+    def get_file_group_gid(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> int:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -593,7 +618,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_file_group_name(self, path, follow_symlinks=True):
+    def get_file_group_name(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> str:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -631,7 +660,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_file_last_modification_time(self, path, follow_symlinks=True):
+    def get_file_last_modification_time(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> datetime.datetime:
         path = Path(path)
         if follow_symlinks:
             path = Path(self.resolve_symbolic_links(path))
@@ -652,7 +685,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_regular_file(self, path):
+    def create_regular_file(self, path: PurePath):
         path = Path(path)
         try:
             if os.path.lexists(path):
@@ -675,7 +708,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_directory(self, path):
+    def create_directory(self, path: PurePath):
         path = Path(path)
         try:
             path.mkdir(parents=False, exist_ok=True)
@@ -699,7 +732,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_directories(self, path):
+    def create_directories(self, path: PurePath):
         path = Path(path)
         try:
             path.mkdir(parents=True, exist_ok=True)
@@ -720,7 +753,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_symbolic_link(self, path, target):
+    def create_symbolic_link(self, path: PurePath, target: PurePath):
         path = Path(path)
         try:
             path.symlink_to(target)
@@ -735,7 +768,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def get_symbolic_link_target(self, path, absolute=False):
+    def get_symbolic_link_target(
+        self,
+        path: PurePath,
+        absolute = False
+    ) -> PurePath:
         path_to_check = Path(path)
         try:
             if path_to_check.is_symlink():
@@ -755,7 +792,7 @@ class HostFileSystem(FileSystem):
 
         return path
 
-    def resolve_symbolic_links(self, path):
+    def resolve_symbolic_links(self, path: PurePath) -> PurePath:
         source_path = Path(path)
         try:
             resolved_path = source_path.resolve(strict=False)
@@ -818,7 +855,7 @@ class HostFileSystem(FileSystem):
                 f"'{source_path}'{msg}"
             ) from None
 
-    def touch_file(self, path):
+    def touch_file(self, path: PurePath):
         path = Path(path)
         try:
             path.touch()
@@ -830,7 +867,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def move(self, source, target, follow_symlinks=True):
+    def move(self, source: PurePath, target: PurePath, follow_symlinks = True):
         source = Path(source)
         target = Path(target)
         symlink_to_be_removed = None
@@ -873,7 +910,7 @@ class HostFileSystem(FileSystem):
                     f"{msg}{_oserr_msg(error)}"
                 ) from None
 
-    def copy(self, source, target, follow_symlinks=True):
+    def copy(self, source: PurePath, target: PurePath, follow_symlinks = True):
         source = Path(source)
         target = Path(target)
         if follow_symlinks:
@@ -927,7 +964,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def remove(self, path, follow_symlinks=True):
+    def remove(self, path: PurePath, follow_symlinks = True):
         path = Path(path)
         is_directory = is_symlink = False
         try:
@@ -962,7 +999,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def list_files_of_directory(self, path, recursive=False):
+    def list_files_of_directory(
+        self,
+        path: PurePath,
+        recursive = False
+    ) -> Generator[PurePath, None, None]:
         path = Path(path)
         try:
             yield from HostFileSystem._generate_dir_listing(path, recursive)
@@ -983,13 +1024,17 @@ class HostFileSystem(FileSystem):
     def flush_system(self):
         pass  # NO-OP
 
-    def get_lock_file_path(self, path, follow_symlinks=True):
+    def get_lock_file_path(
+        self,
+        path: PurePath,
+        follow_symlinks = True
+    ) -> PurePath:
         if follow_symlinks:
             path = self.resolve_symbolic_links(path)
 
         return path.with_name(f".{path.name}.lck")
 
-    def lock_file(self, path, follow_symlinks=True):
+    def lock_file(self, path: PurePath, follow_symlinks = True):
         if follow_symlinks:
             path = self.resolve_symbolic_links(path)
 
@@ -1013,7 +1058,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def unlock_file(self, path, follow_symlinks=True):
+    def unlock_file(self, path: PurePath, follow_symlinks = True):
         path = Path(path)
         if follow_symlinks:
             path = self.resolve_symbolic_links(path)
@@ -1032,7 +1077,12 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_temp_file(self, directory=None, prefix=None, suffix=None):
+    def create_temp_file(
+        self,
+        directory: Optional[Union[PurePath, str]] = None,
+        prefix: Optional[str] = None,
+        suffix: Optional[str] = None
+    ) -> PurePath:
         try:
             # Arguments to mkstemp() must all be of the same type.
             # Accept a PurePath object as a directory path but implicitly
@@ -1064,7 +1114,11 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def create_temp_dir(self, prefix=None, suffix=None):
+    def create_temp_dir(
+        self,
+        prefix: Optional[str] = None,
+        suffix: Optional[str] = None
+    ) -> PurePath:
         try:
             return Path(tempfile.mkdtemp(suffix=suffix, prefix=prefix))
         except OSError as error:

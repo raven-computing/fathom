@@ -20,6 +20,9 @@ import platform
 import locale
 import pathlib
 
+from pathlib import PurePath
+from typing import Optional
+
 try:
     import pwd
 except ImportError:
@@ -31,10 +34,10 @@ from raven.fathom.base.system import SystemEnvironment, OperatingSystem
 class HostSystemEnvironment(SystemEnvironment):
     """Implementation of `SystemEnvironment` which queries the actual host."""
 
-    def get_user_id(self):
+    def get_user_id(self) -> Optional[int]:
         return os.getuid() if hasattr(os, "getuid") else None # type: ignore
 
-    def get_user_name(self):
+    def get_user_name(self) -> Optional[str]:
         try:
             return os.getlogin() or None
         except OSError:
@@ -46,17 +49,17 @@ class HostSystemEnvironment(SystemEnvironment):
 
             return os.environ.get("USER") or os.environ.get("LOGNAME") or None
 
-    def get_home_path(self):
+    def get_home_path(self) -> Optional[PurePath]:
         home = os.environ.get("HOME")
         if home:
             return pathlib.PurePath(home)
 
         return None
 
-    def get_current_working_directory(self):
+    def get_current_working_directory(self) -> PurePath:
         return pathlib.PurePath(os.getcwd())
 
-    def get_operating_system(self):
+    def get_operating_system(self) -> OperatingSystem:
         operating_system = platform.system()
         if operating_system == "Linux":
             return OperatingSystem.GNU_LINUX
@@ -73,14 +76,18 @@ class HostSystemEnvironment(SystemEnvironment):
 
         return OperatingSystem.OTHER
 
-    def get_line_separator(self):
+    def get_line_separator(self) -> str:
         return os.linesep
 
-    def get_text_encoding(self):
+    def get_text_encoding(self) -> str:
         return locale.getpreferredencoding(False)
 
-    def get_file_system_encoding(self):
+    def get_file_system_encoding(self) -> str:
         return sys.getfilesystemencoding()
 
-    def get_variable(self, name, default=None):
+    def get_variable(
+        self,
+        name: str,
+        default: Optional[str] = None
+    ) -> Optional[str]:
         return os.environ.get(name, default)

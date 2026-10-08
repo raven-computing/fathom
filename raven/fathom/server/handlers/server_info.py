@@ -16,6 +16,7 @@
 info queries.
 """
 
+from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.core.version import Version
 
@@ -25,7 +26,7 @@ class ServerInfoHandler(ActionHandler):
 
     _SERVER_AGENT = "raven-fathom-server"
 
-    def handle(self, request, response):
+    def handle(self, request: ClientRequest, response: ServerResponse):
         version = Version.current()
         app_version = str(version) if version is not None else ""
         response.server_info = {

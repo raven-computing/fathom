@@ -16,12 +16,17 @@
 
 import json
 
+from typing import Any, TypeVar, cast
+
 import jsonschema.exceptions
 import jsonschema.validators
 
 from raven.fathom.base import ParcelValidator, ParcelValidationException
 from raven.fathom.base import FileIOException
 from raven.fathom.server.schemas import SchemaLoaderJSON
+
+
+T = TypeVar("T")
 
 
 class ParcelValidatorJSON(ParcelValidator):
@@ -36,11 +41,11 @@ class ParcelValidatorJSON(ParcelValidator):
         """
         self._schema_loader = schema_loader
 
-    def validate(self, parcel):
+    def validate(self, parcel: T) -> T:
         schema = self._load_schema()
         schema_validator = jsonschema.validators.validator_for(schema)
         try:
-            schema_validator(schema).validate(parcel)
+            schema_validator(schema).validate(cast(Any, parcel))
         except jsonschema.exceptions.ValidationError as error:
             raise ParcelValidationException(
                "JSON schema validation failed for parcel"

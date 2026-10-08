@@ -12,27 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Fathom server main entry point."""
-
-from typing import TYPE_CHECKING
+"""Fathom server command execution entry point."""
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
-from raven.fathom.server.cli.registry import command_with_args
+from raven.fathom.server.cli.arguments import AppArgs, AppCommand
+from raven.fathom.server.cli.registry import create_command
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.setup import require_server_setup
 from raven.fathom.server.core.setup import setup_application
 
-if TYPE_CHECKING:
-    from raven.fathom.server.cli.arguments import AppArgs
-
 
 LOG = Logger.get()
 
 
-def run_server(args: "AppArgs") -> ExitStatus:
-    """Runs the Fathom server application.
+def run_server(args: AppArgs) -> ExitStatus:
+    """Runs a command of the Fathom server application.
 
     Args:
         args (AppArgs): The application arguments to be used.
@@ -49,8 +45,8 @@ def run_server(args: "AppArgs") -> ExitStatus:
         cm.load_configs(args)
         config = cm.get_server_config()
         setup_application(args, config)
-        command = command_with_args(args)
-        if args.command != "setup":
+        command = create_command(args)
+        if args.command != AppCommand.SETUP:
             require_server_setup()
 
         return ExitStatus(command.execute())

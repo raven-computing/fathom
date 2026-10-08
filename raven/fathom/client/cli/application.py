@@ -25,7 +25,7 @@ from raven.fathom.client.config import UserConfiguration, ConfigurationManager
 from raven.fathom.client.cli.arguments import ArgumentsCLI, parse_args
 from raven.fathom.client.cli.utils import show_version
 from raven.fathom.client.cli.command import run
-from raven.fathom.client.cli.registry import command_with_args
+from raven.fathom.client.cli.registry import create_command
 from raven.fathom.client.cli.status import ExitStatus
 
 
@@ -66,7 +66,7 @@ def main(argv: list[str]) -> ExitStatus:
                 return status
 
             _setup_client(args)
-            return run(command_with_args(args))
+            return run(create_command(args))
         except Exception as ex:  # pylint: disable=broad-exception-caught
             print("Failed to setup Fathom client:", file=sys.stderr)
             print(str(ex), file=sys.stderr)

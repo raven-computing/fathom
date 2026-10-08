@@ -19,7 +19,7 @@ __all__ = [
     "AppCommand",
     "ServerCommand",
     "ExitStatus",
-    "command_with_args",
+    "create_command",
     "main",
 ]
 
@@ -27,5 +27,5 @@ from .arguments import AppArgs
 from .arguments import AppCommand
 from .command import ServerCommand
 from .status import ExitStatus
-from .registry import command_with_args
+from .registry import create_command
 from .application import main

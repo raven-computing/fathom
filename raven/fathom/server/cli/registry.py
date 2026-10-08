@@ -27,7 +27,7 @@ from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
 
 
-def command_with_args(args: AppArgs) -> ServerCommand:
+def create_command(args: AppArgs) -> ServerCommand:
     """Creates a concrete server command from parsed CLI arguments.
 
     Args:

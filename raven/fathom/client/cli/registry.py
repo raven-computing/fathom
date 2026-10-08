@@ -26,7 +26,7 @@ from raven.fathom.client.logging import Logger
 LOG = Logger.get()
 
 
-def command_with_args(args: ArgumentsCLI) -> ClientCommand | None:
+def create_command(args: ArgumentsCLI) -> ClientCommand | None:
     """Creates a concrete Command from parsed CLI arguments.
 
     Args:

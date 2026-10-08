@@ -21,8 +21,8 @@ from raven.fathom.server.cli.registry import command_with_args
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.core.startup import require_server_setup
-from raven.fathom.server.core.startup import setup_application
+from raven.fathom.server.core.setup import require_server_setup
+from raven.fathom.server.core.setup import setup_application
 
 if TYPE_CHECKING:
     from raven.fathom.server.cli.arguments import AppArgs

@@ -19,14 +19,10 @@ from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.net.defaults import SERVER_ROOT_PATH_V1
 from raven.fathom.server.net.http import assign
 from raven.fathom.server.net.http import ServerHTTP
-from raven.fathom.server.net.http import ServerApplication
 from raven.fathom.server.net.http import HTTPServerStartException
-from raven.fathom.server.controllers import InteractionController
-from raven.fathom.server.controllers import PublicController
-from raven.fathom.server.controllers import SignupController
+from raven.fathom.server.net.routes import FathomServer
 
 
 LOG = Logger.get()
@@ -38,19 +34,6 @@ def _start_server(server: ServerHTTP):
     except HTTPServerStartException:
         LOG.e("Failed to start Fathom server")
         raise
-
-
-class FathomServer(ServerApplication):
-    """The Fathom server application."""
-
-    def __init__(self):
-        super().__init__()
-        self.public = PublicController()
-        self.user = SignupController()
-        self.interact = InteractionController()
-
-    def root_path(self):
-        return SERVER_ROOT_PATH_V1
 
 
 class ServeCommand(ServerCommand):

@@ -25,6 +25,7 @@ from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
+from raven.fathom.server.core.config import ConfigurationManager
 
 
 def create_command(args: AppArgs) -> ServerCommand:
@@ -42,7 +43,7 @@ def create_command(args: AppArgs) -> ServerCommand:
         ValueError: If the command name is invalid.
     """
     if args.command in (AppCommand.SERVE, AppCommand.UNSPECIFIED):
-        return ServeCommand(args)
+        return ServeCommand(args, ConfigurationManager().get_server_config())
 
     if args.command == AppCommand.SETUP:
         return SetupCommand(args)

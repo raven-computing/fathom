@@ -17,6 +17,8 @@
 from typing import Final
 
 
+DEFAULT_SERVER_ADDRESS_LISTEN: Final[str] = "0.0.0.0"
+
 DEFAULT_SERVER_PORT: Final[int] = 8080
 
 SERVER_ROOT_PATH_V1: Final[str] = "/fathom/v1"

@@ -33,6 +33,7 @@ from raven.fathom.base import File, FileSize, FileSizeUnit
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base.decorators import singleton
 from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.net.defaults import DEFAULT_SERVER_ADDRESS_LISTEN
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 
 if TYPE_CHECKING:
@@ -69,7 +70,7 @@ class ServerConfigurationSection(ConfigurationSectionKey):
     )
 
     ADDRESS_LISTEN = ConfigurationKey[str](
-        "address.listen", str, default="0.0.0.0",
+        "address.listen", str, default=DEFAULT_SERVER_ADDRESS_LISTEN,
         description=(
             "The hostname or IP address the server should listens on."
             "By default, the server listens on "

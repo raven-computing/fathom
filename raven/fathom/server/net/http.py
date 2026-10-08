@@ -139,12 +139,25 @@ class ServerHTTP:
                 accept requests.
         """
         config = config or Configuration()
-        section = config.get_section(ServerConfiguration.SERVER)
         self._app = app
         self._config = config
-        self._address = section[ServerConfiguration.SERVER.ADDRESS_LISTEN]
-        self._port = section[ServerConfiguration.SERVER.PORT_LISTEN]
+        self._address = config.get_required_value(
+            ServerConfiguration.SERVER.ADDRESS_LISTEN
+        )
+        self._port = config.get_required_value(
+            ServerConfiguration.SERVER.PORT_LISTEN
+        )
         self._event_ready = event
+
+    @property
+    def address(self) -> str:
+        """The hostname or IP address the server listens on, as a `str`."""
+        return self._address
+
+    @property
+    def port(self) -> int:
+        """The port that this server listens to, as an `int`."""
+        return self._port
 
     def get_application(self) -> ServerApplication:
         """Gets the server application instance being served.

@@ -29,17 +29,6 @@ class TestCase(FathomTestCase):
         Dependencies.enable_object_store()
         Dependencies.flush_object_store()
         super().setUp()
-
-    def tearDown(self):
-        super().tearDown()
-        Dependencies.disable_object_store()
-
-
-class TestFixture(FathomTestFixture):
-    """Base class for all test fixtures used in unit tests."""
-
-    def setUp(self):
-        super().setUp()
         File.get_file_system().flush_system()
         self.app_context = ApplicationContext.create_instance()
         self.app_context.initialize(ApplicationMode.TESTING, File("/"))
@@ -47,3 +36,8 @@ class TestFixture(FathomTestFixture):
     def tearDown(self):
         super().tearDown()
         ApplicationContext.delete()
+        Dependencies.disable_object_store()
+
+
+class TestFixture(FathomTestFixture):
+    """Base class for all test fixtures used in unit tests."""

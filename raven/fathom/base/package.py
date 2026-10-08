@@ -31,7 +31,7 @@ import re
 
 from enum import Enum
 from abc import ABC, abstractmethod
-from typing import Union, Optional, Iterable
+from typing import Union, Optional, Final, Iterable
 from dataclasses import dataclass, field
 from io import StringIO
 
@@ -139,7 +139,7 @@ class Package:
 
     # The name of the file inside of a package that
     # contains the encoded metadata.
-    METADATA_FILE_NAME = "fathom_meta"
+    METADATA_FILE_NAME: Final[str] = "fathom_meta"
 
     def __init__(
         self,

@@ -29,7 +29,7 @@ from raven.fathom.server.net.routes import FathomServer
 LOG = Logger.get()
 
 
-def _start_server(server: ServerHTTP):
+def _start(server: ServerHTTP):
     try:
         server.start()
     except HTTPServerStartException:
@@ -52,7 +52,7 @@ class ServeCommand(ServerCommand):
         port = self.config[ServerConfiguration.SERVER.PORT_LISTEN]
         LOG.i("Starting Fathom server on port %d", port)
         server = assign(self.server)
-        _start_server(server)
+        _start(server)
         app_mode = ApplicationContext.instance().get_application_mode()
         debug_mode = self.config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
         if app_mode == ApplicationMode.PRODUCTION and debug_mode:

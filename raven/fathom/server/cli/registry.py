@@ -19,7 +19,7 @@ from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.project import ProjectCreateCommand
 from raven.fathom.server.cli.project import ProjectDeleteCommand
 from raven.fathom.server.cli.project import ProjectListCommand
-from raven.fathom.server.cli.run import RunServerCommand
+from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
@@ -41,7 +41,7 @@ def command_with_args(args: AppArgs) -> ServerCommand:
         ValueError: If the command name is invalid.
     """
     if not args.command:
-        return RunServerCommand(args)
+        return ServeCommand(args)
 
     if args.command == "setup":
         return SetupCommand(args)

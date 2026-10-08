@@ -53,10 +53,10 @@ class FathomServer(ServerApplication):
         return SERVER_ROOT_PATH_V1
 
 
-class RunServerCommand(ServerCommand):
+class ServeCommand(ServerCommand):
     """Implementation of the default command to server client requests.
 
-    Starts and runs the HTTP server application.
+    Starts and runs the HTTP server application until stopped.
     """
 
     def execute(self) -> int:

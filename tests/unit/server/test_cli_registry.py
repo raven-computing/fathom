@@ -16,7 +16,7 @@
 
 from raven.fathom.server.cli import AppArgs
 from raven.fathom.server.cli import command_with_args
-from raven.fathom.server.cli.run import RunServerCommand
+from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
@@ -33,7 +33,7 @@ class TestServerCommandRegistry(TestCase):
 
     def test_registry_works_for_no_command(self):
         command = command_with_args(AppArgs())
-        self.assertIsInstance(command, RunServerCommand)
+        self.assertIsInstance(command, ServeCommand)
 
     def test_registry_works_for_setup_command(self):
         command = command_with_args(AppArgs(command="setup"))

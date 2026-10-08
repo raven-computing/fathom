@@ -16,22 +16,12 @@
 
 from typing import TYPE_CHECKING
 
-from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import Configuration
 from raven.fathom.base import InputPrompt
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.core.config import ConfigurationManager
-from raven.fathom.server.controllers import InteractionController
-from raven.fathom.server.controllers import PublicController
-from raven.fathom.server.controllers import SignupController
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.net.defaults import SERVER_ROOT_PATH_V1
 from raven.fathom.server.deployment import DeploymentSite
-from raven.fathom.server.net.http import assign
-from raven.fathom.server.net.http import HTTPServerStartException
-from raven.fathom.server.net.http import ServerApplication
-from raven.fathom.server.net.http import ServerHTTP
 from raven.fathom.server.core.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.staging import StagingArea
@@ -45,19 +35,6 @@ if TYPE_CHECKING:
 
 
 LOG = Logger.get()
-
-
-class FathomServer(ServerApplication):
-    """The Fathom server application."""
-
-    def __init__(self):
-        super().__init__()
-        self.public = PublicController()
-        self.user = SignupController()
-        self.interact = InteractionController()
-
-    def root_path(self):
-        return SERVER_ROOT_PATH_V1
 
 
 def _setup_database():
@@ -126,34 +103,6 @@ def setup_application(args: "AppArgs", config: Configuration):
     except Exception:
         LOG.e("An error occurred during application startup")
         raise
-
-
-def _start_server(server: ServerHTTP):
-    try:
-        server.start()
-    except HTTPServerStartException:
-        LOG.e("Failed to start Fathom server")
-        raise
-
-
-def run_server_application(args: "AppArgs") -> int:
-    """Starts and runs the HTTP server application."""
-    config = ConfigurationManager().get_server_config()
-    port = config[ServerConfiguration.SERVER.PORT_LISTEN]
-    LOG.i("Starting Fathom server on port %d", port)
-    server = assign(ServerHTTP(FathomServer(), config, args.ready_event))
-    _start_server(server)
-    app_mode = ApplicationContext.instance().get_application_mode()
-    debug_mode_enabled = config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
-    if app_mode == ApplicationMode.PRODUCTION and debug_mode_enabled:
-        LOG.w(
-            "The debug mode of the server is enabled. "
-            "This is not suitable for a production environment."
-        )
-
-    server.run()
-    LOG.i("Fathom server has been stopped")
-    return server.status_code()
 
 
 def confirm_system_privileges():

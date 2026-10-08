@@ -24,6 +24,7 @@ from raven.fathom.client.connection import (
 )
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.locator import load_management_server_locator
+from raven.fathom.client.cli.arguments import AppCommand
 from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.status import ExitStatus
 
@@ -48,10 +49,10 @@ class SetupCommand(ClientCommand):
             return ExitStatus.FAILURE
 
     def _setup(self):
-        if self.args.setup_subject == "config":
+        if self.args.setup_subject == AppCommand.CONFIG:
             return self._setup_config()
 
-        if self.args.setup_subject != "user":
+        if self.args.setup_subject != AppCommand.USER:
             raise ValueError(
                 f"Invalid setup subject '{self.args.setup_subject}'"
             )
@@ -96,7 +97,7 @@ class SetupCommand(ClientCommand):
     def _setup_config(self):
         cm = ConfigurationManager()
 
-        if self.args.setup_command == "user":
+        if self.args.setup_command == AppCommand.USER:
             config_file = cm.find_user_config_file()
             if config_file is not None:
                 LOG.i(
@@ -109,7 +110,7 @@ class SetupCommand(ClientCommand):
             LOG.i("Created user configuration file '%s'", config_file)
             return ExitStatus.SUCCESS
 
-        if self.args.setup_command == "project":
+        if self.args.setup_command == AppCommand.PROJECT:
             config_file = cm.find_project_config_file()
             if config_file is not None:
                 LOG.i(

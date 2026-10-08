@@ -15,6 +15,7 @@
 """CLI command registry."""
 
 from raven.fathom.server.cli.arguments import AppArgs
+from raven.fathom.server.cli.arguments import AppCommand
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.project import ProjectCreateCommand
 from raven.fathom.server.cli.project import ProjectDeleteCommand
@@ -40,28 +41,28 @@ def command_with_args(args: AppArgs) -> ServerCommand:
     Raises:
         ValueError: If the command name is invalid.
     """
-    if not args.command:
+    if args.command in (AppCommand.SERVE, AppCommand.UNSPECIFIED):
         return ServeCommand(args)
 
-    if args.command == "setup":
+    if args.command == AppCommand.SETUP:
         return SetupCommand(args)
 
-    if args.command == "user":
-        if args.user_command == "create":
+    if args.command == AppCommand.USER:
+        if args.user_command == AppCommand.CREATE:
             return UserCreateCommand(args)
-        if args.user_command == "list":
+        if args.user_command == AppCommand.LIST:
             return UserListCommand(args)
-        if args.user_command == "delete":
+        if args.user_command == AppCommand.DELETE:
             return UserDeleteCommand(args)
 
         raise ValueError(f"Invalid user command '{args.user_command}'")
 
-    if args.command == "project":
-        if args.project_command == "create":
+    if args.command == AppCommand.PROJECT:
+        if args.project_command == AppCommand.CREATE:
             return ProjectCreateCommand(args)
-        if args.project_command == "list":
+        if args.project_command == AppCommand.LIST:
             return ProjectListCommand(args)
-        if args.project_command == "delete":
+        if args.project_command == AppCommand.DELETE:
             return ProjectDeleteCommand(args)
 
         raise ValueError(f"Invalid project command '{args.project_command}'")

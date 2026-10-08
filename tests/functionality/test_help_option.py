@@ -80,6 +80,9 @@ setup and manage the server application and its resources.
 
 positional arguments:
   [command]
+    serve               Starts the server to serve incoming client requests. This is the default if
+                        no command is explicitly specified.
+
     setup               Perform initial setup work for the server application. This should be done
                         once after installation. This step is interactive.
 

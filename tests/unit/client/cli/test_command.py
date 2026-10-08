@@ -14,7 +14,10 @@
 #
 """Unit tests for the command handling infrastructure."""
 
+from typing import cast
+
 from raven.fathom.client.cli.command import ClientCommand, run
+from raven.fathom.client.cli.arguments import AppCommand
 from raven.fathom.client.cli.arguments import ArgumentsCLI
 from raven.fathom.client.cli.registry import command_with_args
 from raven.fathom.client.cli.deploy import DeployCommand
@@ -77,7 +80,7 @@ class TestCommandRegistry(TestCase):
     """Unit tests for the `command_with_args()` function."""
 
     def test_registry_works_for_known_command(self):
-        args = ArgumentsCLI(command="deploy", user="sentinel")
+        args = ArgumentsCLI(command=AppCommand.DEPLOY, user="sentinel")
         command_obj = command_with_args(args)
         self.assertIsNotNone(command_obj)
         assert command_obj is not None
@@ -86,17 +89,17 @@ class TestCommandRegistry(TestCase):
 
     def test_registry_works_for_manage_command(self):
         args = ArgumentsCLI(
-            command="manage",
-            manage_subject="user",
-            manage_command="list",
+            command=AppCommand.MANAGE,
+            manage_subject=AppCommand.USER,
+            manage_command=AppCommand.LIST,
         )
         command_obj = command_with_args(args)
         self.assertIsInstance(command_obj, ManageCommand)
 
     def test_registry_works_for_setup_command(self):
         args = ArgumentsCLI(
-            command="setup",
-            setup_subject="user",
+            command=AppCommand.SETUP,
+            setup_subject=AppCommand.USER,
             setup_user_identifier="user2",
         )
         command_obj = command_with_args(args)
@@ -104,15 +107,15 @@ class TestCommandRegistry(TestCase):
 
     def test_registry_works_for_setup_config_command(self):
         args = ArgumentsCLI(
-            command="setup",
-            setup_subject="config",
-            setup_command="user",
+            command=AppCommand.SETUP,
+            setup_subject=AppCommand.CONFIG,
+            setup_command=AppCommand.USER,
         )
         command_obj = command_with_args(args)
         self.assertIsInstance(command_obj, SetupCommand)
 
     def test_registry_rejects_unknown_command_and_raises_exception(self):
-        args = ArgumentsCLI(command="invalid_command")
+        args = ArgumentsCLI(command=cast(AppCommand, "invalid_command"))
         with self.assertRaises(ValueError) as raised:
             command_with_args(args)
 

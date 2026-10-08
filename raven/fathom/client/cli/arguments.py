@@ -14,6 +14,7 @@
 #
 """Command line argument handling."""
 
+from enum import StrEnum
 from dataclasses import dataclass
 
 from raven.fathom.base import ArgumentParser
@@ -22,6 +23,36 @@ from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 
 
 # pylint: disable=too-many-locals
+
+
+class AppCommand(StrEnum):
+    """Supported client CLI command names and subcommand names."""
+
+    UNSPECIFIED = ""
+
+    DEPLOY = "deploy"
+
+    MANAGE = "manage"
+
+    SETUP = "setup"
+
+    USER = "user"
+
+    PROJECT = "project"
+
+    CONFIG = "config"
+
+    CREATE = "create"
+
+    LIST = "list"
+
+    LIST_USERS = "list-users"
+
+    DELETE = "delete"
+
+    ASSIGN = "assign"
+
+    UNASSIGN = "unassign"
 
 
 @dataclass(frozen=True)
@@ -44,15 +75,15 @@ class ArgumentsCLI:
 
     server: str = ""
 
-    command: str = ""
+    command: AppCommand = AppCommand.UNSPECIFIED
 
-    manage_subject: str = ""
+    manage_subject: AppCommand = AppCommand.UNSPECIFIED
 
-    manage_command: str = ""
+    manage_command: AppCommand = AppCommand.UNSPECIFIED
 
-    setup_subject: str = ""
+    setup_subject: AppCommand = AppCommand.UNSPECIFIED
 
-    setup_command: str = ""
+    setup_command: AppCommand = AppCommand.UNSPECIFIED
 
     user_identifier: str = ""
 
@@ -144,7 +175,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     deploy = subparsers.add_parser(
-        "deploy",
+        str(AppCommand.DEPLOY),
         help="Deploy project documentation resources."
     )
     deploy.add_argument(
@@ -157,7 +188,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage = subparsers.add_parser(
-        "manage",
+        str(AppCommand.MANAGE),
         help=f"Manage a {APPLICATION_NAME} server remotely. "
              "Usage of this command requires the user to "
              "have administrative privileges."
@@ -169,7 +200,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_user = manage_subparsers.add_parser(
-        "user",
+        str(AppCommand.USER),
         help="Manage dedicated application users "
             f"on a {APPLICATION_NAME} server."
     )
@@ -180,7 +211,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_user_create = manage_user_subparsers.add_parser(
-        "create",
+        str(AppCommand.CREATE),
         help="Create a regular application user on the server."
     )
     manage_user_create.add_argument(
@@ -197,13 +228,13 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_user_subparsers.add_parser(
-        "list",
+        str(AppCommand.LIST),
         help="List all dedicated application users that are registered "
              "on the server."
     )
 
     manage_user_delete = manage_user_subparsers.add_parser(
-        "delete",
+        str(AppCommand.DELETE),
         help="Delete a dedicated application user on the server."
     )
     manage_user_delete.add_argument(
@@ -213,7 +244,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_user_assign = manage_user_subparsers.add_parser(
-        "assign",
+        str(AppCommand.ASSIGN),
         help="Assign a dedicated application user to a project on the server."
     )
     manage_user_assign.add_argument(
@@ -228,7 +259,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_user_unassign = manage_user_subparsers.add_parser(
-        "unassign",
+        str(AppCommand.UNASSIGN),
         help="Unassign a dedicated application user "
              "from a project on the server."
     )
@@ -244,7 +275,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_project = manage_subparsers.add_parser(
-        "project",
+        str(AppCommand.PROJECT),
         help=f"Manage registered projects on a {APPLICATION_NAME} server."
     )
     manage_project_subparsers = manage_project.add_subparsers(
@@ -254,7 +285,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_project_create = manage_project_subparsers.add_parser(
-        "create",
+        str(AppCommand.CREATE),
         help="Register one of your projects by creating it on the server."
     )
     manage_project_create.add_argument(
@@ -278,12 +309,12 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_project_subparsers.add_parser(
-        "list",
+        str(AppCommand.LIST),
         help="List all projects that are registered on the server."
     )
 
     manage_project_list_users = manage_project_subparsers.add_parser(
-        "list-users",
+        str(AppCommand.LIST_USERS),
         help="List all application users assigned to a project on the server."
     )
     manage_project_list_users.add_argument(
@@ -293,7 +324,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     manage_project_delete = manage_project_subparsers.add_parser(
-        "delete",
+        str(AppCommand.DELETE),
         help="Delete a registered project on the server."
     )
     manage_project_delete.add_argument(
@@ -303,7 +334,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     setup = subparsers.add_parser(
-        "setup",
+        str(AppCommand.SETUP),
         help="Perform a setup action."
     )
     setup_subparsers = setup.add_subparsers(
@@ -313,7 +344,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     )
 
     setup_config = setup_subparsers.add_parser(
-        "config",
+        str(AppCommand.CONFIG),
         help="Create a default client configuration file if one is missing."
     )
     setup_config_subparsers = setup_config.add_subparsers(
@@ -322,18 +353,18 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         metavar="<TYPE>",
     )
     setup_config_subparsers.add_parser(
-        "user",
+        str(AppCommand.USER),
         help="Create the default user configuration file in the user's "
              "configuration directory."
     )
     setup_config_subparsers.add_parser(
-        "project",
+        str(AppCommand.PROJECT),
         help="Create the default project configuration file in the current "
              "working directory."
     )
 
     setup_user = setup_subparsers.add_parser(
-        "user",
+        str(AppCommand.USER),
         help="Performs a sign-up action for a user that was previously "
              "created by an administrator and is currently "
              "in the onboarding state."
@@ -358,11 +389,23 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
         user=args.user,
         password=args.password,
         server=args.server,
-        command=args.command,
-        manage_subject=getattr(args, "manage_subject", ""),
-        manage_command=getattr(args, "manage_command", ""),
-        setup_subject=getattr(args, "setup_subject", ""),
-        setup_command=getattr(args, "setup_command", ""),
+        command=(
+            AppCommand.UNSPECIFIED
+            if args.command is None
+            else AppCommand(args.command)
+        ),
+        manage_subject=AppCommand(
+            getattr(args, "manage_subject", str(AppCommand.UNSPECIFIED))
+        ),
+        manage_command=AppCommand(
+            getattr(args, "manage_command", str(AppCommand.UNSPECIFIED))
+        ),
+        setup_subject=AppCommand(
+            getattr(args, "setup_subject", str(AppCommand.UNSPECIFIED))
+        ),
+        setup_command=AppCommand(
+            getattr(args, "setup_command", str(AppCommand.UNSPECIFIED))
+        ),
         user_identifier=getattr(args, "user_identifier", ""),
         user_name=getattr(args, "user_name", ""),
         project_identifier=getattr(args, "project_identifier", ""),

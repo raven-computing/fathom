@@ -24,6 +24,7 @@ from raven.fathom.client.connection import (
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.locator import load_management_server_locator
 from raven.fathom.client.authentication import load_client_authentication
+from raven.fathom.client.cli.arguments import AppCommand
 from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.status import ExitStatus
 
@@ -59,8 +60,8 @@ class ManageCommand(ClientCommand):
             ),
         )
 
-        if self.args.manage_subject == "user":
-            if self.args.manage_command == "create":
+        if self.args.manage_subject == AppCommand.USER:
+            if self.args.manage_command == AppCommand.CREATE:
                 user = User(
                     identifier=self.args.user_identifier,
                     name=(
@@ -72,7 +73,7 @@ class ManageCommand(ClientCommand):
                 LOG.i("Created user '%s'", created.identifier)
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "list":
+            if self.args.manage_command == AppCommand.LIST:
                 users = server.list_users()
                 for user in users:
                     role = "admin" if user.is_admin else "regular"
@@ -86,12 +87,12 @@ class ManageCommand(ClientCommand):
                     )
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "delete":
+            if self.args.manage_command == AppCommand.DELETE:
                 server.delete_user(self.args.user_identifier)
                 LOG.i("Deleted user '%s'", self.args.user_identifier)
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "assign":
+            if self.args.manage_command == AppCommand.ASSIGN:
                 server.assign_user_to_project(
                     self.args.user_identifier,
                     self.args.project_identifier,
@@ -103,7 +104,7 @@ class ManageCommand(ClientCommand):
                 )
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "unassign":
+            if self.args.manage_command == AppCommand.UNASSIGN:
                 server.unassign_user_from_project(
                     self.args.user_identifier,
                     self.args.project_identifier,
@@ -119,8 +120,8 @@ class ManageCommand(ClientCommand):
                 f"Invalid manage command '{self.args.manage_command}'"
             )
 
-        if self.args.manage_subject == "project":
-            if self.args.manage_command == "create":
+        if self.args.manage_subject == AppCommand.PROJECT:
+            if self.args.manage_command == AppCommand.CREATE:
                 project = Project(
                     identifier=self.args.project_identifier,
                     name=(
@@ -133,7 +134,7 @@ class ManageCommand(ClientCommand):
                 LOG.i("Created project '%s'", created.identifier)
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "list":
+            if self.args.manage_command == AppCommand.LIST:
                 LOG.i("Fathom projects:")
                 for project in server.list_projects():
                     LOG.i(
@@ -144,7 +145,7 @@ class ManageCommand(ClientCommand):
                     )
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "list-users":
+            if self.args.manage_command == AppCommand.LIST_USERS:
                 LOG.i(
                     "Users assigned to project '%s':",
                     self.args.project_identifier,
@@ -159,7 +160,7 @@ class ManageCommand(ClientCommand):
                     )
                 return ExitStatus.SUCCESS
 
-            if self.args.manage_command == "delete":
+            if self.args.manage_command == AppCommand.DELETE:
                 server.delete_project(self.args.project_identifier)
                 LOG.i(
                     "Deleted project '%s'",

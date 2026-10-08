@@ -16,6 +16,7 @@
 
 import argparse
 
+from enum import StrEnum
 from dataclasses import dataclass
 from typing import Optional
 from multiprocessing.synchronize import Event
@@ -32,6 +33,26 @@ def port_type(arg: str) -> int:
         raise argparse.ArgumentTypeError("Port must be between 1 and 65535")
 
     return port
+
+
+class AppCommand(StrEnum):
+    """Supported server CLI command names and subcommand names."""
+
+    UNSPECIFIED = ""
+
+    SERVE = "serve"
+
+    SETUP = "setup"
+
+    USER = "user"
+
+    PROJECT = "project"
+
+    CREATE = "create"
+
+    LIST = "list"
+
+    DELETE = "delete"
 
 
 @dataclass(frozen=True)
@@ -52,11 +73,11 @@ class AppArgs:
 
     create_default_config: bool = False
 
-    command: str = ""
+    command: AppCommand = AppCommand.SERVE
 
-    user_command: str = ""
+    user_command: AppCommand = AppCommand.UNSPECIFIED
 
-    project_command: str = ""
+    project_command: AppCommand = AppCommand.UNSPECIFIED
 
     user_identifier: str = ""
 
@@ -140,14 +161,19 @@ def parse_args(argv: list[str]) -> AppArgs:
         metavar="[command]",
     )
     subparsers.add_parser(
-        "setup",
+        str(AppCommand.SERVE),
+        help="Starts the server to serve incoming client requests. "
+             "This is the default if no command is explicitly specified.",
+    )
+    subparsers.add_parser(
+        str(AppCommand.SETUP),
         help="Perform initial setup work for the server application. "
              "This should be done once after installation. "
              "This step is interactive."
     )
 
     user_parser = subparsers.add_parser(
-        "user",
+        str(AppCommand.USER),
         help="Manage dedicated application users. This command requires you "
              "to authenticate and have administrative privileges."
     )
@@ -158,7 +184,7 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
 
     user_create = user_subparsers.add_parser(
-        "create",
+        str(AppCommand.CREATE),
         help=f"Create a {APPLICATION_NAME} user that a client can use "
              "to connect to this server."
     )
@@ -181,13 +207,13 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
 
     user_subparsers.add_parser(
-        "list",
+        str(AppCommand.LIST),
         help="List all users that are mananged "
             f"by this {APPLICATION_NAME} server."
     )
 
     user_delete = user_subparsers.add_parser(
-        "delete",
+        str(AppCommand.DELETE),
         help=f"Delete a user from this {APPLICATION_NAME} server."
     )
     user_delete.add_argument(
@@ -197,7 +223,7 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
 
     project_parser = subparsers.add_parser(
-        "project",
+        str(AppCommand.PROJECT),
         help="Manage deployable projects."
     )
     project_subparsers = project_parser.add_subparsers(
@@ -207,7 +233,7 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
 
     project_create = project_subparsers.add_parser(
-        "create",
+        str(AppCommand.CREATE),
         help="Create a project that is managed "
             f"by this {APPLICATION_NAME} server."
     )
@@ -230,13 +256,13 @@ def parse_args(argv: list[str]) -> AppArgs:
     )
 
     project_subparsers.add_parser(
-        "list",
+        str(AppCommand.LIST),
         help="List all projects that are managed "
             f"by this {APPLICATION_NAME} server."
     )
 
     project_delete = project_subparsers.add_parser(
-        "delete",
+        str(AppCommand.DELETE),
         help=f"Delete a project from this {APPLICATION_NAME} server."
     )
     project_delete.add_argument(
@@ -256,9 +282,17 @@ def parse_args(argv: list[str]) -> AppArgs:
         port=args.port,
         working_directory=args.working_directory,
         create_default_config=args.create_default_config,
-        command=args.command,
-        user_command=getattr(args, "user_command", ""),
-        project_command=getattr(args, "project_command", ""),
+        command=(
+            AppCommand.SERVE
+            if args.command is None
+            else AppCommand(args.command)
+        ),
+        user_command=AppCommand(
+            getattr(args, "user_command", str(AppCommand.UNSPECIFIED))
+        ),
+        project_command=AppCommand(
+            getattr(args, "project_command", str(AppCommand.UNSPECIFIED))
+        ),
         user_identifier=getattr(args, "identifier", ""),
         user_name=getattr(args, "name", ""),
         user_is_admin=getattr(args, "admin", False),

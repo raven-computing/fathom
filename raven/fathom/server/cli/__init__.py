@@ -16,6 +16,7 @@
 
 __all__ = [
     "AppArgs",
+    "AppCommand",
     "ServerCommand",
     "ExitStatus",
     "command_with_args",
@@ -23,6 +24,7 @@ __all__ = [
 ]
 
 from .arguments import AppArgs
+from .arguments import AppCommand
 from .command import ServerCommand
 from .status import ExitStatus
 from .registry import command_with_args

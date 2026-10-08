@@ -14,7 +14,10 @@
 #
 """Unit tests for the server command registry."""
 
+from typing import cast
+
 from raven.fathom.server.cli import AppArgs
+from raven.fathom.server.cli import AppCommand
 from raven.fathom.server.cli import command_with_args
 from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.cli.setup import SetupCommand
@@ -36,61 +39,75 @@ class TestServerCommandRegistry(TestCase):
         self.assertIsInstance(command, ServeCommand)
 
     def test_registry_works_for_setup_command(self):
-        command = command_with_args(AppArgs(command="setup"))
+        command = command_with_args(AppArgs(command=AppCommand.SETUP))
         self.assertIsInstance(command, SetupCommand)
 
     def test_registry_works_for_user_create_command(self):
         command = command_with_args(
-            AppArgs(command="user", user_command="create")
+            AppArgs(command=AppCommand.USER, user_command=AppCommand.CREATE)
         )
         self.assertIsInstance(command, UserCreateCommand)
 
     def test_registry_works_for_user_list_command(self):
         command = command_with_args(
-            AppArgs(command="user", user_command="list")
+            AppArgs(command=AppCommand.USER, user_command=AppCommand.LIST)
         )
         self.assertIsInstance(command, UserListCommand)
 
     def test_registry_works_for_user_delete_command(self):
         command = command_with_args(
-            AppArgs(command="user", user_command="delete")
+            AppArgs(command=AppCommand.USER, user_command=AppCommand.DELETE)
         )
         self.assertIsInstance(command, UserDeleteCommand)
 
     def test_registry_works_for_project_create_command(self):
         command = command_with_args(
-            AppArgs(command="project", project_command="create")
+            AppArgs(
+                command=AppCommand.PROJECT,
+                project_command=AppCommand.CREATE
+            )
         )
         self.assertIsInstance(command, ProjectCreateCommand)
 
     def test_registry_works_for_project_list_command(self):
         command = command_with_args(
-            AppArgs(command="project", project_command="list")
+            AppArgs(command=AppCommand.PROJECT, project_command=AppCommand.LIST)
         )
         self.assertIsInstance(command, ProjectListCommand)
 
     def test_registry_works_for_project_delete_command(self):
         command = command_with_args(
-            AppArgs(command="project", project_command="delete")
+            AppArgs(
+                command=AppCommand.PROJECT,
+                project_command=AppCommand.DELETE
+            )
         )
         self.assertIsInstance(command, ProjectDeleteCommand)
 
     def test_registry_rejects_invalid_command(self):
         with self.assertRaises(ValueError) as raised:
-            command_with_args(AppArgs(command="invalid"))
+            command_with_args(AppArgs(command=cast(AppCommand, "invalid")))
 
         self.assertIn("Invalid command 'invalid'", str(raised.exception))
 
     def test_registry_rejects_invalid_user_subcommand(self):
         with self.assertRaises(ValueError) as raised:
-            command_with_args(AppArgs(command="user", user_command="oops"))
+            command_with_args(
+                AppArgs(
+                    command=AppCommand.USER,
+                    user_command=cast(AppCommand, "oops")
+                )
+            )
 
         self.assertIn("Invalid user command 'oops'", str(raised.exception))
 
     def test_registry_rejects_invalid_project_subcommand(self):
         with self.assertRaises(ValueError) as raised:
             command_with_args(
-                AppArgs(command="project", project_command="oops")
+                AppArgs(
+                    command=AppCommand.PROJECT,
+                    project_command=cast(AppCommand, "oops")
+                )
             )
 
         self.assertIn("Invalid project command 'oops'", str(raised.exception))

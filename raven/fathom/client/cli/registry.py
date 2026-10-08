@@ -15,6 +15,7 @@
 """CLI command registry."""
 
 from raven.fathom.client.cli.arguments import ArgumentsCLI
+from raven.fathom.client.cli.arguments import AppCommand
 from raven.fathom.client.cli.command import ClientCommand
 from raven.fathom.client.cli.deploy import DeployCommand
 from raven.fathom.client.cli.manage import ManageCommand
@@ -38,16 +39,16 @@ def command_with_args(args: ArgumentsCLI) -> ClientCommand | None:
     Raises:
         ValueError: If the command name is invalid.
     """
-    name = args.command
-    if not name:
+    command = args.command
+    if command == AppCommand.UNSPECIFIED:
         return None
 
-    if name == "deploy":
+    if command == AppCommand.DEPLOY:
         return DeployCommand(args)
-    if name == "manage":
+    if command == AppCommand.MANAGE:
         return ManageCommand(args)
-    if name == "setup":
+    if command == AppCommand.SETUP:
         return SetupCommand(args)
 
-    LOG.e("Invalid command: '%s'", name)
-    raise ValueError(f"Invalid command '{name}'")
+    LOG.e("Invalid command: '%s'", command)
+    raise ValueError(f"Invalid command '{command}'")

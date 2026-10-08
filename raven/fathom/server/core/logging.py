@@ -29,6 +29,7 @@ from raven.fathom.base.logging import LogManager, LogLevel
 from raven.fathom.base.logging import LogFormatterCLI
 from raven.fathom.base.logging import LogHandlerCLI, LogHandlerFile
 from raven.fathom.base.logging import Logger as BaseLogger
+from raven.fathom.server.cli.arguments import AppCommand
 
 
 FATHOM_SERVER_LOGGER_NAME: Final[str] = "raven.fathom.server"
@@ -84,17 +85,17 @@ def _setup_server_application_logging(args):
 
     handlers.append(FathomLogHandlerFile())
     formatters.append(LogFormatterServerApp())
-    if command:
+    if command == AppCommand.SERVE:
+        if app_mode == ApplicationMode.DEVELOPMENT:
+            handlers.append(LogHandlerCLI())
+            formatters.append(LogFormatterCLI(include_timestamp=True))
+    else:
         handlers.append(LogHandlerCLI())
         formatters.append(
             LogFormatterCLI(
                 use_colours=(app_mode == ApplicationMode.DEVELOPMENT)
             )
         )
-    else:
-        if app_mode == ApplicationMode.DEVELOPMENT:
-            handlers.append(LogHandlerCLI())
-            formatters.append(LogFormatterCLI(include_timestamp=True))
 
     LogManager().setup_logger(
         FATHOM_SERVER_LOGGER_NAME,

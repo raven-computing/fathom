@@ -16,7 +16,8 @@
 
 from raven.fathom.base import ServerInteraction
 from raven.fathom.base import Interaction
-from raven.fathom.base import ServerResponse, DeploymentAuthorization
+from raven.fathom.base import ClientRequest, ServerResponse
+from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import ProcessingException
 from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.server.security import UserAuthenticator
@@ -39,7 +40,7 @@ class ServerInteractionImpl(ServerInteraction):
         self._authenticator = user_authenticator
         self._factory = handler_factory
 
-    def process(self, request):
+    def process(self, request: ClientRequest) -> ServerResponse:
         response = ServerResponse(request.action)
 
         user = self._authenticator.authenticate_client(request)

@@ -15,6 +15,7 @@
 """Client-specific implementations for client-server-interactions."""
 
 from raven.fathom.base import ServerInteraction
+from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import TransmissionException
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
@@ -47,7 +48,7 @@ class ServerInteractionHTTP(ServerInteraction):
         url.path += "/interact/call"
         self._server_url = url
 
-    def process(self, request):
+    def process(self, request: ClientRequest) -> ServerResponse:
         LOG.d("Processing client request:")
         LOG.d("%r", request)
         try:

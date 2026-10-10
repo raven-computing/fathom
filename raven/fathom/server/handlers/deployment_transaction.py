@@ -38,6 +38,7 @@ class DeploymentTransactionHandler(ActionHandler):
     """Implementation of `ActionHandler` for deployment transactions."""
 
     def __init__(self, auth: DeploymentAuthorizer, manager: DeploymentManager):
+        super().__init__(authorizer=None)
         TypeCheck.require_arg(auth, DeploymentAuthorizer)
         TypeCheck.require_arg(manager, DeploymentManager)
         self._authorizer = auth

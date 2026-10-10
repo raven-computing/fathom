@@ -24,38 +24,18 @@ from raven.fathom.server.user_management import (
     UserNotFoundException,
 )
 
-from .handler import ActionHandler
-
-
-def _deny_unless_admin(
-    authorizer: UserAuthorizer,
-    request: ClientRequest,
-    response: ServerResponse,
-) -> bool:
-    user = request.authenticated_user
-    if user is not None and authorizer.is_administrator(user):
-        return False
-
-    response.add_error(
-        ResponseMessage(
-            code=ResponseCode.AUTHORIZATION_DENIED,
-            text="Administrative privileges are required.",
-        )
-    )
-    return True
+from .handler import ActionHandler, require_admin_privileges
 
 
 class UserCreateHandler(ActionHandler):
     """Handles remote user creation requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         user = request.user
         if user is None or not user.identifier:
             response.add_error(
@@ -98,13 +78,11 @@ class UserListHandler(ActionHandler):
     """Handles remote user listing requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         try:
             response.users = self._manager.list_users()
         except UserManagementException as ex:
@@ -120,13 +98,11 @@ class UserDeleteHandler(ActionHandler):
     """Handles remote user deletion requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         user = request.user
         if user is None or not user.identifier:
             response.add_error(
@@ -159,13 +135,11 @@ class UserAssignHandler(ActionHandler):
     """Handles remote user-project assignment requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         user = request.user
         if user is None or not user.identifier:
             response.add_error(
@@ -208,13 +182,11 @@ class UserUnassignHandler(ActionHandler):
     """Handles remote user-project unassignment requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         user = request.user
         if user is None or not user.identifier:
             response.add_error(

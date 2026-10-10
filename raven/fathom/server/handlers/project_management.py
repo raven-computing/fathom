@@ -23,38 +23,18 @@ from raven.fathom.server.project_management import (
     ProjectNotFoundException,
 )
 
-from .handler import ActionHandler
-
-
-def _deny_unless_admin(
-    authorizer: UserAuthorizer,
-    request: ClientRequest,
-    response: ServerResponse,
-) -> bool:
-    user = request.authenticated_user
-    if user is not None and authorizer.is_administrator(user):
-        return False
-
-    response.add_error(
-        ResponseMessage(
-            code=ResponseCode.AUTHORIZATION_DENIED,
-            text="Administrative privileges are required.",
-        )
-    )
-    return True
+from .handler import ActionHandler, require_admin_privileges
 
 
 class ProjectCreateHandler(ActionHandler):
     """Handles remote project creation requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         project = request.project
         if project is None or not project.identifier:
             response.add_error(
@@ -83,13 +63,11 @@ class ProjectListHandler(ActionHandler):
     """Handles remote project listing requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         response.projects = self._manager.list_projects()
 
 
@@ -97,13 +75,11 @@ class ProjectUserListHandler(ActionHandler):
     """Handles remote project-user listing requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         project = request.project
         if project is None or not project.identifier:
             response.add_error(
@@ -136,13 +112,11 @@ class ProjectDeleteHandler(ActionHandler):
     """Handles remote project deletion requests."""
 
     def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
-        self._authorizer = authorizer
+        super().__init__(authorizer)
         self._manager = manager
 
+    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        if _deny_unless_admin(self._authorizer, request, response):
-            return
-
         project = request.project
         if project is None or not project.identifier:
             response.add_error(

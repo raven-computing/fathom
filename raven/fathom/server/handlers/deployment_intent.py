@@ -27,6 +27,7 @@ class DeploymentIntentHandler(ActionHandler):
     """Implementation of `ActionHandler` for deployment intents."""
 
     def __init__(self, authorizer: DeploymentAuthorizer):
+        super().__init__(authorizer=None)
         TypeCheck.require_arg(authorizer, DeploymentAuthorizer)
         self._authorizer = authorizer
 

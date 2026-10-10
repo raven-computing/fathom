@@ -28,10 +28,10 @@ from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.core.exceptions import FathomServerException
+from raven.fathom.server.core.exceptions import DomainException
 
 
-class UserManagementException(FathomServerException):
+class UserManagementException(DomainException):
     """Base class for user-management domain failures."""
 
 

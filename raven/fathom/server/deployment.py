@@ -25,16 +25,16 @@ from raven.fathom.base import File, FileIOException
 from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
+from raven.fathom.server.staging import StagingArea, StagingAreaException
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.core.exceptions import FathomServerException
-from raven.fathom.server.staging import StagingArea, StagingAreaException
+from raven.fathom.server.core.exceptions import DomainException
 
 
 LOG = Logger.get()
 
 
-class ServerDeploymentException(FathomServerException):
+class ServerDeploymentException(DomainException):
     """Base class for all failed deployment operations on the Fathom server."""
 
 

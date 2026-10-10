@@ -21,3 +21,7 @@ class FathomServerException(FathomException):
     """Base exception class to be used only by the **server** component
     of Fathom.
     """
+
+
+class DomainException(FathomServerException):
+    """Base exception class to be used by code in the domain layer."""

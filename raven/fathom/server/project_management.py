@@ -26,10 +26,10 @@ from raven.fathom.server.models import ProjectVersion
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import Project as ProjectModel
-from raven.fathom.server.core.exceptions import FathomServerException
+from raven.fathom.server.core.exceptions import DomainException
 
 
-class ProjectManagementException(FathomServerException):
+class ProjectManagementException(DomainException):
     """Base class for project-management domain failures."""
 
 

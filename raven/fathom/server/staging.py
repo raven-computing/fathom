@@ -33,10 +33,10 @@ from raven.fathom.base import PackageOperationException
 from raven.fathom.server.dao import DataAccess, DatastoreException
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.models import StagingAllocation
-from raven.fathom.server.core.exceptions import FathomServerException
+from raven.fathom.server.core.exceptions import DomainException
 
 
-class StagingAreaException(FathomServerException):
+class StagingAreaException(DomainException):
     """Something is wrong with the staging area."""
 
 

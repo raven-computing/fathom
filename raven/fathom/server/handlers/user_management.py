@@ -18,7 +18,11 @@ from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
 from raven.fathom.base import UserState
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.user_management import (
+    UserManager,
+    UserManagementException,
+    UserNotFoundException,
+)
 
 from .handler import ActionHandler
 
@@ -78,7 +82,7 @@ class UserCreateHandler(ActionHandler):
 
         try:
             self._manager.create_user(user)
-        except ValueError as ex:
+        except UserManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
@@ -101,7 +105,15 @@ class UserListHandler(ActionHandler):
         if _deny_unless_admin(self._authorizer, request, response):
             return
 
-        response.users = self._manager.list_users()
+        try:
+            response.users = self._manager.list_users()
+        except UserManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
+                    text=str(ex),
+                )
+            )
 
 
 class UserDeleteHandler(ActionHandler):
@@ -127,10 +139,17 @@ class UserDeleteHandler(ActionHandler):
 
         try:
             self._manager.delete_user(user)
-        except ValueError as ex:
+        except UserNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except UserManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
                     text=str(ex),
                 )
             )
@@ -169,10 +188,17 @@ class UserAssignHandler(ActionHandler):
 
         try:
             self._manager.assign_user_to_project(user, project)
-        except ValueError as ex:
+        except UserNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except UserManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
                     text=str(ex),
                 )
             )
@@ -211,10 +237,17 @@ class UserUnassignHandler(ActionHandler):
 
         try:
             self._manager.unassign_user_from_project(user, project)
-        except ValueError as ex:
+        except UserNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except UserManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
                     text=str(ex),
                 )
             )

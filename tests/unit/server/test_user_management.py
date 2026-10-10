@@ -14,12 +14,21 @@
 #
 """Unit tests for server-side user management logic."""
 
-from raven.fathom.base import User, UserState
+from raven.fathom.base import Project, User, UserState
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import Settings
+from raven.fathom.server.project_management import (
+    ProjectManagementException,
+    ProjectManager,
+)
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.user_management import (
+    UserManagementException,
+    UserManager,
+    UserNotFoundException,
+    InvalidUserRequestException,
+)
 
 from tests.unit import TestCase
 from tests.unit.mocks import Mock
@@ -45,20 +54,32 @@ class TestUserManager(TestCase):
     def test_create_system_user_rejects_empty_password(self):
         user = User(identifier="ignored", password="")
 
-        with self.assertRaises(ValueError) as raised:
+        with self.assertRaises(InvalidUserRequestException) as raised:
             self.manager.create_system_user(user)
 
         self.assertIn("password must not be empty", str(raised.exception))
+
+    def test_get_user_role_raises_domain_exception_for_missing_user(self):
+        self.ds.users().find_by_identifier.return_value = None
+
+        with self.assertRaises(UserNotFoundException):
+            self.manager.get_user_role("missing-user")
 
     def test_create_user_requires_shared_secret(self):
         self.ds.users().find_by_identifier.return_value = None
         self.settings.shared_secret = ""
         user = User(identifier="new-user", state=UserState.ONBOARDING)
 
-        with self.assertRaises(ValueError) as raised:
+        with self.assertRaises(UserManagementException) as raised:
             self.manager.create_user(user)
 
         self.assertIn("No shared secret set", str(raised.exception))
+
+    def test_project_manager_uses_domain_exception_for_duplicate_project(self):
+        self.ds.projects().find_by_identifier.return_value = object()
+
+        with self.assertRaises(ProjectManagementException):
+            ProjectManager().create_project(Project(identifier="duplicate"))
 
     def test_sign_up_user_updates_record_and_redacts_password(self):
         user_record = UserModel(

@@ -22,7 +22,11 @@ from raven.fathom.server.models import UserProjectRel, AuthDeployment
 from raven.fathom.server.models.user import UserRole
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.security._hash import StoredPasswordHash
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.user_management import (
+    UserManagementException,
+    UserManager,
+    UserStateException,
+)
 
 from tests.integration import DatabaseIntegrationTestCase
 
@@ -111,7 +115,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(stored_user.state, UserState.ACTIVE)
 
     def test_cannot_create_second_system_user(self):
-        with self.assertRaises(ValueError) as raised:
+        with self.assertRaises(UserManagementException) as raised:
             self.mananger.create_system_user(
                 User(password="secret-password", identifier="ignored")
             )
@@ -164,7 +168,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(AuthDeployment.select().count(), 1) # type: ignore
 
     def test_delete_rejects_system_user(self):
-        with self.assertRaises(ValueError) as raised:
+        with self.assertRaises(UserStateException) as raised:
             self.mananger.delete_user(
                 User(identifier="fathom")
             )

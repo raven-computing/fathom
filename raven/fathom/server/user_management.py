@@ -21,10 +21,45 @@ from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.base import UserState
 from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.dao import FailedCreateQueryException
+from raven.fathom.server.dao import FailedReadQueryException
+from raven.fathom.server.dao import FailedUpdateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.security import UserAuthenticator
+from raven.fathom.server.core.exceptions import FathomServerException
+
+
+class UserManagementException(FathomServerException):
+    """Base class for user-management domain failures."""
+
+
+class InvalidUserRequestException(UserManagementException):
+    """A precondition for a requested operation was not met or some input
+    given to a requested operation was invalid.
+    """
+
+
+class UserNotFoundException(InvalidUserRequestException):
+    """An operation was requested for a user that does not actually exist."""
+
+
+class UserAlreadyExistsException(InvalidUserRequestException):
+    """An attempt was made to create a user that already exists."""
+
+
+class UserStateException(UserManagementException):
+    """A user is in an invalid state or the requested operation is illegal
+    in the user's current state.
+    """
+
+
+class UserInternalException(UserManagementException):
+    """Infrastructure has failed unexpectedly.
+
+    Signals a lower-level internal system error that is not a caller mistake.
+    """
 
 
 SYSTEM_USER_IDENTIFIER: Final[str] = "fathom"
@@ -62,18 +97,25 @@ class UserManager:
         """Resolves the stored role of a managed user."""
         user = self._ds.users().find_by_identifier(identifier)
         if user is None:
-            raise ValueError(f"User '{identifier}' does not exist")
+            raise UserNotFoundException(f"User '{identifier}' does not exist")
 
         return UserRole(str(user.role))
 
     def create_system_user(self, user: User):
-        """Creates the one-time system user for the server bootstrap."""
+        """Creates the one-time system user for the server bootstrap.
+        
+        Args:
+            user (User): The User object representing the system user to create.
+
+        Raises:
+            UserManagementException: If the system user cannot be created.
+        """
         TypeCheck.require_arg(user.password, str)
         if not user.password:
-            raise ValueError("User password must not be empty")
+            raise InvalidUserRequestException("User password must not be empty")
 
         if self.is_setup_complete():
-            raise ValueError("The server has already been set up")
+            raise UserManagementException("The server has already been set up")
 
         user_record = UserModel(
             identifier=SYSTEM_USER_IDENTIFIER,
@@ -83,7 +125,14 @@ class UserManager:
             state=UserState.ACTIVE,
         )
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().create_new_user(user_record)
+        try:
+            self._ds.users().create_new_user(user_record)
+        except FailedCreateQueryException as ex:
+            raise UserManagementException(
+                f"Failed to create system user '{user_record.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
         user.identifier = SYSTEM_USER_IDENTIFIER
         user.name = str(user_record.name)
         user.password = ""
@@ -102,28 +151,32 @@ class UserManager:
             user (User): The User object to create in the server backend.
 
         Raises:
-            ValueError: If the given user cannot be created.
+            UserManagementException: If the given user cannot be created.
         """
         TypeCheck.require_arg(user.identifier, str)
         if not user.identifier:
-            raise ValueError("User identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot create user. User identifier must not be empty"
+            )
 
         if self._ds.users().find_by_identifier(user.identifier) is not None:
-            raise ValueError(f"User '{user.identifier}' already exists")
+            raise UserAlreadyExistsException(
+                f"Cannot create user '{user.identifier}'. User already exists"
+            )
 
         name = user.name
         if not name:
             name = user.identifier
 
         if user.state != UserState.ONBOARDING:
-            raise ValueError(
-                f"User '{user.identifier}' must be in "
+            raise UserStateException(
+                f"Cannot create user '{user.identifier}'. User must be in "
                 f"initial state {UserState.ONBOARDING} in order to be created"
             )
 
         settings = self._ds.settings().find_server_settings()
         if not settings.shared_secret:
-            raise ValueError(
+            raise UserManagementException(
                 "Cannot create new user. "
                 "No shared secret set "
                 f"for organisation '{settings.organisation_name}'"
@@ -140,7 +193,13 @@ class UserManager:
             state=str(UserState.ONBOARDING),
         )
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().create_new_user(user_record)
+        try:
+            self._ds.users().create_new_user(user_record)
+        except FailedCreateQueryException as ex:
+            raise UserManagementException(
+                f"Failed to create user '{user_record.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
 
     def sign_up_user(self, user: User):
         """Sets the initial password for an onboarding user.
@@ -150,32 +209,41 @@ class UserManager:
                 to complete the setup procedure.
 
         Raises:
-            ValueError: If the setup procedure cannot be completed
-                or the given user is invalid.
+            UserManagementException: If the setup procedure cannot be
+                completed or the given user is invalid.
         """
         identifier = user.identifier
         password = user.password
         TypeCheck.require_arg(identifier, str)
         TypeCheck.require_arg(password, str)
         if not identifier:
-            raise ValueError("User identifier must not be empty")
+            raise InvalidUserRequestException(
+                "User sign-up failed.User identifier must not be empty"
+            )
 
         if not password:
-            raise ValueError("User password must not be empty")
+            raise InvalidUserRequestException("User password must not be empty")
 
         user_record = self._ds.users().find_by_identifier(identifier)
         if user_record is None:
-            raise ValueError(f"User '{identifier}' does not exist")
+            raise UserNotFoundException(f"User '{identifier}' does not exist")
 
         if str(user_record.state) != str(UserState.ONBOARDING):
-            raise ValueError(
+            raise UserStateException(
                 f"User '{identifier}' has already been initialized"
             )
 
         user_record.password = password
         user_record.state = UserState.ACTIVE
         self._authenticator.constitute_password_authentication(user_record)
-        self._ds.users().update(user_record)
+        try:
+            self._ds.users().update(user_record)
+        except FailedUpdateQueryException as ex:
+            raise UserManagementException(
+                f"Failed to update user '{user_record.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
         user.name = user_record.name
         user.password = "" # Evict
         user.is_admin = self._role_has_admin_privileges(user_record.role)
@@ -188,17 +256,22 @@ class UserManager:
             list: A `list` of `User` objects managed by the Fathom server.
         """
         result = []
-        for user in self._ds.users().read_all():
-            role = UserRole(str(user.role))
-            if role != UserRole.SYSTEM:
-                result.append(
-                    User(
-                        identifier=str(user.identifier),
-                        name=str(user.name),
-                        is_admin=self._role_has_admin_privileges(role),
-                        state=UserState(str(user.state)),
+        try:
+            for user in self._ds.users().read_all():
+                role = UserRole(str(user.role))
+                if role != UserRole.SYSTEM:
+                    result.append(
+                        User(
+                            identifier=str(user.identifier),
+                            name=str(user.name),
+                            is_admin=self._role_has_admin_privileges(role),
+                            state=UserState(str(user.state)),
+                        )
                     )
-                )
+        except FailedReadQueryException as ex:
+            raise UserManagementException(
+                "Failed to list users. An internal error has occurred."
+            ) from ex
 
         return result
 
@@ -210,26 +283,31 @@ class UserManager:
                 user to delete from the server backend.
 
         Raises:
-            ValueError: If the given user is invalid or could not be deleted.
+            UserManagementException: If the given user is invalid or could
+                not be deleted.
         """
         TypeCheck.require_arg(user.identifier, str)
         if not user.identifier:
-            raise ValueError("User identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot delete user. User identifier must not be empty"
+            )
 
         try:
             user_record = self._ds.users().find_by_identifier(user.identifier)
             if user_record is None:
-                raise ValueError(
-                    f"Failed to delete user '{user.identifier}'"
+                raise UserNotFoundException(
+                    f"Failed to delete user '{user.identifier}'. "
+                    "User does not exist."
                 )
 
             if UserRole(str(user_record.role)) == UserRole.SYSTEM:
-                raise ValueError("The system user cannot be deleted")
+                raise UserStateException("The system user cannot be deleted")
 
             self._ds.users().delete_by_identifier(user.identifier)
         except FailedDeleteQueryException as ex:
-            raise ValueError(
-                f"Failed to delete user '{user.identifier}'"
+            raise UserInternalException(
+                f"Failed to delete user '{user.identifier}'. "
+                "An internal error has occurred."
             ) from ex
 
     def _role_has_admin_privileges(self, role: UserRole | str) -> bool:
@@ -244,25 +322,37 @@ class UserManager:
             project (Project): The project to assign the user to.
 
         Raises:
-            ValueError: If the given user or project is invalid.
+            UserManagementException: If the given user or project is invalid.
         """
         TypeCheck.require_arg(user.identifier, str)
         TypeCheck.require_arg(project.identifier, str)
         if not user.identifier:
-            raise ValueError("User identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot assign user to project. "
+                "User identifier must not be empty"
+            )
 
         if not project.identifier:
-            raise ValueError("Project identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot assign user to project. "
+                "Project identifier must not be empty"
+            )
 
         user_record = self._ds.users().find_by_identifier(user.identifier)
         if user_record is None:
-            raise ValueError(f"User '{user.identifier}' does not exist")
+            raise UserNotFoundException(
+                "Cannot assign user to project. "
+                f"User '{user.identifier}' does not exist"
+            )
 
         project_record = self._ds.projects().find_by_identifier(
             project.identifier
         )
         if project_record is None:
-            raise ValueError(f"Project '{project.identifier}' does not exist")
+            raise InvalidUserRequestException(
+                "Cannot assign user to project. "
+                f"Project '{project.identifier}' does not exist"
+            )
 
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
             user_record
@@ -271,12 +361,22 @@ class UserManager:
             record.id == project_record.id # type: ignore
             for record in assigned_projects
         ):
-            raise ValueError(
+            raise UserManagementException(
+                "Cannot assign user to project. "
                 f"User '{user.identifier}' is already assigned "
                 f"to project '{project.identifier}'"
             )
 
-        self._ds.projects().assign_user_to_project(user_record, project_record)
+        try:
+            self._ds.projects().assign_user_to_project(
+                user_record, project_record
+            )
+        except FailedUpdateQueryException as ex:
+            raise UserManagementException(
+                f"Cannot assign user '{user.identifier}' "
+                f"to project '{project.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
 
     def unassign_user_from_project(self, user: User, project: Project):
         """Removes a user's assignment from an existing project.
@@ -286,25 +386,37 @@ class UserManager:
             project (Project): The project to remove the user from.
 
         Raises:
-            ValueError: If the given user or project is invalid.
+            UserManagementException: If the given user or project is invalid.
         """
         TypeCheck.require_arg(user.identifier, str)
         TypeCheck.require_arg(project.identifier, str)
         if not user.identifier:
-            raise ValueError("User identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot unassign user from project. "
+                "User identifier must not be empty"
+            )
 
         if not project.identifier:
-            raise ValueError("Project identifier must not be empty")
+            raise InvalidUserRequestException(
+                "Cannot unassign user from project. "
+                "Project identifier must not be empty"
+            )
 
         user_record = self._ds.users().find_by_identifier(user.identifier)
         if user_record is None:
-            raise ValueError(f"User '{user.identifier}' does not exist")
+            raise UserNotFoundException(
+                "Cannot unassign user from project. "
+                f"User '{user.identifier}' does not exist"
+            )
 
         project_record = self._ds.projects().find_by_identifier(
             project.identifier
         )
         if project_record is None:
-            raise ValueError(f"Project '{project.identifier}' does not exist")
+            raise UserManagementException(
+                "Cannot unassign user from project. "
+                f"Project '{project.identifier}' does not exist"
+            )
 
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
             user_record
@@ -313,12 +425,20 @@ class UserManager:
             record.id != project_record.id # type: ignore
             for record in assigned_projects
         ):
-            raise ValueError(
+            raise UserManagementException(
+                "Cannot unassign user from project. "
                 f"User '{user.identifier}' is not assigned "
                 f"to project '{project.identifier}'"
             )
 
-        self._ds.projects().unassign_user_from_project(
-            user_record,
-            project_record,
-        )
+        try:
+            self._ds.projects().unassign_user_from_project(
+                user_record,
+                project_record,
+            )
+        except FailedUpdateQueryException as ex:
+            raise UserManagementException(
+                f"Cannot unassign user '{user.identifier}' "
+                f"from project '{project.identifier}'. "
+                "An internal error has occurred."
+            ) from ex

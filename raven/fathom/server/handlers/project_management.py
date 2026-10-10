@@ -17,7 +17,11 @@
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.project_management import (
+    ProjectManager,
+    ProjectManagementException,
+    ProjectNotFoundException,
+)
 
 from .handler import ActionHandler
 
@@ -63,7 +67,7 @@ class ProjectCreateHandler(ActionHandler):
 
         try:
             self._manager.create_project(project)
-        except ValueError as ex:
+        except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
@@ -112,10 +116,17 @@ class ProjectUserListHandler(ActionHandler):
 
         try:
             response.users = self._manager.list_project_users(project)
-        except ValueError as ex:
+        except ProjectNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except ProjectManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
                     text=str(ex),
                 )
             )
@@ -144,10 +155,17 @@ class ProjectDeleteHandler(ActionHandler):
 
         try:
             self._manager.delete_project(project)
-        except ValueError as ex:
+        except ProjectNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except ProjectManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
                     text=str(ex),
                 )
             )

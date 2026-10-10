@@ -21,7 +21,10 @@ from raven.fathom.server.handlers.project_management import (
     ProjectDeleteHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.project_management import (
+    ProjectManager,
+    ProjectNotFoundException,
+)
 
 from tests.unit import TestCase
 from tests.unit.mocks import Mock
@@ -136,7 +139,7 @@ class TestProjectManagementHandlers(TestCase):
 
     def test_delete_handler_reports_unknown_project(self):
         self.admin_authorizer.is_administrator.return_value = True
-        self.manager.delete_project.side_effect = ValueError(
+        self.manager.delete_project.side_effect = ProjectNotFoundException(
             "Project 'proj-one' does not exist"
         )
         request = ClientRequest(Interaction.DELETE_PROJECT)

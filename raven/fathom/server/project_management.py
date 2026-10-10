@@ -18,6 +18,7 @@ from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.dao import FailedReadQueryException
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import AuthDeployment
@@ -25,6 +26,34 @@ from raven.fathom.server.models import ProjectVersion
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import Project as ProjectModel
+from raven.fathom.server.core.exceptions import FathomServerException
+
+
+class ProjectManagementException(FathomServerException):
+    """Base class for project-management domain failures."""
+
+
+class InvalidProjectRequestException(ProjectManagementException):
+    """A precondition for a requested operation was not met or some input
+    given to a requested operation was invalid.
+    """
+
+
+class ProjectNotFoundException(InvalidProjectRequestException):
+    """An operation was requested for a project that does not
+    actually exist.
+    """
+
+
+class ProjectAlreadyExistsException(InvalidProjectRequestException):
+    """An attempt was made to create a project that already exists."""
+
+
+class ProjectInternalException(ProjectManagementException):
+    """Infrastructure has failed unexpectedly.
+
+    Signals a lower-level internal system error that is not a caller mistake.
+    """
 
 
 class ProjectManager:
@@ -41,17 +70,23 @@ class ProjectManager:
             project (Project): The project to create.
 
         Raises:
-            ValueError: If the given project cannot be created.
+            ProjectManagementException: If the given project cannot be created.
         """
         TypeCheck.require_arg(project.identifier, str)
         if not project.identifier:
-            raise ValueError("Project identifier must not be empty")
+            raise InvalidProjectRequestException(
+                "Cannot create a new project. "
+                "Project identifier must not be empty"
+            )
 
         project_record = self._ds.projects().find_by_identifier(
             project.identifier
         )
         if project_record is not None:
-            raise ValueError(f"Project '{project.identifier}' already exists")
+            raise ProjectAlreadyExistsException(
+                f"Cannot create project '{project.identifier}' "
+                "because the project already exists"
+            )
 
         if not project.name:
             project.name = project.identifier
@@ -68,8 +103,9 @@ class ProjectManager:
         try:
             self._ds.projects().create(project_record)
         except FailedCreateQueryException as ex:
-            raise ValueError(
-                f"Failed to create project '{project.identifier}'"
+            raise ProjectInternalException(
+                f"Failed to create project '{project.identifier}'. "
+                "An internal error has occurred."
             ) from ex
 
     def list_projects(self) -> list[Project]:
@@ -77,14 +113,23 @@ class ProjectManager:
 
         Returns:
             list: A `list` of `Project` objects managed by the Fathom server.
+
+        Raises:
+            ProjectManagementException: If projects cannot be listed.
         """
-        return [
-            Project(
-                identifier=str(project.identifier),
-                name=str(project.name),
-                description=str(project.description),
-            ) for project in self._ds.projects().read_all()
-        ]
+        try:
+            return [
+                Project(
+                    identifier=str(project.identifier),
+                    name=str(project.name),
+                    description=str(project.description),
+                ) for project in self._ds.projects().read_all()
+            ]
+        except FailedReadQueryException as ex:
+            raise ProjectInternalException(
+                "Failed to obtain list of registered projects. "
+                "An internal error has occurred."
+            ) from ex
 
     def list_project_users(self, project: Project) -> list[User]:
         """Lists all users assigned to a registered project.
@@ -96,27 +141,41 @@ class ProjectManager:
             list: A `list` of `User` objects assigned to the project.
 
         Raises:
-            ValueError: If the given project is invalid.
+            ProjectManagementException: If project users cannot be listed.
         """
         TypeCheck.require_arg(project.identifier, str)
         if not project.identifier:
-            raise ValueError("Project identifier must not be empty")
+            raise InvalidProjectRequestException(
+                "Cannot list project users. "
+                "Project identifier must not be empty"
+            )
 
         project_record = self._ds.projects().find_by_identifier(
             project.identifier
         )
         if project_record is None:
-            raise ValueError(f"Project '{project.identifier}' does not exist")
+            raise ProjectNotFoundException(
+                f"Cannot list users for project '{project.identifier}'. "
+                "The project does not exist"
+            )
 
-        return [
-            User(
-                identifier=str(user.identifier),
-                name=str(user.name),
-            )
-            for user in self._ds.projects().find_all_users_assigned_to_project(
-                project_record
-            )
-        ]
+        try:
+            projects = self._ds.projects()
+            return [
+                User(
+                    identifier=str(user.identifier),
+                    name=str(user.name),
+                )
+                for user in projects.find_all_users_assigned_to_project(
+                    project_record
+                )
+            ]
+        except FailedReadQueryException as ex:
+            raise ProjectInternalException(
+                "Failed to obtain list of users assigned "
+                f"to project '{project.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
 
     def delete_project(self, project: Project):
         """Deletes a project from the server backend.
@@ -125,18 +184,23 @@ class ProjectManager:
             project (Project): The project to delete.
 
         Raises:
-            ValueError: If the given project is invalid or could not
-                be deleted.
+            ProjectManagementException: If the project could not be deleted.
         """
         TypeCheck.require_arg(project.identifier, str)
         if not project.identifier:
-            raise ValueError("Project identifier must not be empty")
+            raise InvalidProjectRequestException(
+                "Cannot delete project. "
+                "Project identifier must not be empty"
+            )
 
         project_record = self._ds.projects().find_by_identifier(
             project.identifier
         )
         if project_record is None:
-            raise ValueError(f"Project '{project.identifier}' does not exist")
+            raise ProjectNotFoundException(
+                f"Cannot delete project '{project.identifier}'. "
+                "The project does not exist"
+            )
 
         try:
             # pylint: disable=not-an-iterable
@@ -166,6 +230,7 @@ class ProjectManager:
 
             self._ds.projects().delete(project_record)
         except FailedDeleteQueryException as ex:
-            raise ValueError(
-                f"Failed to delete project '{project.identifier}'"
+            raise ProjectInternalException(
+                f"Failed to delete project '{project.identifier}'. "
+                "An internal error has occurred."
             ) from ex

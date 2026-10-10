@@ -21,7 +21,10 @@ from raven.fathom.server.handlers.user_management import (
     UserAssignHandler, UserUnassignHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.user_management import (
+    UserManager,
+    UserNotFoundException,
+)
 
 from tests.unit import TestCase
 from tests.unit.mocks import Mock
@@ -102,7 +105,7 @@ class TestUserManagementHandlers(TestCase):
 
     def test_delete_handler_reports_unknown_user(self):
         self.admin_authorizer.is_administrator.return_value = True
-        self.manager.delete_user.side_effect = ValueError(
+        self.manager.delete_user.side_effect = UserNotFoundException(
             "User 'bla' does not exist"
         )
         request = ClientRequest(Interaction.DELETE_USER)

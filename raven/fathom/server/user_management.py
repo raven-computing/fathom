@@ -20,6 +20,7 @@ from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.base import UserState
+from raven.fathom.base.context import APPLICATION_NAME, APPLICATION_PROJECT_ID
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedReadQueryException
@@ -62,9 +63,57 @@ class UserInternalException(UserManagementException):
     """
 
 
-SYSTEM_USER_IDENTIFIER: Final[str] = "fathom"
+class _SystemUser:
+    """The Fathom system user.
 
-SYSTEM_USER_NAME: Final[str] = "Fathom System User"
+    Models the domain-concept of the system user, encapsulates
+    the system user's identity and provides methods to manage the record
+    in the datastore.
+    """
+
+    IDENTIFIER: Final[str] = APPLICATION_PROJECT_ID
+
+    NAME: Final[str] = f"{APPLICATION_NAME} System User"
+
+    def __init__(self):
+        self._ds = DataAccess.instance()
+
+    def exists(self) -> bool:
+        """Checks whether a system user already exists
+        in the application's datastore.
+
+        Returns:
+            bool: `True` if a system user record exists,
+                `False` if no such record could be found.
+        """
+        for user in self._ds.users().read_all():
+            if UserRole(str(user.role)) == UserRole.SYSTEM:
+                return True
+
+        return False
+
+    def create(self, authenticator: UserAuthenticator, password: str):
+        """Creates the systen user record in the datastore.
+
+        Only one system user must exist in the datastore.
+
+        Args:
+            authenticator (UserAuthenticator): The authenticator object to use
+                to establish a password-based authentication.
+            password (str): The password to use for authentication.
+
+        Raises:
+            FailedCreateQueryException: If an error occurs in the datastore.
+        """
+        system_user_record = UserModel(
+            identifier=_SystemUser.IDENTIFIER,
+            name=_SystemUser.NAME,
+            password=password,
+            role=UserRole.SYSTEM,
+            state=UserState.ACTIVE,
+        )
+        authenticator.constitute_password_authentication(system_user_record)
+        self._ds.users().create_new_user(system_user_record)
 
 
 class UserManager:
@@ -114,27 +163,20 @@ class UserManager:
         if not user.password:
             raise InvalidUserRequestException("User password must not be empty")
 
-        if self.is_setup_complete():
+        system_user = _SystemUser()
+        if system_user.exists():
             raise UserManagementException("The server has already been set up")
 
-        user_record = UserModel(
-            identifier=SYSTEM_USER_IDENTIFIER,
-            name=SYSTEM_USER_NAME,
-            password=user.password,
-            role=UserRole.SYSTEM,
-            state=UserState.ACTIVE,
-        )
-        self._authenticator.constitute_password_authentication(user_record)
         try:
-            self._ds.users().create_new_user(user_record)
+            system_user.create(self._authenticator, user.password)
         except FailedCreateQueryException as ex:
             raise UserManagementException(
-                f"Failed to create system user '{user_record.identifier}'. "
+                f"Failed to create system user '{_SystemUser.IDENTIFIER}'. "
                 "An internal error has occurred."
             ) from ex
 
-        user.identifier = SYSTEM_USER_IDENTIFIER
-        user.name = str(user_record.name)
+        user.identifier = _SystemUser.IDENTIFIER
+        user.name = _SystemUser.NAME
         user.password = ""
         user.is_admin = True
         user.state = UserState.ACTIVE

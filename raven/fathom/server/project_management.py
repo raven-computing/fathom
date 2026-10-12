@@ -21,10 +21,6 @@ from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedReadQueryException
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
-from raven.fathom.server.models import AuthDeployment
-from raven.fathom.server.models import ProjectVersion
-from raven.fathom.server.models import StagingAllocation
-from raven.fathom.server.models import UserProjectRel
 from raven.fathom.server.models import Project as ProjectModel
 from raven.fathom.server.core.exceptions import DomainException
 
@@ -203,32 +199,7 @@ class ProjectManager:
             )
 
         try:
-            # pylint: disable=not-an-iterable
-            auth_records = AuthDeployment.select().where(
-                AuthDeployment.project == project_record
-            )
-            for auth_record in auth_records:
-                self._ds.data(AuthDeployment).delete(auth_record)
-
-            relations = UserProjectRel.select().where(
-                UserProjectRel.project == project_record
-            )
-            for relation in relations:
-                self._ds.data(UserProjectRel).delete(relation)
-
-            versions = ProjectVersion.select().where(
-                ProjectVersion.project == project_record
-            )
-            for version in versions:
-                allocations = StagingAllocation.select().where(
-                    StagingAllocation.project_version == version
-                )
-                for allocation in allocations:
-                    self._ds.data(StagingAllocation).delete(allocation)
-
-                self._ds.data(ProjectVersion).delete(version)
-
-            self._ds.projects().delete(project_record)
+            self._ds.projects().delete_by_identifier(project.identifier)
         except FailedDeleteQueryException as ex:
             raise ProjectInternalException(
                 f"Failed to delete project '{project.identifier}'. "

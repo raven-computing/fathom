@@ -20,9 +20,10 @@ from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import IllegalQueryException
 from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.models import User, Project
+from raven.fathom.server.models import User, Project, ProjectVersion
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import AuthDeployment
+from raven.fathom.server.models import UserProjectRel, StagingAllocation
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
 from raven.fathom.server.datastore._sqlite import DatabaseSQLite
 
@@ -178,6 +179,52 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             "this-project-does-not-exist"
         )
         self.assertIsNone(project)
+
+    def test_delete_by_identifier_removes_all_project_records(self):
+        project = self.db.projects().find_by_identifier("test-project-1")
+        self.assertIsNotNone(project)
+        assert project is not None
+
+        version = ProjectVersion.create(
+            project=project,
+            version_sequence=2,
+            version_identifier="2.0.0",
+        )
+        StagingAllocation.create(
+            project_version=version,
+            path="/tmp/test-project-1-staging",
+        )
+
+        self.db.projects().delete_by_identifier("test-project-1")
+
+        self.assertIsNone(
+            self.db.projects().find_by_identifier("test-project-1")
+        )
+        self.assertEqual(
+            AuthDeployment.select().where(
+                AuthDeployment.project == project.id # type: ignore
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            UserProjectRel.select().where(
+                UserProjectRel.project == project.id # type: ignore
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            ProjectVersion.select().where(
+                ProjectVersion.project == project.id # type: ignore
+            ).count(),
+            0,
+        )
+        # pylint: disable=no-member
+        self.assertEqual(
+            StagingAllocation.select().where(
+                StagingAllocation.project_version == version.id # type: ignore
+            ).count(),
+            0,
+        )
 
     def test_query_can_find_all_projects_assigned_to_user(self):
         user = self.db.users().find_by_identifier("test-user-1")

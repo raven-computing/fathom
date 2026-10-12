@@ -217,6 +217,39 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
             )
         ).find_one()
 
+    def delete_by_identifier(self, identifier: str):
+        project = self.find_by_identifier(identifier)
+        if project is None:
+            raise FailedDeleteQueryException(
+                f"Cannot delete project '{identifier}': Project does not exist"
+            )
+
+        # pylint: disable=no-member
+        DeleteQuery[AuthDeployment](
+            AuthDeployment.delete().where(AuthDeployment.project == project)
+        ).execute()
+
+        DeleteQuery[UserProjectRel](
+            UserProjectRel.delete().where(UserProjectRel.project == project)
+        ).execute()
+
+        versions = ReadQuery[ProjectVersion](
+            ProjectVersion.select().where(ProjectVersion.project == project)
+        ).execute()
+        for version in versions:
+            DeleteQuery[StagingAllocation](
+                StagingAllocation.delete().where(
+                    StagingAllocation.project_version == version
+                )
+            ).execute()
+            DeleteQuery[ProjectVersion](
+                ProjectVersion.delete().where(
+                    ProjectVersion.id == version.id # type: ignore
+                )
+            ).execute()
+
+        self.delete(project)
+
     def delete_staging_allocation(self, project: ProjectVersion):
         # Ignore spurious warning
         # pylint: disable=no-value-for-parameter

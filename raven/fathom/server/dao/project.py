@@ -137,6 +137,16 @@ class ProjectDAO(DataAccessObject[Project]):
         """
 
     @abstractmethod
+    def delete_by_identifier(self, identifier: str):
+        """Deletes the project with the given project identifier.
+
+        Also deletes all records associated with the given project.
+
+        Args:
+            identifier (str): The unique identifier of the project to delete.
+        """
+
+    @abstractmethod
     def delete_staging_allocation(self, project: ProjectVersion):
         """Deletes the staging allocation for the given version of the project.
 

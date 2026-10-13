@@ -151,13 +151,18 @@ class TestServerUserManagementCLI(TestCase):
     AUTO_START_SERVER = False
 
     def test_server_cli_setup_creates_system_user(self):
-        self.server.stdin = ["secret-password", "secret-password"]
+        self.server.stdin = [
+            "My Org",
+            "secret-password",
+            "secret-password",
+            "my-shared-secret",
+        ]
 
         self.server.execute("setup")
 
         self.assertServerSuccess()
         self.assertIn(
-            "Configured system user 'fathom'.",
+            "Server setup completed",
             self.server.stdout
         )
 

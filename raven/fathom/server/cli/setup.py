@@ -15,8 +15,10 @@
 """CLI command handling for setup actions."""
 
 from raven.fathom.base import InputPrompt, User
+from raven.fathom.base import SecretToken
+from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.core.logging import Logger, log_stdout
 from raven.fathom.server.models import Settings
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import SYSTEM_USER_IDENTIFIER
@@ -31,6 +33,30 @@ class SetupCommand(ServerCommand):
 
     def execute(self) -> int:
         prompt = InputPrompt.instance()
+        LOG.i(
+            "Performing initial setup procedure "
+            "for the %s server", APPLICATION_NAME
+        )
+        LOG.i("")
+        LOG.i(
+            "Please enter the name of the organisation "
+            "that this server instance will be serving."
+        )
+        organisation_name = prompt.read()
+        if not organisation_name:
+            raise ValueError("Name must not be empty.")
+
+        LOG.i("")
+        LOG.i("The server application needs to create a superuser account.")
+        LOG.i(
+            "This user is used to authenticate local administrative commands "
+            "submitted via the CLI."
+        )
+        LOG.i(
+            "You will now be asked to create a password "
+            "for that system user."
+        )
+        LOG.i("Setting password for system user '%s'.", SYSTEM_USER_IDENTIFIER)
         password = prompt.read("Password: ", secret=True)
         if not password:
             raise ValueError("Password must not be empty.")
@@ -39,15 +65,27 @@ class SetupCommand(ServerCommand):
         if password != confirmation:
             raise ValueError("Password confirmation does not match.")
 
+        LOG.i("Define a shared secret that users must provide when signing up.")
+        LOG.i("(Press enter to automatically generate one)")
+        shared_secret = prompt.read("Secret: ", secret=True)
+        if not shared_secret:
+            shared_secret = SecretToken(size=16).to_string()
+            LOG.i("Generated shared secret:")
+            log_stdout(f"       {shared_secret}")
+            LOG.i("Please store it in a secure place")
+
         user = User(
             identifier="",
             password=password,
         )
+        LOG.i("Setting system user '%s'.", SYSTEM_USER_IDENTIFIER)
         UserManager(UserAuthenticator()).create_system_user(user)
+        LOG.i("Creating organisation settings for '%s'", organisation_name)
         Settings.create(
-            organisation_name="System",
-            shared_secret="whatever",
+            organisation_name=organisation_name,
+            shared_secret=shared_secret,
             active=True,
         )
-        LOG.i("Configured system user '%s'.", SYSTEM_USER_IDENTIFIER)
+        LOG.i("Server setup completed")
+        LOG.i("You may now start the server")
         return 0

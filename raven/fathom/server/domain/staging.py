@@ -31,8 +31,8 @@ from raven.fathom.base import File, FileIOException, FileNotFoundException
 from raven.fathom.base import FileLockAcquisitionException
 from raven.fathom.base import PackageOperationException
 from raven.fathom.server.dao import DataAccess, DatastoreException
-from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.models import StagingAllocation
+from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import DomainException
 
 

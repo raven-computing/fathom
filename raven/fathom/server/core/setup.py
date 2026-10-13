@@ -16,19 +16,17 @@
 
 from typing import TYPE_CHECKING
 
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import Configuration
 from raven.fathom.base import InputPrompt
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.datastore import DatabaseManager
-from raven.fathom.server.deployment import DeploymentSite
+from raven.fathom.server.domain.deployment import DeploymentSite
 from raven.fathom.server.core.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.staging import StagingArea
+from raven.fathom.server.domain.staging import StagingArea
 from raven.fathom.server.updates import FailedApplicationUpdateException
 from raven.fathom.server.updates import UpdateManager
-from raven.fathom.server.user_management import SYSTEM_USER_IDENTIFIER
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.core.user_management import UserManager
 
 if TYPE_CHECKING:
     from raven.fathom.server.cli.arguments import AppArgs
@@ -109,22 +107,10 @@ def confirm_system_privileges():
     """Asks for user credentials and validates system user privileges."""
     prompt = InputPrompt.instance()
     LOG.i("Authentication is required to perform this action")
-    authentication = ClientAuthentication(
-        username=prompt.read("User: "),
-        password=prompt.read("Password: ", secret=True),
-    )
-    auth_result = UserAuthenticator().authenticate_system_user(authentication)
+    password=prompt.read("Password: ", secret=True)
+    auth_result = UserAuthenticator().authenticate_system_user(password)
     if not auth_result.is_authenticated():
         raise ValueError("Incorrect username or password.")
-
-    user_record = auth_result.user_record
-    if user_record is None:
-        raise ValueError("Authentication failed.")
-
-    if str(user_record.identifier) != SYSTEM_USER_IDENTIFIER:
-        raise ValueError(
-            "Fathom system user authentication is required."
-        )
 
 
 def ensure_connected_to_database():

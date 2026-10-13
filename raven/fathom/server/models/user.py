@@ -15,8 +15,10 @@
 """Data model to represent a user within the Fathom server."""
 
 from enum import StrEnum
+from typing import Final
 
 from raven.fathom.base import UserState
+from raven.fathom.base.context import APPLICATION_NAME, APPLICATION_PROJECT_ID
 
 from raven.fathom.server.datastore.orm import Model
 from raven.fathom.server.datastore.orm import (
@@ -25,6 +27,11 @@ from raven.fathom.server.datastore.orm import (
 from raven.fathom.server.models.project import Project
 
 # pylint: disable=missing-class-docstring
+
+
+SYSTEM_USER_IDENTIFIER: Final[str] = APPLICATION_PROJECT_ID
+
+SYSTEM_USER_NAME: Final[str] = f"{APPLICATION_NAME} System User"
 
 
 class UserRole(StrEnum):
@@ -72,6 +79,17 @@ class User(Model):
         null=False,
         default=UserState.INACTIVE,
     )
+
+    def is_system_user(self) -> bool:
+        """Checks if this user is the system user.
+
+        Returns:
+            bool: `True` if this user is the system user, `False` otherwise.
+        """
+        return (
+            UserRole(str(self.role)) == UserRole.SYSTEM
+            and self.identifier == SYSTEM_USER_IDENTIFIER
+        )
 
 
 class UserProjectRel(Model):

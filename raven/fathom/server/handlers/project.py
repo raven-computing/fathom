@@ -12,57 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Handlers for remote user-management interactions."""
+"""Handlers for remote project-management interactions."""
 
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
-from raven.fathom.base import UserState
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.user_management import (
-    UserManager,
-    UserManagementException,
-    UserNotFoundException,
+from raven.fathom.server.domain.project import (
+    ProjectManager,
+    ProjectManagementException,
+    ProjectNotFoundException,
 )
 
 from .handler import ActionHandler, require_admin_privileges
 
 
-class UserCreateHandler(ActionHandler):
-    """Handles remote user creation requests."""
+class ProjectCreateHandler(ActionHandler):
+    """Handles remote project creation requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
         super().__init__(authorizer)
         self._manager = manager
 
     @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        user = request.user
-        if user is None or not user.identifier:
+        project = request.project
+        if project is None or not project.identifier:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
+                    text="No managed project identifier provided.",
                 )
             )
             return
-
-        if user.is_admin:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.AUTHORIZATION_DENIED,
-                    text=(
-                        "Remote user creation cannot grant "
-                        "administrator permissions."
-                    ),
-                )
-            )
-            return
-
-        user.state = UserState.ONBOARDING
 
         try:
-            self._manager.create_user(user)
-        except UserManagementException as ex:
+            self._manager.create_project(project)
+        except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
@@ -71,58 +56,50 @@ class UserCreateHandler(ActionHandler):
             )
             return
 
-        response.users = [user]
+        response.projects = [project]
 
 
-class UserListHandler(ActionHandler):
-    """Handles remote user listing requests."""
+class ProjectListHandler(ActionHandler):
+    """Handles remote project listing requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
         super().__init__(authorizer)
         self._manager = manager
 
     @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        try:
-            response.users = self._manager.list_users()
-        except UserManagementException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INTERNAL_ERROR,
-                    text=str(ex),
-                )
-            )
+        response.projects = self._manager.list_projects()
 
 
-class UserDeleteHandler(ActionHandler):
-    """Handles remote user deletion requests."""
+class ProjectUserListHandler(ActionHandler):
+    """Handles remote project-user listing requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
         super().__init__(authorizer)
         self._manager = manager
 
     @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        user = request.user
-        if user is None or not user.identifier:
+        project = request.project
+        if project is None or not project.identifier:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
+                    text="No managed project identifier provided.",
                 )
             )
             return
 
         try:
-            self._manager.delete_user(user)
-        except UserNotFoundException as ex:
+            response.users = self._manager.list_project_users(project)
+        except ProjectNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
                     text=str(ex),
                 )
             )
-        except UserManagementException as ex:
+        except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INTERNAL_ERROR,
@@ -131,10 +108,10 @@ class UserDeleteHandler(ActionHandler):
             )
 
 
-class UserAssignHandler(ActionHandler):
-    """Handles remote user-project assignment requests."""
+class ProjectUserAssignHandler(ActionHandler):
+    """Handles remote project-user assignment requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
         super().__init__(authorizer)
         self._manager = manager
 
@@ -162,14 +139,14 @@ class UserAssignHandler(ActionHandler):
 
         try:
             self._manager.assign_user_to_project(user, project)
-        except UserNotFoundException as ex:
+        except ProjectNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
                     text=str(ex),
                 )
             )
-        except UserManagementException as ex:
+        except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INTERNAL_ERROR,
@@ -178,10 +155,10 @@ class UserAssignHandler(ActionHandler):
             )
 
 
-class UserUnassignHandler(ActionHandler):
-    """Handles remote user-project unassignment requests."""
+class ProjectUserUnassignHandler(ActionHandler):
+    """Handles remote project-user unassignment requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
         super().__init__(authorizer)
         self._manager = manager
 
@@ -209,14 +186,51 @@ class UserUnassignHandler(ActionHandler):
 
         try:
             self._manager.unassign_user_from_project(user, project)
-        except UserNotFoundException as ex:
+        except ProjectNotFoundException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.NOT_FOUND,
                     text=str(ex),
                 )
             )
-        except UserManagementException as ex:
+        except ProjectManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
+                    text=str(ex),
+                )
+            )
+
+
+class ProjectDeleteHandler(ActionHandler):
+    """Handles remote project deletion requests."""
+
+    def __init__(self, authorizer: UserAuthorizer, manager: ProjectManager):
+        super().__init__(authorizer)
+        self._manager = manager
+
+    @require_admin_privileges
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        project = request.project
+        if project is None or not project.identifier:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No managed project identifier provided.",
+                )
+            )
+            return
+
+        try:
+            self._manager.delete_project(project)
+        except ProjectNotFoundException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+        except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INTERNAL_ERROR,

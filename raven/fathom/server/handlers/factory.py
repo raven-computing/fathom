@@ -21,21 +21,20 @@ from raven.fathom.base import SystemClock
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.deployment import DeploymentManager
-from raven.fathom.server.user_management import UserManager
-from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.domain.deployment import DeploymentManager
+from raven.fathom.server.core.user_management import UserManager
+from raven.fathom.server.domain.project import ProjectManager
 
 from .handler import ActionHandler
 from .server_info import ServerInfoHandler
 from .deployment_intent import DeploymentIntentHandler
 from .deployment_transaction import DeploymentTransactionHandler
-from .user_management import (
+from .user import (
     UserCreateHandler, UserListHandler, UserDeleteHandler,
-    UserAssignHandler, UserUnassignHandler,
 )
-from .project_management import (
+from .project import (
     ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
-    ProjectDeleteHandler,
+    ProjectDeleteHandler, ProjectUserAssignHandler, ProjectUserUnassignHandler,
 )
 
 
@@ -87,14 +86,14 @@ class HandlerFactory:
                 UserManager(UserAuthenticator())
             )
         elif client_action == Interaction.ASSIGN_USER:
-            handler = UserAssignHandler(
+            handler = ProjectUserAssignHandler(
                 UserAuthorizer(),
-                UserManager(UserAuthenticator())
+                ProjectManager()
             )
         elif client_action == Interaction.UNASSIGN_USER:
-            handler = UserUnassignHandler(
+            handler = ProjectUserUnassignHandler(
                 UserAuthorizer(),
-                UserManager(UserAuthenticator())
+                ProjectManager()
             )
         elif client_action == Interaction.CREATE_PROJECT:
             handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())

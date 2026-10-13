@@ -18,7 +18,7 @@ from raven.fathom.base import Project
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.domain.project import ProjectManager
 
 
 LOG = Logger.get()

@@ -26,6 +26,7 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import User
 from raven.fathom.server.models import UserRole
+from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security._hash import PasswordHasher
 from raven.fathom.server.security._hash import StoredPasswordHash
@@ -114,7 +115,7 @@ class UserAuthentication:
         self._internal_auth = is_authenticated
 
     @property
-    def user_record(self) -> Optional[User]:
+    def user(self) -> Optional[User]:
         """The identified user of an authentication request, as a `User`.
 
         May be `None` if no user could be identified from a submitted request.
@@ -242,21 +243,49 @@ class UserAuthenticator:
 
     def authenticate_system_user(
         self,
-        authentication: ClientAuthentication
+        password: str
     ) -> UserAuthentication:
-        """Authenticates the local Fathom system user for server CLI usage."""
-        _check_auth_types(authentication)
-        user = self._ds.users().find_by_identifier(authentication.username)
+        """Authenticates the local Fathom system user.
+
+        Args:
+            password (str): The system user's password to use
+                for authentication.
+
+        Returns:
+            UserAuthentication: The authentication result. Never `None`.
+        """
+        auth = self.authenticate_user(SYSTEM_USER_IDENTIFIER, password)
+        if auth.user is not None and not auth.user.is_system_user():
+            return UserAuthentication(auth.user, is_authenticated=False)
+
+        return auth
+
+    def authenticate_user(
+        self,
+        username: str,
+        password: str
+    ) -> UserAuthentication:
+        """Authenticates the user by the given username-password-combination.
+
+        Args:
+            username (str): The user identifier to use for authentication.
+            password (str): The user password to use for authentication.
+
+        Returns:
+            UserAuthentication: The authentication result. Never `None`.
+        """
+        _check_auth_types(ClientAuthentication(username, password))
+        user = self._ds.users().find_by_identifier(username)
         is_authenticated = False
-        if self._active_system_user_record_has_password_set(user):
+        if self._active_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
-                authentication.password
+                password
             )
             is_authenticated = user is not None
         else:
-            self._spin_authentication_process(authentication.password)
+            self._spin_authentication_process(password)
 
         return UserAuthentication(user, is_authenticated)
 

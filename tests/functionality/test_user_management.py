@@ -161,7 +161,7 @@ class TestServerUserManagementCLI(TestCase):
             self.server.stdout
         )
 
-        self.server.stdin = ["fathom", "secret-password"]
+        self.server.stdin = ["secret-password"]
         self.server.execute("user", "list")
 
         self.assertServerSuccess()

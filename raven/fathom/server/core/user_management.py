@@ -17,10 +17,8 @@
 from typing import Final
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.base import UserState
-from raven.fathom.base.context import APPLICATION_NAME, APPLICATION_PROJECT_ID
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedReadQueryException
@@ -28,12 +26,14 @@ from raven.fathom.server.dao import FailedUpdateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
+from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
+from raven.fathom.server.models import SYSTEM_USER_NAME
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.core.exceptions import DomainException
+from raven.fathom.server.core.exceptions import FathomServerException
 
 
-class UserManagementException(DomainException):
-    """Base class for user-management domain failures."""
+class UserManagementException(FathomServerException):
+    """Base class for user-management application failures."""
 
 
 class InvalidUserRequestException(UserManagementException):
@@ -71,9 +71,9 @@ class _SystemUser:
     in the datastore.
     """
 
-    IDENTIFIER: Final[str] = APPLICATION_PROJECT_ID
+    IDENTIFIER: Final[str] = SYSTEM_USER_IDENTIFIER
 
-    NAME: Final[str] = f"{APPLICATION_NAME} System User"
+    NAME: Final[str] = SYSTEM_USER_NAME
 
     def __init__(self):
         self._ds = DataAccess.instance()
@@ -355,132 +355,3 @@ class UserManager:
     def _role_has_admin_privileges(self, role: UserRole | str) -> bool:
         role = UserRole(str(role))
         return role.has_administrative_privileges()
-
-    def assign_user_to_project(self, user: User, project: Project):
-        """Assigns an existing user to an existing project.
-
-        Args:
-            user (User): The user to assign.
-            project (Project): The project to assign the user to.
-
-        Raises:
-            UserManagementException: If the given user or project is invalid.
-        """
-        TypeCheck.require_arg(user.identifier, str)
-        TypeCheck.require_arg(project.identifier, str)
-        if not user.identifier:
-            raise InvalidUserRequestException(
-                "Cannot assign user to project. "
-                "User identifier must not be empty"
-            )
-
-        if not project.identifier:
-            raise InvalidUserRequestException(
-                "Cannot assign user to project. "
-                "Project identifier must not be empty"
-            )
-
-        user_record = self._ds.users().find_by_identifier(user.identifier)
-        if user_record is None:
-            raise UserNotFoundException(
-                "Cannot assign user to project. "
-                f"User '{user.identifier}' does not exist"
-            )
-
-        project_record = self._ds.projects().find_by_identifier(
-            project.identifier
-        )
-        if project_record is None:
-            raise InvalidUserRequestException(
-                "Cannot assign user to project. "
-                f"Project '{project.identifier}' does not exist"
-            )
-
-        assigned_projects = self._ds.projects().find_all_assigned_to_user(
-            user_record
-        )
-        if any(
-            record.id == project_record.id # type: ignore
-            for record in assigned_projects
-        ):
-            raise UserManagementException(
-                "Cannot assign user to project. "
-                f"User '{user.identifier}' is already assigned "
-                f"to project '{project.identifier}'"
-            )
-
-        try:
-            self._ds.projects().assign_user_to_project(
-                user_record, project_record
-            )
-        except FailedUpdateQueryException as ex:
-            raise UserManagementException(
-                f"Cannot assign user '{user.identifier}' "
-                f"to project '{project.identifier}'. "
-                "An internal error has occurred."
-            ) from ex
-
-    def unassign_user_from_project(self, user: User, project: Project):
-        """Removes a user's assignment from an existing project.
-
-        Args:
-            user (User): The user to unassign.
-            project (Project): The project to remove the user from.
-
-        Raises:
-            UserManagementException: If the given user or project is invalid.
-        """
-        TypeCheck.require_arg(user.identifier, str)
-        TypeCheck.require_arg(project.identifier, str)
-        if not user.identifier:
-            raise InvalidUserRequestException(
-                "Cannot unassign user from project. "
-                "User identifier must not be empty"
-            )
-
-        if not project.identifier:
-            raise InvalidUserRequestException(
-                "Cannot unassign user from project. "
-                "Project identifier must not be empty"
-            )
-
-        user_record = self._ds.users().find_by_identifier(user.identifier)
-        if user_record is None:
-            raise UserNotFoundException(
-                "Cannot unassign user from project. "
-                f"User '{user.identifier}' does not exist"
-            )
-
-        project_record = self._ds.projects().find_by_identifier(
-            project.identifier
-        )
-        if project_record is None:
-            raise UserManagementException(
-                "Cannot unassign user from project. "
-                f"Project '{project.identifier}' does not exist"
-            )
-
-        assigned_projects = self._ds.projects().find_all_assigned_to_user(
-            user_record
-        )
-        if all(
-            record.id != project_record.id # type: ignore
-            for record in assigned_projects
-        ):
-            raise UserManagementException(
-                "Cannot unassign user from project. "
-                f"User '{user.identifier}' is not assigned "
-                f"to project '{project.identifier}'"
-            )
-
-        try:
-            self._ds.projects().unassign_user_from_project(
-                user_record,
-                project_record,
-            )
-        except FailedUpdateQueryException as ex:
-            raise UserManagementException(
-                f"Cannot unassign user '{user.identifier}' "
-                f"from project '{project.identifier}'. "
-                "An internal error has occurred."
-            ) from ex

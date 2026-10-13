@@ -19,7 +19,7 @@ from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.user_management import UserManager
+from raven.fathom.server.core.user_management import UserManager
 
 
 LOG = Logger.get()

@@ -18,4 +18,4 @@ import sys
 
 from .cli.application import main
 
-sys.exit(int(main(sys.argv)))
+sys.exit(main(sys.argv))

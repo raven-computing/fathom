@@ -16,12 +16,12 @@
 
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, User, Project
-from raven.fathom.server.handlers.project_management import (
+from raven.fathom.server.handlers.project import (
     ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
-    ProjectDeleteHandler,
+    ProjectDeleteHandler, ProjectUserAssignHandler, ProjectUserUnassignHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.project_management import (
+from raven.fathom.server.domain.project import (
     ProjectManager,
     ProjectNotFoundException,
 )
@@ -152,6 +152,42 @@ class TestProjectManagementHandlers(TestCase):
         )
 
         self.assertEqual(response.errors[0].code, ResponseCode.NOT_FOUND)
+
+    def test_assign_handler_assigns_user_to_project(self):
+        self.admin_authorizer.is_administrator.return_value = True
+        request = ClientRequest(Interaction.ASSIGN_USER)
+        request.authenticated_user = self.request_user
+        request.user = User(identifier="someone")
+        request.project = Project(identifier="project-1")
+        response = ServerResponse(Interaction.ASSIGN_USER)
+
+        ProjectUserAssignHandler(self.admin_authorizer, self.manager).handle(
+            request, response
+        )
+
+        self.assertFalse(response.has_errors())
+        self.manager.assign_user_to_project.assert_called_once_with(
+            request.user,
+            request.project,
+        )
+
+    def test_unassign_handler_unassigns_user_from_project(self):
+        self.admin_authorizer.is_administrator.return_value = True
+        request = ClientRequest(Interaction.UNASSIGN_USER)
+        request.authenticated_user = self.request_user
+        request.user = User(identifier="someone")
+        request.project = Project(identifier="project-1")
+        response = ServerResponse(Interaction.UNASSIGN_USER)
+
+        ProjectUserUnassignHandler(self.admin_authorizer, self.manager).handle(
+            request, response
+        )
+
+        self.assertFalse(response.has_errors())
+        self.manager.unassign_user_from_project.assert_called_once_with(
+            request.user,
+            request.project,
+        )
 
 
 if __name__ == "__main__":

@@ -18,8 +18,9 @@ from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.dao import FailedReadQueryException
 from raven.fathom.server.dao import FailedCreateQueryException
+from raven.fathom.server.dao import FailedReadQueryException
+from raven.fathom.server.dao import FailedUpdateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import Project as ProjectModel
 from raven.fathom.server.core.exceptions import DomainException
@@ -170,6 +171,135 @@ class ProjectManager:
             raise ProjectInternalException(
                 "Failed to obtain list of users assigned "
                 f"to project '{project.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
+    def assign_user_to_project(self, user: User, project: Project):
+        """Assigns an existing user to an existing project.
+
+        Args:
+            user (User): The user to assign.
+            project (Project): The project to assign the user to.
+
+        Raises:
+            UserManagementException: If the given user or project is invalid.
+        """
+        TypeCheck.require_arg(user.identifier, str)
+        TypeCheck.require_arg(project.identifier, str)
+        if not user.identifier:
+            raise InvalidProjectRequestException(
+                "Cannot assign user to project. "
+                "User identifier must not be empty"
+            )
+
+        if not project.identifier:
+            raise InvalidProjectRequestException(
+                "Cannot assign user to project. "
+                "Project identifier must not be empty"
+            )
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise InvalidProjectRequestException(
+                "Cannot assign user to project. "
+                f"User '{user.identifier}' does not exist"
+            )
+
+        project_record = self._ds.projects().find_by_identifier(
+            project.identifier
+        )
+        if project_record is None:
+            raise ProjectNotFoundException(
+                "Cannot assign user to project. "
+                f"Project '{project.identifier}' does not exist"
+            )
+
+        assigned_projects = self._ds.projects().find_all_assigned_to_user(
+            user_record
+        )
+        if any(
+            record.id == project_record.id # type: ignore
+            for record in assigned_projects
+        ):
+            raise ProjectManagementException(
+                "Cannot assign user to project. "
+                f"User '{user.identifier}' is already assigned "
+                f"to project '{project.identifier}'"
+            )
+
+        try:
+            self._ds.projects().assign_user_to_project(
+                user_record, project_record
+            )
+        except FailedUpdateQueryException as ex:
+            raise ProjectInternalException(
+                f"Cannot assign user '{user.identifier}' "
+                f"to project '{project.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
+    def unassign_user_from_project(self, user: User, project: Project):
+        """Removes a user's assignment from an existing project.
+
+        Args:
+            user (User): The user to unassign.
+            project (Project): The project to remove the user from.
+
+        Raises:
+            UserManagementException: If the given user or project is invalid.
+        """
+        TypeCheck.require_arg(user.identifier, str)
+        TypeCheck.require_arg(project.identifier, str)
+        if not user.identifier:
+            raise InvalidProjectRequestException(
+                "Cannot unassign user from project. "
+                "User identifier must not be empty"
+            )
+
+        if not project.identifier:
+            raise InvalidProjectRequestException(
+                "Cannot unassign user from project. "
+                "Project identifier must not be empty"
+            )
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise InvalidProjectRequestException(
+                "Cannot unassign user from project. "
+                f"User '{user.identifier}' does not exist"
+            )
+
+        project_record = self._ds.projects().find_by_identifier(
+            project.identifier
+        )
+        if project_record is None:
+            raise ProjectNotFoundException(
+                "Cannot unassign user from project. "
+                f"Project '{project.identifier}' does not exist"
+            )
+
+        assigned_projects = self._ds.projects().find_all_assigned_to_user(
+            user_record
+        )
+        if all(
+            record.id != project_record.id # type: ignore
+            for record in assigned_projects
+        ):
+            raise ProjectManagementException(
+                "Cannot unassign user from project. "
+                f"User '{user.identifier}' is not assigned "
+                f"to project '{project.identifier}'"
+            )
+
+        try:
+            self._ds.projects().unassign_user_from_project(
+                user_record,
+                project_record,
+            )
+        except FailedUpdateQueryException as ex:
+            raise ProjectInternalException(
+                f"Cannot unassign user '{user.identifier}' "
+                f"from project '{project.identifier}'. "
                 "An internal error has occurred."
             ) from ex
 

@@ -18,12 +18,12 @@ from raven.fathom.base import Project, User, UserState
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import Settings
-from raven.fathom.server.project_management import (
+from raven.fathom.server.domain.project import (
     ProjectManagementException,
     ProjectManager,
 )
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.user_management import (
+from raven.fathom.server.core.user_management import (
     UserManagementException,
     UserManager,
     UserNotFoundException,

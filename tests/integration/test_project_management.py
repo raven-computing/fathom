@@ -17,7 +17,7 @@
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.project_management import ProjectManager
+from raven.fathom.server.domain.project import ProjectManager
 
 from tests.integration import DatabaseIntegrationTestCase
 
@@ -80,6 +80,35 @@ class TestProjectManagement(DatabaseIntegrationTestCase):
         self.assertIsNone(
             self.db.projects().find_by_identifier("test-project-1")
         )
+
+    def test_can_assign_user_to_project(self):
+        ProjectManager().assign_user_to_project(
+            User(identifier="fathom"),
+            Project(identifier="test-project-2"),
+        )
+
+        user = self.db.users().find_by_identifier("fathom")
+        assert user is not None
+        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
+        self.assertEqual(
+            sorted(project.identifier for project in assigned_projects),
+            ["test-project-2"],
+        )
+
+    def test_can_unassign_user_from_project(self):
+        ProjectManager().assign_user_to_project(
+            User(identifier="fathom"),
+            Project(identifier="test-project-1"),
+        )
+        ProjectManager().unassign_user_from_project(
+            User(identifier="fathom"),
+            Project(identifier="test-project-1"),
+        )
+
+        user = self.db.users().find_by_identifier("fathom")
+        assert user is not None
+        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
+        self.assertEqual(assigned_projects, [])
 
 
 if __name__ == "__main__":

@@ -14,7 +14,6 @@
 #
 """Integration tests for server-side user management."""
 
-from raven.fathom.base.project import Project
 from raven.fathom.base.user import User, UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
@@ -22,7 +21,7 @@ from raven.fathom.server.models import UserProjectRel, AuthDeployment
 from raven.fathom.server.models.user import UserRole
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.security._hash import StoredPasswordHash
-from raven.fathom.server.user_management import (
+from raven.fathom.server.core.user_management import (
     UserManagementException,
     UserManager,
     UserStateException,
@@ -141,22 +140,12 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         self.assertEqual(users[1].state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):
-        user = User(
-            identifier="test-user-2",
-            name="Test User 2",
-            state=UserState.ONBOARDING,
-        )
-        self.mananger.create_user(user)
-        self.mananger.assign_user_to_project(
-            User(identifier="test-user-2"),
-            Project(identifier="test-project-1"),
-        )
-        user_record_id = self.db.users().find_by_identifier(
-            "test-user-2"
-        ).id # type: ignore
-        self.mananger.delete_user(user)
+        user_record = self.db.users().find_by_identifier("test-user-1")
+        assert user_record is not None
+        user_record_id = user_record.id # type: ignore
+        self.mananger.delete_user(User(identifier=user_record.identifier))
 
-        deleted_user_record = self.db.users().find_by_identifier("test-user-2")
+        deleted_user_record = self.db.users().find_by_identifier("test-user-1")
         self.assertIsNone(deleted_user_record)
         self.assertEqual(UserPermission.select().where(
             UserPermission.user == user_record_id
@@ -165,7 +154,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             UserProjectRel.user == user_record_id
         ).count(), 0)
         # pylint: disable=no-value-for-parameter
-        self.assertEqual(AuthDeployment.select().count(), 1) # type: ignore
+        self.assertEqual(AuthDeployment.select().count(), 0) # type: ignore
 
     def test_delete_rejects_system_user(self):
         with self.assertRaises(UserStateException) as raised:
@@ -177,35 +166,6 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             "The system user cannot be deleted",
             str(raised.exception)
         )
-
-    def test_can_assign_user_to_project(self):
-        self.mananger.assign_user_to_project(
-            User(identifier="fathom"),
-            Project(identifier="test-project-2"),
-        )
-
-        user = self.db.users().find_by_identifier("fathom")
-        assert user is not None
-        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
-        self.assertEqual(
-            sorted(project.identifier for project in assigned_projects),
-            ["test-project-2"],
-        )
-
-    def test_can_unassign_user_from_project(self):
-        self.mananger.assign_user_to_project(
-            User(identifier="fathom"),
-            Project(identifier="test-project-1"),
-        )
-        self.mananger.unassign_user_from_project(
-            User(identifier="fathom"),
-            Project(identifier="test-project-1"),
-        )
-
-        user = self.db.users().find_by_identifier("fathom")
-        assert user is not None
-        assigned_projects = self.db.projects().find_all_assigned_to_user(user)
-        self.assertEqual(assigned_projects, [])
 
 
 if __name__ == "__main__":

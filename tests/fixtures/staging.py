@@ -16,7 +16,7 @@
 
 from raven.fathom.base import Configuration
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.staging import StagingArea
+from raven.fathom.server.domain.staging import StagingArea
 
 from tests.common import FathomTestFixture
 

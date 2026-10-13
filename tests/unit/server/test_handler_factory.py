@@ -24,15 +24,15 @@ from raven.fathom.server.handlers.deployment_intent import (
 from raven.fathom.server.handlers.deployment_transaction import (
     DeploymentTransactionHandler,
 )
-from raven.fathom.server.handlers.project_management import (
+from raven.fathom.server.handlers.project import (
     ProjectCreateHandler,
     ProjectListHandler,
     ProjectUserListHandler,
     ProjectDeleteHandler,
 )
-from raven.fathom.server.handlers.user_management import (
-    UserAssignHandler,
-    UserUnassignHandler,
+from raven.fathom.server.handlers.project import (
+    ProjectUserAssignHandler,
+    ProjectUserUnassignHandler,
 )
 
 from tests.unit import TestCase, TestFixture
@@ -79,12 +79,12 @@ class TestHandlerFactory(TestCase, TestFixture):
     def test_creates_user_assign_handler_for_user_assignment(self):
         request = ClientRequest(Interaction.ASSIGN_USER)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, UserAssignHandler)
+        self.assertIsInstance(handler, ProjectUserAssignHandler)
 
     def test_creates_user_unassign_handler_for_user_unassignment(self):
         request = ClientRequest(Interaction.UNASSIGN_USER)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, UserUnassignHandler)
+        self.assertIsInstance(handler, ProjectUserUnassignHandler)
 
     def test_returns_none_for_unrecognized_action(self):
         request = ClientRequest("unknown-action") # type: ignore

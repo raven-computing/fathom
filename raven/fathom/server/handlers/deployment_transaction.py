@@ -25,8 +25,8 @@ from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
-from raven.fathom.server.deployment import DeploymentManager
-from raven.fathom.server.deployment import DeploymentExecutionException
+from raven.fathom.server.domain.deployment import DeploymentManager
+from raven.fathom.server.domain.deployment import DeploymentExecutionException
 
 
 LOG = Logger.get()

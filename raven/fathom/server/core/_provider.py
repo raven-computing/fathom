@@ -18,7 +18,7 @@ from typing import Optional
 
 from raven.fathom.base import AbstractProvider, DirectImplementation, Namespace
 from raven.fathom.base import ServerInteraction
-from raven.fathom.server.interaction import ServerInteractionImpl
+from raven.fathom.server.core.interaction import ServerInteractionImpl
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
 from raven.fathom.server.security import UserAuthenticator

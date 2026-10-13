@@ -21,5 +21,6 @@ from .cli.application import main
 from .core._provider import ServerProvider as _ProviderImpl
 
 _Dependencies.register(_ProviderImpl())
+
 del _ProviderImpl
 del _Dependencies

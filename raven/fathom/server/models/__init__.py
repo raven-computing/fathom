@@ -19,6 +19,8 @@ __all__ = [
     "User",
     "UserRole",
     "UserProjectRel",
+    "SYSTEM_USER_IDENTIFIER",
+    "SYSTEM_USER_NAME",
     "UserPermission",
     "Project",
     "ProjectVersion",
@@ -30,6 +32,8 @@ from .auth_deployment import AuthDeployment
 from .user import User
 from .user import UserRole
 from .user import UserProjectRel
+from .user import SYSTEM_USER_IDENTIFIER
+from .user import SYSTEM_USER_NAME
 from .user_permission import UserPermission
 from .project import Project
 from .project import ProjectVersion

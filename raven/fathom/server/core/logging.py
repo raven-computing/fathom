@@ -50,6 +50,18 @@ class FathomLogHandlerFile(LogHandlerFile):
         super().__init__(log_file)
 
 
+def log_stdout(message: str):
+    """Logs a message to standard output.
+
+    Is used to log messages that are not part of the Fathom server logging
+    system, such as when interacting with a CLI user.
+
+    Args:
+        message (str): The message to log.
+    """
+    print(message, file=sys.stdout)
+
+
 def log_stderr(message: str):
     """Logs a message to standard error.
 

@@ -286,9 +286,10 @@ class UserManager:
                 "An internal error has occurred."
             ) from ex
 
+        role = UserRole(str(user_record.role))
         user.name = user_record.name
         user.password = "" # Evict
-        user.is_admin = self._role_has_admin_privileges(user_record.role)
+        user.is_admin = role.has_administrative_privileges()
         user.state = UserState.ACTIVE
 
     def list_users(self) -> list[User]:
@@ -306,7 +307,7 @@ class UserManager:
                         User(
                             identifier=str(user.identifier),
                             name=str(user.name),
-                            is_admin=self._role_has_admin_privileges(role),
+                            is_admin=role.has_administrative_privileges(),
                             state=UserState(str(user.state)),
                         )
                     )
@@ -351,7 +352,3 @@ class UserManager:
                 f"Failed to delete user '{user.identifier}'. "
                 "An internal error has occurred."
             ) from ex
-
-    def _role_has_admin_privileges(self, role: UserRole | str) -> bool:
-        role = UserRole(str(role))
-        return role.has_administrative_privileges()

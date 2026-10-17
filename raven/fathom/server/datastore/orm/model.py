@@ -20,6 +20,16 @@ from raven.fathom.server.datastore._proxy import get_orm_proxy
 from raven.fathom.server.datastore.orm.field import FieldChecker
 
 
+def _apply_private_field_mapping(fields: set[str], kwargs: dict):
+    """Maps public to private model fields in kwargs."""
+    for field_name in fields:
+        if field_name.startswith("_"):
+            private_name = field_name
+            public_name = field_name[1:]
+            if public_name in kwargs and private_name not in kwargs:
+                kwargs[private_name] = kwargs.pop(public_name)
+
+
 class _BaseModel(orm_impl.Model):
     # pylint: disable=missing-class-docstring
     class Meta:
@@ -34,6 +44,7 @@ class _DataModelORM(_BaseModel):
             FieldChecker.assign_checker(self)
 
         field_checker = FieldChecker.get_checker(self)
+        _apply_private_field_mapping(field_checker.get_all_fields(), kwargs)
         field_checker.check_known(**kwargs)
         field_checker.check_required(**kwargs)
 

@@ -69,8 +69,9 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
     def create_new_user(self, record: User):
         if record.role == UserRole.SYSTEM:
+            # pylint: disable=protected-access
             has_system_user = User.select().where(
-                User.role == UserRole.SYSTEM
+                User._role == UserRole.SYSTEM
             ).exists()
             if has_system_user:
                 raise IllegalQueryException(

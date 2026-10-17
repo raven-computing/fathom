@@ -87,7 +87,7 @@ class _SystemUser:
                 `False` if no such record could be found.
         """
         for user in self._ds.users().read_all():
-            if UserRole(str(user.role)) == UserRole.SYSTEM:
+            if user.role == UserRole.SYSTEM:
                 return True
 
         return False
@@ -137,7 +137,7 @@ class UserManager:
     def find_system_user_record(self) -> UserModel | None:
         """Returns the configured system user record, if one exists."""
         for user in self._ds.users().read_all():
-            if UserRole(str(user.role)) == UserRole.SYSTEM:
+            if user.role == UserRole.SYSTEM:
                 return user
 
         return None
@@ -148,7 +148,7 @@ class UserManager:
         if user is None:
             raise UserNotFoundException(f"User '{identifier}' does not exist")
 
-        return UserRole(str(user.role))
+        return user.role
 
     def create_system_user(self, user: User):
         """Creates the one-time system user for the server bootstrap.
@@ -232,7 +232,7 @@ class UserManager:
                 UserRole.ADMINISTRATOR
                 if user.is_admin else UserRole.USER
             ),
-            state=str(UserState.ONBOARDING),
+            state=UserState.ONBOARDING,
         )
         self._authenticator.constitute_password_authentication(user_record)
         try:
@@ -270,13 +270,13 @@ class UserManager:
         if user_record is None:
             raise UserNotFoundException(f"User '{identifier}' does not exist")
 
-        if str(user_record.state) != str(UserState.ONBOARDING):
+        if user_record.state != UserState.ONBOARDING:
             raise UserStateException(
                 f"User '{identifier}' has already been initialized"
             )
 
         user_record.password = password
-        user_record.state = UserState.ACTIVE
+        user_record.set_active()
         self._authenticator.constitute_password_authentication(user_record)
         try:
             self._ds.users().update(user_record)
@@ -286,10 +286,9 @@ class UserManager:
                 "An internal error has occurred."
             ) from ex
 
-        role = UserRole(str(user_record.role))
         user.name = user_record.name
         user.password = "" # Evict
-        user.is_admin = role.has_administrative_privileges()
+        user.is_admin = user_record.role.has_administrative_privileges()
         user.state = UserState.ACTIVE
 
     def list_users(self) -> list[User]:
@@ -301,7 +300,7 @@ class UserManager:
         result = []
         try:
             for user in self._ds.users().read_all():
-                role = UserRole(str(user.role))
+                role = user.role
                 if role != UserRole.SYSTEM:
                     result.append(
                         User(
@@ -343,7 +342,7 @@ class UserManager:
                     "User does not exist."
                 )
 
-            if UserRole(str(user_record.role)) == UserRole.SYSTEM:
+            if user_record.role == UserRole.SYSTEM:
                 raise UserStateException("The system user cannot be deleted")
 
             self._ds.users().delete_by_identifier(user.identifier)

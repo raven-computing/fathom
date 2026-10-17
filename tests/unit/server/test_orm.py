@@ -92,6 +92,19 @@ class TestRequiredFieldChecker(TestCase):
             "Instances of RequiredFieldChecker should be reused per model"
         )
 
+    def test_get_all_fields(self):
+        obj = ModelWithNonNullFields(
+            field_a="AAA", field_b="CCC", field_c=True, field_d=10,
+        )
+        checker = FieldChecker.get_checker(obj)
+        fields = checker.get_all_fields()
+        self.assertEqual(len(fields), 5)
+        self.assertIn("id", fields)
+        self.assertIn("field_a", fields)
+        self.assertIn("field_b", fields)
+        self.assertIn("field_c", fields)
+        self.assertIn("field_d", fields)
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

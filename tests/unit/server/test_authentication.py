@@ -22,7 +22,7 @@ from raven.fathom.server.security import UserAuthenticator, UserAuthentication
 from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.models import User
 from raven.fathom.server.models import UserRole
-from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
+from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER, SYSTEM_USER_NAME
 
 from tests.unit import TestCase
 from tests.unit.server.mocks import DataAccessMock
@@ -57,6 +57,20 @@ class TestUserAuthentication(TestCase):
             role=UserRole.USER,
             state=self.user_signup.state,
         )
+        self.user_onboarding = User(
+            identifier=self.user_stored.identifier,
+            name=self.user_stored.name,
+            password=self.known_user_password_hash,
+            role=UserRole.USER,
+            state=UserState.ONBOARDING,
+        )
+        self.user_system = User(
+            identifier=SYSTEM_USER_IDENTIFIER,
+            name=SYSTEM_USER_NAME,
+            password=self.known_user_password_hash,
+            role=UserRole.SYSTEM,
+            state=UserState.ACTIVE,
+        )
         self.client_request = ClientRequest(
             action=Interaction.REQUEST_DEPLOYMENT
         )
@@ -88,7 +102,7 @@ class TestUserAuthentication(TestCase):
         self.assertIs(auth.user, self.user_stored)
 
     def test_wrong_username_in_client_request_denies_user_authentication(self):
-        self.user_stored.identifier = "an-unknown-user" # type: ignore
+        self.user_stored.identifier = "an-unknown-user"
         self.dao.users().find_by_identifier.return_value = None
         auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
@@ -107,8 +121,7 @@ class TestUserAuthentication(TestCase):
         self.assertIsNone(auth.user)
 
     def test_onboarding_user_is_not_authenticated_with_matching_password(self):
-        self.user_stored.state = UserState.ONBOARDING # type: ignore
-        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.dao.users().find_by_identifier.return_value = self.user_onboarding
         auth = self.authenticator.authenticate_client(self.client_request)
         self.assertIsInstance(auth, UserAuthentication)
         self.assertFalse(auth.is_authenticated())
@@ -208,8 +221,7 @@ class TestUserAuthentication(TestCase):
         )
 
     def test_system_user_is_rejected_for_remote_client_authentication(self):
-        self.user_stored.role = UserRole.SYSTEM
-        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.dao.users().find_by_identifier.return_value = self.user_system
 
         auth = self.authenticator.authenticate_client(self.client_request)
 
@@ -217,16 +229,14 @@ class TestUserAuthentication(TestCase):
         self.assertIsNotNone(auth.user)
 
     def test_system_user_can_authenticate_for_local_server_commands(self):
-        self.user_stored.identifier = SYSTEM_USER_IDENTIFIER
-        self.user_stored.role = UserRole.SYSTEM
-        self.dao.users().find_by_identifier.return_value = self.user_stored
+        self.dao.users().find_by_identifier.return_value = self.user_system
 
         password = self.user_signup.password
         assert password is not None
         auth = self.authenticator.authenticate_system_user(password)
 
         self.assertTrue(auth.is_authenticated())
-        self.assertIs(auth.user, self.user_stored)
+        self.assertIs(auth.user, self.user_system)
 
     def test_authenticate_client_without_auth_raises_processing_ex(self):
         self.client_request.authentication = None

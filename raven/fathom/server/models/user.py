@@ -26,8 +26,6 @@ from raven.fathom.server.datastore.orm import (
 )
 from raven.fathom.server.models.project import Project
 
-# pylint: disable=missing-class-docstring
-
 
 SYSTEM_USER_IDENTIFIER: Final[str] = APPLICATION_PROJECT_ID
 
@@ -70,15 +68,27 @@ class User(Model):
         null=True,
     )
 
-    role = CharField(
+    _role = CharField(
+        column_name="role",
         null=False,
         default=UserRole.USER,
     )
 
-    state = CharField(
+    _state = CharField(
+        column_name="state",
         null=False,
         default=UserState.INACTIVE,
     )
+
+    @property
+    def role(self) -> UserRole:
+        """The role of this user, as a `UserRole` enumerator."""
+        return UserRole(str(self._role))
+
+    @property
+    def state(self) -> UserState:
+        """The state of this user, as a `UserState` enumerator."""
+        return UserState(str(self._state))
 
     def is_system_user(self) -> bool:
         """Checks if this user is the system user.
@@ -87,15 +97,28 @@ class User(Model):
             bool: `True` if this user is the system user, `False` otherwise.
         """
         return (
-            UserRole(str(self.role)) == UserRole.SYSTEM
+            self.role == UserRole.SYSTEM
             and self.identifier == SYSTEM_USER_IDENTIFIER
         )
+
+    def set_active(self):
+        """Activates this user."""
+        self._state = UserState.ACTIVE
+
+    def set_inactive(self):
+        """Deactivates this user.
+
+        Deactivating a user means it can no longer be used in operations
+        of the underlying application.
+        """
+        self._state = UserState.INACTIVE
 
 
 class UserProjectRel(Model):
     """Models a user and project relation."""
 
     # Peewee does some metaclass magic, which confuses the type checker.
+    # pylint: disable=missing-class-docstring
     class Meta: # type: ignore[reportIncompatibleVariableOverride]
         primary_key = CompositeKey("user", "project")
 

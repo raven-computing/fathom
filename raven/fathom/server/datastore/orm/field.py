@@ -47,6 +47,14 @@ class FieldChecker:
         self._all_fields = self._compute_all(fields)
         self._req_fields = self._compute_required(fields)
 
+    def get_all_fields(self) -> set[str]:
+        """Returns all fields of the model.
+
+        Returns:
+            set: A set of `str` field names.
+        """
+        return self._all_fields
+
     def check_required(self, **kwargs):
         """Checks that all required fields have a value specified.
 
@@ -79,9 +87,10 @@ class FieldChecker:
             TypeError: If at least one field is not known.
         """
         for field_name in kwargs:
-            if (not field_name.startswith("_")
-                and field_name not in self._all_fields):
+            if field_name.startswith("__"):
+                continue
 
+            if field_name not in self._all_fields:
                 raise TypeError(
                     "Unknown model field "
                     f"'{self._model_name}.{field_name}'"
@@ -147,7 +156,7 @@ class FieldChecker:
             and not isinstance(attribute[1], orm_impl.MetaField)
             and attribute[0] != "id"
             and not attribute[0].endswith("_id")
-            and not attribute[0].startswith("_")
+            and not attribute[0].startswith("__")
         ]
 
     def _compute_all(self, fields):

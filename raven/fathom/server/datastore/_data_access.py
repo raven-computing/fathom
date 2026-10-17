@@ -159,7 +159,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
         ).find_one()
 
     def find_all_assigned_to_user(self, user: User) -> list[Project]:
-        user_id = user.id # type: ignore
+        user_id = user.datastore_id.value
         return [
             cast(Project, user_project_rel.project)
             for user_project_rel in ReadQuery[UserProjectRel](
@@ -171,7 +171,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
         self,
         project: Project
     ) -> list[User]:
-        project_id = project.id # type: ignore
+        project_id = project.datastore_id.value
         return [
             cast(User, user_project_rel.user)
             for user_project_rel in ReadQuery[UserProjectRel](
@@ -243,9 +243,10 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
                     StagingAllocation.project_version == version
                 )
             ).execute()
+            version_id = version.datastore_id.value
             DeleteQuery[ProjectVersion](
                 ProjectVersion.delete().where(
-                    ProjectVersion.id == version.id # type: ignore
+                    ProjectVersion.id == version_id # type: ignore
                 )
             ).execute()
 

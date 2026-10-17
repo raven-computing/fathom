@@ -18,6 +18,7 @@ Using peewee as an ORM implementation.
 """
 
 from .model import Model
+from .field import RecordId
 from .field import IntegerField
 from .field import BigIntegerField
 from .field import BooleanField

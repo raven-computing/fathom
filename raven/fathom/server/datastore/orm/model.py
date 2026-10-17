@@ -17,6 +17,7 @@
 import peewee as orm_impl
 
 from raven.fathom.server.datastore._proxy import get_orm_proxy
+from raven.fathom.server.datastore.orm.field import RecordId
 from raven.fathom.server.datastore.orm.field import FieldChecker
 
 
@@ -49,6 +50,13 @@ class _DataModelORM(_BaseModel):
         field_checker.check_required(**kwargs)
 
         super().__init__(*args, **kwargs)
+
+    @property
+    def datastore_id(self) -> RecordId:
+        """The internal datastore ID of this record."""
+        # pylint: disable=no-member
+        raw_id = self.id # pyright: ignore[reportAttributeAccessIssue]
+        return RecordId(raw_id)
 
 
 class Model(_DataModelORM):

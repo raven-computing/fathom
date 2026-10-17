@@ -217,8 +217,9 @@ class ProjectManager:
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
             user_record
         )
+        project_record_id = project_record.datastore_id.value
         if any(
-            record.id == project_record.id # type: ignore
+            record.datastore_id.value == project_record_id
             for record in assigned_projects
         ):
             raise ProjectManagementException(
@@ -281,8 +282,9 @@ class ProjectManager:
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
             user_record
         )
+        project_record_id = project_record.datastore_id.value
         if all(
-            record.id != project_record.id # type: ignore
+            record.datastore_id.value != project_record_id
             for record in assigned_projects
         ):
             raise ProjectManagementException(

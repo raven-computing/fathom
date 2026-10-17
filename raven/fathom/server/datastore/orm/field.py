@@ -16,12 +16,43 @@
 
 import threading
 
-from typing import Final
+from typing import Any, Final, TypeAlias
 
 import peewee as orm_impl
 
 
 _INIT_LOCK = threading.Lock()
+
+
+class _RecordIdType:
+    """Opaque type representing a record ID in the datastore.
+
+    Encapsulates the raw value of a record ID and provides utility
+    methods to check its state.
+    """
+
+    DATASTORE_NAME: Final[str] = "id"
+
+    def __init__(self, raw_value):
+        self._val = raw_value
+
+    @property
+    def value(self) -> Any:
+        """The raw value of this record ID."""
+        return self._val
+
+    def is_set(self) -> bool:
+        """Indicates whether this is an assigned record ID.
+
+        Returns:
+            bool: `True` if this record ID has been assigned by the underlying
+            datastore. `False` if this record ID is not set, which usually
+            means that the underlying record is not persisted in the datastore.
+        """
+        return self._val is not None
+
+
+RecordId: TypeAlias = _RecordIdType
 
 
 class FieldChecker:
@@ -154,13 +185,15 @@ class FieldChecker:
             attribute for attribute in attributes
             if isinstance(attribute[1], orm_impl.Field)
             and not isinstance(attribute[1], orm_impl.MetaField)
-            and attribute[0] != "id"
+            and attribute[0] != _RecordIdType.DATASTORE_NAME
             and not attribute[0].endswith("_id")
             and not attribute[0].startswith("__")
         ]
 
     def _compute_all(self, fields):
-        return set(map(lambda field: field[0], fields)) | {"id"}
+        return set(
+            map(lambda field: field[0], fields)
+        ) | {_RecordIdType.DATASTORE_NAME}
 
     def _compute_required(self, fields):
         return set(

@@ -142,7 +142,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
     def test_delete_user_removes_associated_records(self):
         user_record = self.db.users().find_by_identifier("test-user-1")
         assert user_record is not None
-        user_record_id = user_record.id # type: ignore
+        user_record_id = user_record.datastore_id.value
         self.mananger.delete_user(User(identifier=user_record.identifier))
 
         deleted_user_record = self.db.users().find_by_identifier("test-user-1")

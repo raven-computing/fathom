@@ -45,7 +45,7 @@ class UserRole(StrEnum):
 
     def has_administrative_privileges(self) -> bool:
         """Indicates whether this user role has admin privileges.
-        
+
         Returns:
             bool: `True` if this user role can access data and perform actions
                 that are reserved for administrators. `False` if this role does

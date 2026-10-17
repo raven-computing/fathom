@@ -68,6 +68,10 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
         super().__init__(User)
 
     def create_new_user(self, record: User):
+        default_permission = UserPermission(
+            user=record,
+            allow_overwrite=False,
+        )
         if record.role == UserRole.SYSTEM:
             # pylint: disable=protected-access
             has_system_user = User.select().where(
@@ -78,13 +82,10 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
                     "A system user already exists and cannot be created again"
                 )
 
+            default_permission.allow_overwrite = True
+
         self.create(record)
-        self.create(
-            UserPermission(
-                user=record,
-                allow_overwrite=False,
-            )
-        )
+        self.create(default_permission)
 
     def find_by_identifier(self, identifier: str) -> Optional[User]:
         return ReadQuery[User](

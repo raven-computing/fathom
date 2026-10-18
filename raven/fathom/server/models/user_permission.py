@@ -24,7 +24,8 @@ from raven.fathom.server.models.user import User
 class UserPermission(Model):
     """Models a Fathom user permission."""
 
-    user = ForeignKeyField(
+    _user = ForeignKeyField(
+        column_name="user_id",
         model=User,
         unique=True,
     )
@@ -33,3 +34,8 @@ class UserPermission(Model):
         default=False,
         null=False,
     )
+
+    @property
+    def user(self) -> User:
+        """The `User` record this permission record is associated with."""
+        return self._user

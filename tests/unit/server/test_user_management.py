@@ -67,7 +67,8 @@ class TestUserManager(TestCase):
 
     def test_create_user_requires_shared_secret(self):
         self.ds.users().find_by_identifier.return_value = None
-        self.settings.shared_secret = ""
+        # pylint: disable=protected-access
+        self.settings._shared_secret = ""
         user = User(identifier="new-user", state=UserState.ONBOARDING)
 
         with self.assertRaises(UserManagementException) as raised:

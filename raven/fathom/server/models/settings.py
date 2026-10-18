@@ -23,6 +23,20 @@ class Settings(Model):
 
     organisation_name = CharField()
 
-    shared_secret = CharField()
+    _shared_secret = CharField(
+        column_name="shared_secret",
+    )
 
-    active = BooleanField()
+    _active = BooleanField(
+        column_name="active",
+    )
+
+    @property
+    def shared_secret(self) -> str:
+        """The shared secret of the organisation."""
+        return self._shared_secret
+
+    @property
+    def active(self) -> bool:
+        """Indicates whether this settings record is active."""
+        return self._active

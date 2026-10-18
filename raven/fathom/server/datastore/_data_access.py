@@ -105,14 +105,16 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
         DeleteQuery[UserProjectRel](
             UserProjectRel.delete().where(UserProjectRel.user == user)
         ).execute()
+        # pylint: disable=protected-access
         DeleteQuery[UserPermission](
-            UserPermission.delete().where(UserPermission.user == user)
+            UserPermission.delete().where(UserPermission._user == user)
         ).execute()
         self.delete(user)
 
     def find_permission(self, user: User) -> UserPermission:
+        # pylint: disable=protected-access
         permission = ReadQuery[UserPermission](
-            UserPermission.select().where(UserPermission.user == user)
+            UserPermission.select().where(UserPermission._user == user)
         ).find_one()
 
         if permission is None:
@@ -269,8 +271,9 @@ class _SettingsDAOImpl(DataAccessObjectRDBMS, SettingsDAO):
         super().__init__(Settings)
 
     def find_server_settings(self) -> Settings:
+        # pylint: disable=protected-access
         record = ReadQuery[Settings](
-            Settings.select().where(Settings.active)
+            Settings.select().where(Settings._active)
         ).find_one()
         if record is None:
             raise IncoherentDatastoreStateException(

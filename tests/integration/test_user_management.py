@@ -147,8 +147,9 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
         deleted_user_record = self.db.users().find_by_identifier("test-user-1")
         self.assertIsNone(deleted_user_record)
+        # pylint: disable=protected-access
         self.assertEqual(UserPermission.select().where(
-            UserPermission.user == user_record_id
+            UserPermission._user == user_record_id
         ).count(), 0)
         self.assertEqual(UserProjectRel.select().where(
             UserProjectRel.user == user_record_id

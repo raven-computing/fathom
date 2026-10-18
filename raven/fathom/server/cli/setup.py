@@ -42,7 +42,7 @@ class SetupCommand(ServerCommand):
             "Please enter the name of the organisation "
             "that this server instance will be serving."
         )
-        organisation_name = prompt.read()
+        organisation_name = prompt.read("Name: ")
         if not organisation_name:
             raise ValueError("Name must not be empty.")
 

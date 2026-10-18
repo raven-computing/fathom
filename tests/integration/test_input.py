@@ -125,6 +125,108 @@ class TestSystemInputPromptStdIn(TestCase):
         self.assertEqual(captured_input, "secret-value")
         self.assert_output_contains("Password: ")
 
+    def test_validator_accepts_valid_input(self):
+        valid_input = "valid"
+        self.set_in(valid_input)
+        validator = lambda x: x == "valid"
+        captured = self.input_prompt.read(validator=validator)
+        self.assertEqual(captured, valid_input)
+
+    def test_validator_rejects_invalid_input_and_accepts_on_retry(self):
+        self.set_in("invalid\nvalid")
+        def validator(x):
+            if x == "valid":
+                return True
+
+            self.stream_out.write("Invalid input\n")
+            return False
+
+        captured = self.input_prompt.read(validator=validator)
+        self.assertEqual(captured, "valid")
+        self.assert_output_contains("Invalid input")
+
+    def test_validator_with_default_value_validates_default(self):
+        default_value = "default123"
+        validator = lambda x: len(x) > 5
+        captured = self.input_prompt.read(
+            default_value=default_value,
+            validator=validator
+        )
+        self.assertEqual(captured, default_value)
+
+    def test_validator_rejects_default_value_and_accepts_user_input(self):
+        self.set_in("toolong")
+        default_value = "bad"  # too short
+        validator = lambda x: len(x) > 5
+        captured = self.input_prompt.read(
+            default_value=default_value,
+            validator=validator
+        )
+        self.assertEqual(captured, "toolong")
+
+    def test_validator_with_prompt_repeats_prompt_on_invalid(self):
+        self.set_in("invalid\nvalid")
+        prompt = "Enter valid input: "
+        validator = lambda x: x == "valid"
+        captured = self.input_prompt.read(prompt, validator=validator)
+        self.assertEqual(captured, "valid")
+        self.assert_output_contains(prompt)
+
+    def test_validator_numeric_input(self):
+        self.set_in("123")
+        validator = lambda x: x.isdigit()
+        captured = self.input_prompt.read(validator=validator)
+        self.assertEqual(captured, "123")
+
+    def test_validator_rejects_non_numeric_and_accepts_numeric(self):
+        self.set_in("abc\n456")
+        validator = lambda x: x.isdigit()
+        captured = self.input_prompt.read(validator=validator)
+        self.assertEqual(captured, "456")
+
+    def test_validator_with_secret_input(self):
+        self.set_in("validpass")
+        validator = lambda x: len(x) > 5
+        captured = self.input_prompt.read(secret=True, validator=validator)
+        self.assertEqual(captured, "validpass")
+
+    def test_validator_rejects_secret_input_and_retries(self):
+        self.set_in("short\nvalidsecret")
+        def validator(x):
+            if len(x) > 7:
+                return True
+
+            self.stream_out.write("Invalid input\n")
+            return False
+
+        captured = self.input_prompt.read(secret=True, validator=validator)
+        self.assertEqual(captured, "validsecret")
+        self.assert_output_contains("Invalid input")
+
+    def test_validator_multiple_retries_until_valid(self):
+        self.set_in("a\nbb\nccc\nvalid")
+        def validator(x):
+            if len(x) >= 5:
+                return True
+
+            self.stream_out.write("Invalid input\n")
+            return False
+
+        captured = self.input_prompt.read(validator=validator)
+        self.assertEqual(captured, "valid")
+        output = self.stream_out.getvalue()
+        invalid_count = output.count("Invalid input")
+        self.assertEqual(invalid_count, 3)
+
+    def test_validator_with_empty_string_validation(self):
+        default_value = ""
+        validator = lambda x: True  # Always valid
+        captured = self.input_prompt.read(
+            default_value=default_value,
+            validator=validator
+        )
+        self.assertEqual(captured, "")
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

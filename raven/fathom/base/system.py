@@ -20,7 +20,7 @@ from abc import abstractmethod
 from enum import Enum
 from pathlib import PurePath
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Union, Any
+from typing import TYPE_CHECKING, Optional, Union, Any, Callable, TypeAlias
 from collections.abc import Generator
 
 from raven.fathom.base.typing import Interface
@@ -173,6 +173,10 @@ class SystemEnvironment(Interface):
         """
 
 
+# Type alias for input validation functions
+InputPromptValidator: TypeAlias = Callable[[str], bool]
+
+
 @inject
 class InputPrompt(Interface):
     """An interface to prompt the user for input.
@@ -186,11 +190,14 @@ class InputPrompt(Interface):
         self,
         prompt: Optional[str] = None,
         default_value: str = "",
-        secret: bool = False
+        secret: bool = False,
+        validator: Optional[InputPromptValidator] = None
     ) -> str:
         """Prompts the user and reads his entered input.
 
-        This method may block until the user provides input.
+        This method may block until the user provides input. If a validator
+        is provided, the input is validated and the prompt is repeated until
+        the input is valid.
 
         Args:
             prompt (str): The message to display to the user as the prompt.
@@ -201,6 +208,11 @@ class InputPrompt(Interface):
             secret (bool): If `True`, the input will be hidden, i.e. it will
                 not be echoed. This is useful for sensitive input, e.g. for
                 password prompts. Defaults to `False`.
+            validator (InputPromptValidator): An optional validation function
+                that takes the input string and returns `True` if the input is
+                valid, `False` otherwise. If specified and the input is
+                invalid, the prompt will be repeated.
+                Defaults to `None` (no validation).
 
         Returns:
             str: The input provided by the user. May be an empty string.
@@ -208,6 +220,8 @@ class InputPrompt(Interface):
 
         Raises:
             InputReadException: If the input cannot be read.
+            Exception: Any uncaught exception that is raised
+                by a specified `InputPromptValidator`.
         """
 
 

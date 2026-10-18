@@ -19,7 +19,7 @@ inputs and prompts.
 from collections import deque
 from typing import Optional
 
-from raven.fathom.base.system import InputPrompt
+from raven.fathom.base.system import InputPrompt, InputPromptValidator
 
 
 class SystemInputPromptMock(InputPrompt):
@@ -35,15 +35,23 @@ class SystemInputPromptMock(InputPrompt):
         self,
         prompt: Optional[str] = None,
         default_value: str = "",
-        secret: bool = False
+        secret: bool = False,
+        validator: Optional[InputPromptValidator] = None
     ) -> str:
-        if prompt is not None:
-            self.prompts.append(prompt)
+        while True:
+            if prompt is not None:
+                self.prompts.append(prompt)
 
-        if secret:
-            self.secret_reads += 1
+            if secret:
+                self.secret_reads += 1
 
-        if len(self.inputs) == 0:
-            return default_value
+            if len(self.inputs) == 0:
+                result = default_value
+            else:
+                result = self.inputs.popleft() or default_value
 
-        return self.inputs.popleft() or default_value
+            if validator is not None:
+                if validator(result):
+                    return result
+            else:
+                return result

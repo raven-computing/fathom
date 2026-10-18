@@ -21,7 +21,8 @@ import sys
 import getpass
 from typing import Optional
 
-from raven.fathom.base.system import InputPrompt, InputReadException
+from raven.fathom.base.system import InputPrompt, InputPromptValidator
+from raven.fathom.base.system import InputReadException
 from raven.fathom.base.logging import LogFormatterCLI
 
 
@@ -37,33 +38,42 @@ class SystemInputPromptStdIn(InputPrompt):
         self,
         prompt: Optional[str] = None,
         default_value: str = "",
-        secret: bool = False
+        secret: bool = False,
+        validator: Optional[InputPromptValidator] = None
     ) -> str:
-        if prompt is not None:
-            print(
-                LogFormatterCLI.format_message_info(prompt),
-                file=self.stream_out,
-                end="",
-                flush=True,
-            )
-
-        try:
-            if secret and self._can_read_secret():
-                user_input = getpass.getpass("", stream=self.stream_out)
-            else:
-                user_input = self.stream_in.readline()
-        except KeyboardInterrupt:
+        while True:
             if prompt is not None:
-                print("", file=self.stream_out, flush=True)
+                print(
+                    LogFormatterCLI.format_message_info(prompt),
+                    file=self.stream_out,
+                    end="",
+                    flush=True,
+                )
 
-            raise
-        except EOFError as error:
-            raise InputReadException(f"Failed to read input: {error}")
+            try:
+                if secret and self._can_read_secret():
+                    user_input = getpass.getpass("", stream=self.stream_out)
+                else:
+                    user_input = self.stream_in.readline()
+            except KeyboardInterrupt:
+                if prompt is not None:
+                    print("", file=self.stream_out, flush=True)
 
-        if not user_input:
-            return default_value
+                raise
+            except EOFError as error:
+                raise InputReadException(f"Failed to read input: {error}")
 
-        return user_input.rstrip("\n") or default_value
+            if not user_input:
+                result = default_value
+            else:
+                result = user_input.rstrip("\n") or default_value
+
+            if validator is not None:
+                if validator(result):
+                    return result
+
+            else:
+                return result
 
     def _can_read_secret(self):
         if self.stream_in is not sys.stdin:

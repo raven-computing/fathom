@@ -27,13 +27,13 @@ from raven.fathom.base.logging import LogHandlerCLI, LogHandlerFile
 from raven.fathom.base.logging import Logger as BaseLogger
 
 if TYPE_CHECKING:
-    from raven.fathom.client.cli import ArgumentsCLI
+    from raven.fathom.client.cli import AppArgs
 
 
 FATHOM_CLIENT_LOGGER_NAME: Final[str] = "raven.fathom.client"
 
 
-def _determine_log_level(args: "ArgumentsCLI") -> LogLevel:
+def _determine_log_level(args: "AppArgs") -> LogLevel:
     log_level = LogLevel.INFO
     log_verbose = args.verbose
     if log_verbose:
@@ -51,13 +51,13 @@ def _determine_log_level(args: "ArgumentsCLI") -> LogLevel:
     return log_level
 
 
-def setup_cli_logger(args: "ArgumentsCLI"):
+def setup_cli_logger(args: "AppArgs"):
     """Setup function for the CLI logging utilities.
 
     This function should only be called once during startup.
 
     Args:
-        args (ArgumentsCLI): The CLI arguments given to the application.
+        args (AppArgs): The CLI arguments given to the application.
             Is used to determine the logging configuration.
     """
     ctx = ApplicationContext.instance()
@@ -71,13 +71,13 @@ def setup_cli_logger(args: "ArgumentsCLI"):
     )
 
 
-def setup_file_logger(args: "ArgumentsCLI"):
+def setup_file_logger(args: "AppArgs"):
     """Setup function for the file logging utilities.
 
     This function should only be called once during startup.
 
     Args:
-        args (ArgumentsCLI): The CLI arguments given to the application.
+        args (AppArgs): The CLI arguments given to the application.
             Is used to determine the logging configuration.
 
     Raises:

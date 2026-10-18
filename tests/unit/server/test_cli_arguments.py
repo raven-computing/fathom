@@ -19,7 +19,7 @@ from raven.fathom.server.cli.arguments import AppArgs, parse_args
 from tests.unit import TestCase
 
 
-class TestServerArgumentsCLI(TestCase):
+class TestServerAppArgs(TestCase):
     """Unit tests for the server CLI parser."""
 
     def test_setup_command_is_recognized(self):

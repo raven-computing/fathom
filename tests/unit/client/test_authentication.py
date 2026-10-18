@@ -23,7 +23,7 @@ from raven.fathom.client.authentication import (
     ENVIRONMENT_VARIABLE_USER_PASSWORD
 )
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
-from raven.fathom.client.cli.arguments import ArgumentsCLI
+from raven.fathom.client.cli.arguments import AppArgs
 
 from tests.unit import TestCase
 
@@ -36,7 +36,7 @@ class TestClientAuthentication(TestCase):
         # User data from CLI arguments
         self.user_name_cli = "TestUserCLI"
         self.user_password_cli = "TestPasswordCLI"
-        self.cli_args = ArgumentsCLI(
+        self.cli_args = AppArgs(
             user=self.user_name_cli,
             password=self.user_password_cli
         )
@@ -88,7 +88,7 @@ class TestClientAuthentication(TestCase):
     def test_returns_auth_from_user_config_when_project_server_matches(self):
         TestEnvironment.instance().env_vars.clear()
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -105,7 +105,7 @@ class TestClientAuthentication(TestCase):
         )
 
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -126,7 +126,7 @@ class TestClientAuthentication(TestCase):
         )
 
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -143,7 +143,7 @@ class TestClientAuthentication(TestCase):
         )
 
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -154,7 +154,7 @@ class TestClientAuthentication(TestCase):
 
     def test_env_overrides_project_and_user_config(self):
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -175,7 +175,7 @@ class TestClientAuthentication(TestCase):
     def test_returns_auth_with_all_sources_none_prompts_user(self):
         TestEnvironment.instance().env_vars.clear()
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             Configuration(),
             Configuration()
         )
@@ -187,7 +187,7 @@ class TestClientAuthentication(TestCase):
         env = TestEnvironment.instance()
         env.env_vars[ENVIRONMENT_VARIABLE_USER_NAME] = ""
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             Configuration(),
             Configuration()
         )
@@ -201,7 +201,7 @@ class TestClientAuthentication(TestCase):
         env = TestEnvironment.instance()
         env.env_vars[ENVIRONMENT_VARIABLE_USER_PASSWORD] = ""
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             Configuration(),
             Configuration()
         )
@@ -213,7 +213,7 @@ class TestClientAuthentication(TestCase):
         TestEnvironment.instance().env_vars.clear()
         SystemInputPromptMock.instance().inputs.clear()
         auth = load_client_authentication(
-            ArgumentsCLI(),
+            AppArgs(),
             Configuration(),
             Configuration()
         )

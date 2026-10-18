@@ -18,7 +18,7 @@ from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.client.locator import ServerLocator, load_server_locator
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.exceptions import InvalidConfigurationException
-from raven.fathom.client.cli.arguments import ArgumentsCLI
+from raven.fathom.client.cli.arguments import AppArgs
 
 from tests.unit import TestCase
 from tests.fixtures import ConfigurationFixture
@@ -123,7 +123,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         )
 
     def test_loads_from_cli_https_url(self):
-        args = ArgumentsCLI(server="https://fathom.example.com")
+        args = AppArgs(server="https://fathom.example.com")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "fathom.example.com")
         self.assertTrue(locator.secure_connection)
@@ -131,7 +131,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         self.assertIsNone(locator.location)
 
     def test_loads_from_cli_http_url(self):
-        args = ArgumentsCLI(server="http://fathom.example.com")
+        args = AppArgs(server="http://fathom.example.com")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "fathom.example.com")
         self.assertFalse(locator.secure_connection)
@@ -139,21 +139,21 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         self.assertIsNone(locator.location)
 
     def test_loads_from_cli_with_port(self):
-        args = ArgumentsCLI(server="https://fathom.example.com:8443")
+        args = AppArgs(server="https://fathom.example.com:8443")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "fathom.example.com")
         self.assertEqual(locator.port, 8443)
         self.assertTrue(locator.secure_connection)
 
     def test_loads_from_cli_with_path(self):
-        args = ArgumentsCLI(server="https://fathom.example.com/api/v1")
+        args = AppArgs(server="https://fathom.example.com/api/v1")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "fathom.example.com")
         self.assertEqual(locator.location, "/api/v1")
         self.assertTrue(locator.secure_connection)
 
     def test_loads_from_cli_with_port_and_path(self):
-        args = ArgumentsCLI(
+        args = AppArgs(
             server="https://fathom.example.com:8443/api/v1"
         )
         locator = load_server_locator(args, Configuration(), Configuration())
@@ -163,21 +163,21 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         self.assertTrue(locator.secure_connection)
 
     def test_loads_from_cli_with_ip_address(self):
-        args = ArgumentsCLI(server="http://192.168.1.100:8080")
+        args = AppArgs(server="http://192.168.1.100:8080")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "192.168.1.100")
         self.assertEqual(locator.port, 8080)
         self.assertFalse(locator.secure_connection)
 
     def test_rejects_unsupported_protocol(self):
-        args = ArgumentsCLI(server="ftp://fathom.example.com")
+        args = AppArgs(server="ftp://fathom.example.com")
         with self.assertRaises(InvalidConfigurationException) as raised:
             load_server_locator(args, Configuration(), Configuration())
 
         self.assertIn("Not a valid server location", str(raised.exception))
 
     def test_cli_overrides_config_values(self):
-        args = ArgumentsCLI(server="http://cli.example.com:9000")
+        args = AppArgs(server="http://cli.example.com:9000")
         locator = load_server_locator(
             args,
             self.user_config,
@@ -189,7 +189,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
 
     def test_loads_from_user_config(self):
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -204,7 +204,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             "project.example.com"
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -216,7 +216,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             8081
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -228,7 +228,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             "/api/v2"
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -240,7 +240,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             True
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -251,7 +251,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             UserConfiguration.SERVER.TRANSPORT_SECURE,
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -264,7 +264,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         )
         with self.assertRaises(InvalidConfigurationException) as raised:
             load_server_locator(
-                ArgumentsCLI(),
+                AppArgs(),
                 self.user_config,
                 self.project_config
             )
@@ -281,7 +281,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         user_config.add_section(server_section)
         with self.assertRaises(InvalidConfigurationException) as raised:
             load_server_locator(
-                ArgumentsCLI(),
+                AppArgs(),
                 user_config,
                 self.project_config
             )
@@ -310,7 +310,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         )
 
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -336,7 +336,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         self.user_config.add_section(another_server)
 
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )
@@ -348,7 +348,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             "development"
         )
         locator = load_server_locator(
-            ArgumentsCLI(),
+            AppArgs(),
             self.user_config,
             self.project_config
         )

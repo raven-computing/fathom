@@ -17,7 +17,7 @@
 from raven.fathom.base import Command
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import InvalidConfigurationException
-from raven.fathom.client.cli.arguments import ArgumentsCLI
+from raven.fathom.client.cli.arguments import AppArgs
 from raven.fathom.client.cli.status import ExitStatus
 
 
@@ -28,11 +28,11 @@ class ClientCommand(Command):
     """Base class for all client CLI commands.
 
     Attributes:
-        args (ArgumentsCLI): The `ArgumentsCLI` object used by
+        args (AppArgs): The `AppArgs` object used by
             the underlying CLI application.
     """
 
-    def __init__(self, args: ArgumentsCLI):
+    def __init__(self, args: AppArgs):
         self.args = args
         super().__init__(args.command)
 

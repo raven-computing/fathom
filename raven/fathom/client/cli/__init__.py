@@ -16,14 +16,14 @@
 
 __all__ = [
     "ClientCommand",
-    "ArgumentsCLI",
+    "AppArgs",
     "AppCommand",
     "ExitStatus",
     "main",
 ]
 
 from .command import ClientCommand
-from .arguments import ArgumentsCLI
+from .arguments import AppArgs
 from .arguments import AppCommand
 from .status import ExitStatus
 from .application import main

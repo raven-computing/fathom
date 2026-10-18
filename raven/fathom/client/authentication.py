@@ -21,7 +21,7 @@ from raven.fathom.base import SystemEnvironment, InputPrompt
 from raven.fathom.base import Configuration
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
-from raven.fathom.client.cli.arguments import ArgumentsCLI
+from raven.fathom.client.cli.arguments import AppArgs
 
 
 LOG = Logger.get()
@@ -103,7 +103,7 @@ def _gather_from_environment(
     _set_client_authentication(auth, username, password)
 
 
-def _gather_from_cli_arguments(auth: ClientAuthentication, args: ArgumentsCLI):
+def _gather_from_cli_arguments(auth: ClientAuthentication, args: AppArgs):
     _set_client_authentication(auth, args.user, args.password)
 
 
@@ -118,7 +118,7 @@ def _gather_from_user_prompt(auth: ClientAuthentication, sys_in: InputPrompt):
 
 
 def load_client_authentication(
-    args: ArgumentsCLI,
+    args: AppArgs,
     user_config: Configuration,
     project_config: Configuration
 ) -> ClientAuthentication:
@@ -142,7 +142,7 @@ def load_client_authentication(
     corresponding server information is looked up in the user configuration.
 
     Args:
-        args (ArgumentsCLI): The command line arguments. May be empty.
+        args (AppArgs): The command line arguments. May be empty.
         user_config (Configuration): The user configuration. May be empty.
         project_config (Configuration): The project configuration.
             May be empty.

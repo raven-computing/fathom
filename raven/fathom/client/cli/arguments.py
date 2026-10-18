@@ -56,7 +56,7 @@ class AppCommand(StrEnum):
 
 
 @dataclass(frozen=True)
-class ArgumentsCLI:
+class AppArgs:
     """Holds the parsed command line arguments provided by a CLI user."""
 
     verbose: bool = False
@@ -101,15 +101,15 @@ class ArgumentsCLI:
 
 
 @noexcept
-def parse_args(argv: list[str]) -> ArgumentsCLI:
+def parse_args(argv: list[str]) -> AppArgs:
     """Parses the arguments passed to the Fathom client program.
 
     Args:
         argv (list): The arguments vector.
 
     Returns:
-        ArgumentsCLI: The processed command line arguments,
-            as an `ArgumentsCLI` object.
+        AppArgs: The processed command line arguments,
+            as an `AppArgs` object.
     """
     parser = ArgumentParser(
         allow_abbrev=False,
@@ -122,13 +122,13 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     parser.add_argument(
         "--debug",
         action="store_true",
-        default=ArgumentsCLI.debug,
+        default=AppArgs.debug,
         help="Turn on debug logging."
     )
     parser.add_argument(
         "--password",
         action="store",
-        default=ArgumentsCLI.password,
+        default=AppArgs.password,
         help="The password to use for authentication. If this option is used, "
              "the application will not prompt the user to enter a password on "
              "the command-line. If you intend to use this option in a "
@@ -141,13 +141,13 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     parser.add_argument(
         "--quiet",
         action="store_true",
-        default=ArgumentsCLI.quiet,
+        default=AppArgs.quiet,
         help="Turn off all output except errors."
     )
     parser.add_argument(
         "--server",
         action="store",
-        default=ArgumentsCLI.server,
+        default=AppArgs.server,
         help=f"The URL of the {APPLICATION_NAME} server to connect to. "
              "For example, to connect to a local server running on port 8080, "
              "use 'http://localhost:8080' as the option value."
@@ -155,7 +155,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     parser.add_argument(
         "--user",
         action="store",
-        default=ArgumentsCLI.user,
+        default=AppArgs.user,
         help="The username identifier to use for authentication. Using this "
              "option you can override the username that would otherwise be "
              "derived from a user configuration file "
@@ -164,7 +164,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     parser.add_argument(
         "--verbose",
         action="store_true",
-        default=ArgumentsCLI.verbose,
+        default=AppArgs.verbose,
         help="Turn on verbose output."
     )
 
@@ -181,7 +181,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     deploy.add_argument(
         "--project-directory",
         action="store",
-        default=ArgumentsCLI.project_directory,
+        default=AppArgs.project_directory,
         help="The path to the source root directory of the project to deploy. "
              "A relative path is interpreted relative to the "
              "current working directory."
@@ -380,7 +380,7 @@ def parse_args(argv: list[str]) -> ArgumentsCLI:
     parser.add_version_argument()
 
     args = parser.parse_args(argv[1:])
-    return ArgumentsCLI(
+    return AppArgs(
         verbose=args.verbose,
         debug=args.debug,
         quiet=args.quiet,

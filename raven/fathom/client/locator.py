@@ -29,7 +29,7 @@ from raven.fathom.client.logging import Logger
 from raven.fathom.client.exceptions import InvalidConfigurationException
 
 if TYPE_CHECKING:
-    from raven.fathom.client.cli.arguments import ArgumentsCLI
+    from raven.fathom.client.cli.arguments import AppArgs
 
 
 LOG = Logger.get()
@@ -154,7 +154,7 @@ def server_locator_to_url(locator: ServerLocator) -> URL:
     return url
 
 
-def _load_from_cli_args(args: "ArgumentsCLI") -> ServerLocator:
+def _load_from_cli_args(args: "AppArgs") -> ServerLocator:
     url = URL(args.server)
     domain = url.authority.hostname
     if not url.scheme in ("http", "https"):
@@ -240,14 +240,14 @@ def _load_from_configs(
 
 
 def load_server_locator(
-    args: "ArgumentsCLI",
+    args: "AppArgs",
     user_config: Configuration,
     project_config: Configuration
 ) -> ServerLocator:
     """Retrieves the server location details.
 
     Args:
-        args (ArgumentsCLI): The command line arguments. May be empty.
+        args (AppArgs): The command line arguments. May be empty.
         user_config (Configuration): The user configuration. May be empty.
         project_config (Configuration): The project configuration.
             May be empty.
@@ -265,13 +265,13 @@ def load_server_locator(
 
 
 def load_management_server_locator(
-    args: "ArgumentsCLI",
+    args: "AppArgs",
     user_config: Configuration,
 ) -> ServerLocator:
     """Retrieves the server location details for management commands.
 
     Args:
-        args (ArgumentsCLI): The command line arguments. May be empty.
+        args (AppArgs): The command line arguments. May be empty.
         user_config (Configuration): The user configuration. May be empty.
 
     Returns:

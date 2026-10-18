@@ -22,14 +22,14 @@ from raven.fathom.client.logging import shutdown_loggers
 from raven.fathom.client.context import determine_client_application_mode
 from raven.fathom.client.context import determine_client_working_directory
 from raven.fathom.client.config import UserConfiguration, ConfigurationManager
-from raven.fathom.client.cli.arguments import ArgumentsCLI, parse_args
+from raven.fathom.client.cli.arguments import AppArgs, parse_args
 from raven.fathom.client.cli.utils import show_version
 from raven.fathom.client.cli.command import run
 from raven.fathom.client.cli.registry import create_command
 from raven.fathom.client.cli.status import ExitStatus
 
 
-def _check_version_option(args: ArgumentsCLI) -> ExitStatus | None:
+def _check_version_option(args: AppArgs) -> ExitStatus | None:
     if args.version:
         ok = show_version(args.version_short)
         return ExitStatus.SUCCESS if ok else ExitStatus.INTERNAL_ERROR
@@ -37,7 +37,7 @@ def _check_version_option(args: ArgumentsCLI) -> ExitStatus | None:
     return None
 
 
-def _setup_client(args: ArgumentsCLI):
+def _setup_client(args: AppArgs):
     setup_cli_logger(args)
     cm = ConfigurationManager()
     cm.load_configs(args)

@@ -14,91 +14,91 @@
 #
 """Unit tests for CLI argument parsing."""
 
-from raven.fathom.client.cli.arguments import parse_args, ArgumentsCLI
+from raven.fathom.client.cli.arguments import parse_args, AppArgs
 
 from tests.unit import TestCase
 
 
-class TestArgumentsCLI(TestCase):
+class TestAppArgs(TestCase):
     """Unit tests for the `parse_args` function."""
 
     def test_verbose_flag_is_false_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertFalse(args.verbose)
 
     def test_debug_flag_is_false_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertFalse(args.debug)
 
     def test_quiet_flag_is_false_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertFalse(args.quiet)
 
     def test_verbose_flag_is_set_when_provided(self):
         args = parse_args(["fathom", "--verbose", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertTrue(args.verbose)
 
     def test_debug_flag_is_set_when_provided(self):
         args = parse_args(["fathom", "--debug", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertTrue(args.debug)
 
     def test_quiet_flag_is_set_when_provided(self):
         args = parse_args(["fathom", "--quiet", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertTrue(args.quiet)
 
     def test_user_argument_is_empty_string_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.user, "")
 
     def test_password_argument_is_empty_string_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.password, "")
 
     def test_server_argument_is_empty_string_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.server, "")
 
     def test_project_directory_argument_is_empty_string_by_default(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.project_directory, "")
 
     def test_user_argument_stores_provided_value(self):
         args = parse_args(["fathom", "--user", "testuser", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.user, "testuser")
 
     def test_password_argument_stores_provided_value(self):
         args = parse_args(["fathom", "--password", "testpass", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.password, "testpass")
 
     def test_server_argument_stores_provided_value(self):
         args = parse_args(
             ["fathom", "--server", "https://example.com", "deploy"]
         )
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.server, "https://example.com")
 
     def test_project_directory_argument_stores_provided_value(self):
         args = parse_args(
             ["fathom", "deploy", "--project-directory", "/my/project"]
         )
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.project_directory, "/my/project")
 
     def test_deploy_command_is_recognized(self):
         args = parse_args(["fathom", "deploy"])
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.command, "deploy")
 
     def test_manage_user_create_command_is_recognized(self):
@@ -210,7 +210,7 @@ class TestArgumentsCLI(TestCase):
              "deploy"
             ],
         )
-        self.assertIsInstance(args, ArgumentsCLI)
+        self.assertIsInstance(args, AppArgs)
         self.assertTrue(args.verbose)
         self.assertEqual(args.user, "alice")
         self.assertEqual(args.password, "secret")

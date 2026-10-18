@@ -35,7 +35,7 @@ from raven.fathom.base.decorators import singleton
 from raven.fathom.client.logging import Logger
 
 if TYPE_CHECKING:
-    from raven.fathom.client.cli import ArgumentsCLI
+    from raven.fathom.client.cli import AppArgs
 
 
 LOG = Logger.get()
@@ -306,11 +306,11 @@ class ConfigurationManager:
         self._mode = None
         self._cache_enabled = None
 
-    def load_configs(self, args: "ArgumentsCLI"):
+    def load_configs(self, args: "AppArgs"):
         """Setup functionality for the client configuration.
         
         Args:
-            args (ArgumentsCLI): The parsed command line arguments.
+            args (AppArgs): The parsed command line arguments.
         """
         LOG.d(
             "Loading client configuration object in memory. "

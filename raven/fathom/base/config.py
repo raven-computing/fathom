@@ -385,7 +385,10 @@ class ConfigurationSectionKey(metaclass=_SectionKeyMeta):
             ConfigurationSection: A configuration section that has all
                 configurations of this section definition.
         """
-        section = ConfigurationSection(self)
+        section = ConfigurationSection(
+            self,
+            sequence_number=1 if self.is_repeatable else None
+        )
         for key in self.__class__.all_keys():
             if key.default_value is not None:
                 section[key] = key.default_value

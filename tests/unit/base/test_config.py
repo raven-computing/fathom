@@ -194,6 +194,7 @@ class TestConfigurationSectionKey(TestCase):
         section = FakeTestConfig.SECTION_B.default_configuration()
 
         self.assertIsInstance(section, ConfigurationSection)
+        self.assertIsNone(section.sequence_number)
         self.assertIs(section.key, FakeTestConfig.SECTION_B)
         self.assertEqual(
             section.value_of(FakeTestConfig.SECTION_B.CONFIG_KEY_A),
@@ -204,6 +205,19 @@ class TestConfigurationSectionKey(TestCase):
             FakeTestConfig.SECTION_B.CONFIG_KEY_B.default_value
         )
         self.assertEqual(len(section), 2)
+
+    def test_default_config_has_sequence_number_for_repeatable_section(self):
+        section = FakeTestConfig.SECTION_C.default_configuration()
+
+        self.assertIsInstance(section, ConfigurationSection)
+        self.assertIsNotNone(section.sequence_number)
+        self.assertEqual(1, section.sequence_number)
+        self.assertIs(section.key, FakeTestConfig.SECTION_C)
+        self.assertEqual(
+            section.value_of(FakeTestConfig.SECTION_C.CONFIG_KEY_A),
+            FakeTestConfig.SECTION_C.CONFIG_KEY_A.default_value
+        )
+        self.assertEqual(len(section), 1)
 
     def test_get_all_keys_from_section(self):
         section = FakeTestConfig.SECTION_A

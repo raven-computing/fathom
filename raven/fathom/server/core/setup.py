@@ -45,7 +45,7 @@ def _setup_database():
     if LOG.level == LogLevel.DEBUG:
         db_manager.set_debug_loggging_enabled(True)
 
-    LOG.i("Connecting to %s database", db.type_name())
+    LOG.v("Connecting to %s database", db.type_name())
     db.connect()
     if not db_exists:
         LOG.i("Creating database schema")

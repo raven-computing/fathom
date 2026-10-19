@@ -572,7 +572,7 @@ class ConfigurationManager:
                 ProjectConfiguration, LOG, enable_validation=True
             ).load(config_file)
 
-        LOG.w("No project configuration file found")
+        LOG.d("No project configuration file found")
         return Configuration()
 
     def _get_all_file_permutations(self, file_names):

@@ -227,6 +227,82 @@ class TestSystemInputPromptStdIn(TestCase):
         )
         self.assertEqual(captured, "")
 
+    def test_select_returns_option_by_number(self):
+        options = ["Option 1", "Option 2", "Option 3"]
+        test_input = "2"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options)
+        self.assertEqual(captured, "Option 2")
+        self.assert_output_contains("[1] Option 1")
+        self.assert_output_contains("[2] Option 2")
+        self.assert_output_contains("[3] Option 3")
+
+    def test_select_returns_option_by_name(self):
+        options = ["Option 1", "Option 2", "Option 3"]
+        test_input = "Option 1"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options)
+        self.assertEqual(captured, "Option 1")
+        self.assert_output_contains("[1] Option 1")
+        self.assert_output_contains("[2] Option 2")
+        self.assert_output_contains("[3] Option 3")
+
+    def test_select_repeats_on_empty_input(self):
+        options = ["Option 1", "Option 2"]
+        test_input = "\n\n\nOption 2"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options, prompt="SENTINEL")
+        self.assertEqual(captured, "Option 2")
+        self.assertEqual(
+            self.stream_out.getvalue().count("SENTINEL"),
+            4,
+            "Should have printed the prompt four times"
+        )
+        self.assertEqual(
+            self.stream_out.getvalue().count("[1] Option 1"),
+            1,
+            "Should have printed the available options once"
+        )
+
+    def test_select_repeats_on_invalid_input(self):
+        options = ["Option 1", "Option 2"]
+        test_input = "invalid\nOption 1"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options, "Choose an option: ")
+        self.assertEqual(captured, "Option 1")
+        self.assertEqual(
+            self.stream_out.getvalue().count("Choose an option: "),
+            2
+        )
+        self.assertEqual(
+            self.stream_out.getvalue().count("[1] Option 1"),
+            1
+        )
+
+    def test_select_raises_value_error_on_empty_options(self):
+        empty_sequence = []
+        with self.assertRaises(ValueError) as raised:
+            self.input_prompt.select(options=empty_sequence)
+
+        self.assertIn(
+            "The options sequence must not be empty",
+            str(raised.exception)
+        )
+
+    def test_select_returns_default_value_on_empty_input(self):
+        options = ["Option 1", "Option 2"]
+        test_input = "\n"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options, default_value="DEFAULT")
+        self.assertEqual(captured, "DEFAULT")
+
+    def test_select_returns_default_value_on_whitespace_input(self):
+        options = ["Option 1", "Option 2"]
+        test_input = "   \n"
+        self.set_in(test_input)
+        captured = self.input_prompt.select(options, default_value="DEFAULT")
+        self.assertEqual(captured, "DEFAULT")
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

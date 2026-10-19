@@ -20,7 +20,8 @@ from abc import abstractmethod
 from enum import Enum
 from pathlib import PurePath
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional, Union, Any, Callable, TypeAlias
+from typing import Optional, Union, Any, Callable, TypeAlias, Sequence
+from typing import TYPE_CHECKING
 from collections.abc import Generator
 
 from raven.fathom.base.typing import Interface
@@ -222,6 +223,42 @@ class InputPrompt(Interface):
             InputReadException: If the input cannot be read.
             Exception: Any uncaught exception that is raised
                 by a specified `InputPromptValidator`.
+        """
+
+    @abstractmethod
+    def select(
+        self,
+        options: Sequence[str],
+        prompt: Optional[str] = None,
+        default_value: Optional[str] = None
+    ) -> str:
+        """Prompts the user to select one of the given options.
+
+        This method may block until the user provides input. The given options
+        are presented as a numbered list of named items. The user may either
+        specify his selection by entering the name of the shown item or by
+        entering the number of that item. If the user provides empty input and
+        no default value is specified, then the prompt is repeated until valid
+        input is provided. Otherwise, on empty input, the specified default
+        value is returned.
+
+        Args:
+            options (Sequence): A sequence of `str` items to let the user
+                choose from. Must not be empty.
+            prompt (str): The message to display to the user as the prompt.
+                Specify as `None` to not display a prompt and only read
+                the option selection.
+            default_value (str): The default value to return if the user
+                does not provide any input. When `None`, the user must provide
+                a non-empty input.
+
+        Returns:
+            str: The input provided by the user. Must never include any
+                trailing newline character.
+
+        Raises:
+            ValueError: If the given options sequence is empty.
+            InputReadException: If the input cannot be read.
         """
 
 

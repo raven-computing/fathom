@@ -21,8 +21,9 @@ contact the Fathom server.
 from typing import TYPE_CHECKING, Optional, Final
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.base import Configuration
+from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.base import URL, URLAuthority
+from raven.fathom.base import InputPrompt
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
@@ -172,12 +173,90 @@ def _load_from_cli_args(args: "AppArgs") -> ServerLocator:
     return server
 
 
+def _load_from_user_config_section(
+    config: ConfigurationSection
+)-> ServerLocator:
+    server_name = config.value_of(ProjectConfiguration.SERVER.NAME)
+    if not server_name:
+        LOG.e(
+            "The server referenced in the user configuration "
+            "has no name set"
+        )
+        raise InvalidConfigurationException(
+            "Missing configuration in user config"
+        )
+
+    domain = config.value_of(ProjectConfiguration.SERVER.DOMAIN)
+    if domain is None:
+        LOG.e(
+            "The server referenced in the user configuration "
+            "has no domain set"
+        )
+        LOG.e(
+            "Missing configuration key '%s' for server '%s'",
+            UserConfiguration.SERVER.DOMAIN.name,
+            server_name
+        )
+        raise InvalidConfigurationException(
+            "Missing configuration in user config"
+        )
+
+    use_secure_connection = config.value_of(
+        ProjectConfiguration.SERVER.TRANSPORT_SECURE
+    )
+
+    server = ServerLocator(domain)
+    server.secure_connection = (
+        use_secure_connection
+        if use_secure_connection is not None
+        else True
+    )
+    server.port = config.value_of(ProjectConfiguration.SERVER.PORT)
+    server.location = config.value_of(ProjectConfiguration.SERVER.LOCATION)
+    return server
+
+
+def _load_from_user_config(config: Configuration)-> ServerLocator:
+    server_sections = config.get_repeatable_sections(UserConfiguration.SERVER)
+    if len(server_sections) == 0:
+        raise InvalidConfigurationException(
+            "Missing server configuration. "
+            "Specify --server or configure a server in the user config."
+        )
+    if len(server_sections) == 1:
+        return _load_from_user_config_section(server_sections[0])
+
+    sys_in = InputPrompt.instance()
+    available_server_names = list(
+        filter(
+            None,
+            [
+                section.value_of(UserConfiguration.SERVER.NAME)
+                for section in server_sections
+            ]
+        )
+    )
+    LOG.i("Which server should be used?")
+    selected_name = sys_in.select(available_server_names)
+    selected_server_section = [
+        section
+        for section in server_sections
+        if section.value_of(UserConfiguration.SERVER.NAME) == selected_name
+    ][0]
+    return _load_from_user_config_section(selected_server_section)
+
+
 def _load_from_configs(
     user: Configuration,
     project: Configuration
 )-> ServerLocator:
 
-    server_name = project.get_required_value(ProjectConfiguration.SERVER.NAME)
+    if project.is_empty():
+        return _load_from_user_config(user)
+
+    server_name = project.value_of(ProjectConfiguration.SERVER.NAME)
+    if not server_name:
+        return _load_from_user_config(user)
 
     domain = project.value_of(ProjectConfiguration.SERVER.DOMAIN)
     use_secure_connection = user.value_of(
@@ -220,7 +299,12 @@ def _load_from_configs(
     if use_secure_connection is None:
         use_secure_connection = referenced_server_section.value_of(
             UserConfiguration.SERVER.TRANSPORT_SECURE
-        ) or True
+        )
+        use_secure_connection = (
+            use_secure_connection
+            if use_secure_connection is not None
+            else True
+        )
 
     if port is None:
         port = referenced_server_section.value_of(
@@ -262,47 +346,3 @@ def load_server_locator(
         return _load_from_cli_args(args)
 
     return _load_from_configs(user_config, project_config)
-
-
-def load_management_server_locator(
-    args: "AppArgs",
-    user_config: Configuration,
-) -> ServerLocator:
-    """Retrieves the server location details for management commands.
-
-    Args:
-        args (AppArgs): The command line arguments. May be empty.
-        user_config (Configuration): The user configuration. May be empty.
-
-    Returns:
-        ServerLocator: The loaded server location details.
-
-    Raises:
-        InvalidConfigurationException: If there is a configuration issue.
-    """
-    if args.server:
-        return _load_from_cli_args(args)
-
-    server_sections = user_config.get_repeatable_sections(
-        UserConfiguration.SERVER
-    )
-    if len(server_sections) == 0:
-        raise InvalidConfigurationException(
-            "Missing server configuration. "
-            "Specify --server or configure a server in the user config."
-        )
-
-    section = server_sections[0]
-    domain = section.value_of(UserConfiguration.SERVER.DOMAIN)
-    if not domain:
-        raise InvalidConfigurationException(
-            "Missing server domain in user configuration."
-        )
-
-    server = ServerLocator(domain)
-    server.secure_connection = section.value_of(
-        UserConfiguration.SERVER.TRANSPORT_SECURE
-    ) or False
-    server.port = section.value_of(UserConfiguration.SERVER.PORT)
-    server.location = section.value_of(UserConfiguration.SERVER.LOCATION)
-    return server

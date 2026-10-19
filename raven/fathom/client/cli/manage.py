@@ -22,7 +22,7 @@ from raven.fathom.client.connection import (
     ServerConnectionException, ServerOperationException,
 )
 from raven.fathom.client.logging import Logger
-from raven.fathom.client.locator import load_management_server_locator
+from raven.fathom.client.locator import load_server_locator
 from raven.fathom.client.authentication import load_client_authentication
 from raven.fathom.client.cli.arguments import AppCommand
 from raven.fathom.client.cli.command import ClientCommand
@@ -52,7 +52,7 @@ class ManageCommand(ClientCommand):
         user_config = config.get_user_config()
         project_config = config.get_project_config()
         server = Server(
-            load_management_server_locator(self.args, user_config),
+            load_server_locator(self.args, user_config, project_config),
             load_client_authentication(
                 self.args,
                 user_config,

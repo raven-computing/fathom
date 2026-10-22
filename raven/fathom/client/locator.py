@@ -246,42 +246,54 @@ def _load_from_user_config(config: Configuration)-> ServerLocator:
     return _load_from_user_config_section(selected_server_section)
 
 
-def _load_from_configs(
-    user: Configuration,
-    project: Configuration
-)-> ServerLocator:
-
-    if project.is_empty():
-        return _load_from_user_config(user)
-
-    server_name = project.value_of(ProjectConfiguration.SERVER.NAME)
-    if not server_name:
-        return _load_from_user_config(user)
-
-    domain = project.value_of(ProjectConfiguration.SERVER.DOMAIN)
-    use_secure_connection = user.value_of(
-        ProjectConfiguration.SERVER.TRANSPORT_SECURE
+def _has_no_server_entry(project: Configuration) -> bool:
+    return (
+        project.is_empty()
+        or not project.has_section(ProjectConfiguration.SERVER)
     )
-    port = user.value_of(ProjectConfiguration.SERVER.PORT)
-    location_path = user.value_of(ProjectConfiguration.SERVER.LOCATION)
 
-    referenced_server_section = None
+
+def _get_project_server_values(
+    project: Configuration,
+) -> tuple[
+    Optional[str],
+    Optional[int],
+    Optional[str],
+    Optional[bool],
+]:
+    section = project.get_section(ProjectConfiguration.SERVER)
+    return (
+        section.value_of(ProjectConfiguration.SERVER.DOMAIN, default=None),
+        section.value_of(ProjectConfiguration.SERVER.PORT, default=None),
+        section.value_of(ProjectConfiguration.SERVER.LOCATION, default=None),
+        section.value_of(
+            ProjectConfiguration.SERVER.TRANSPORT_SECURE,
+            default=None,
+        ),
+    )
+
+
+def _find_named_server(
+    user: Configuration,
+    server_name: str,
+) -> Optional[ConfigurationSection]:
     for section in user.get_repeatable_sections(UserConfiguration.SERVER):
         if section.value_of(UserConfiguration.SERVER.NAME) == server_name:
-            referenced_server_section = section
+            return section
 
-    if referenced_server_section is None:
-        LOG.e(
-            "The server referenced in the project configuration "
-            "cannot be found"
-        )
-        LOG.e("No server available with name '%s'", server_name)
-        raise InvalidConfigurationException("Missing configuration")
+    return None
 
+
+def _merge_with_user_server(
+    user_server: ConfigurationSection,
+    server_name: Optional[str],
+    domain: Optional[str],
+    port: Optional[int],
+    location_path: Optional[str],
+    use_secure_connection: Optional[bool],
+) -> tuple[Optional[str], Optional[int], Optional[str], Optional[bool]]:
     if domain is None:
-        domain = referenced_server_section.value_of(
-            UserConfiguration.SERVER.DOMAIN
-        )
+        domain = user_server.value_of(UserConfiguration.SERVER.DOMAIN)
         if domain is None:
             LOG.e(
                 "The server referenced in the project configuration "
@@ -297,7 +309,7 @@ def _load_from_configs(
             )
 
     if use_secure_connection is None:
-        use_secure_connection = referenced_server_section.value_of(
+        use_secure_connection = user_server.value_of(
             UserConfiguration.SERVER.TRANSPORT_SECURE
         )
         use_secure_connection = (
@@ -307,19 +319,102 @@ def _load_from_configs(
         )
 
     if port is None:
-        port = referenced_server_section.value_of(
-            UserConfiguration.SERVER.PORT
-        )
+        port = user_server.value_of(UserConfiguration.SERVER.PORT)
 
     if location_path is None:
-        location_path = referenced_server_section.value_of(
-            UserConfiguration.SERVER.LOCATION
+        location_path = user_server.value_of(UserConfiguration.SERVER.LOCATION)
+
+    return domain, port, location_path, use_secure_connection
+
+
+def _load_from_configs(
+    user: Configuration,
+    project: Configuration
+)-> ServerLocator:
+
+    if _has_no_server_entry(project):
+        return _load_from_user_config(user)
+
+    server_name = project.value_of(ProjectConfiguration.SERVER.NAME)
+    domain, port, location, use_secure_connection = _get_project_server_values(
+        project
+    )
+
+    if (not server_name
+        and domain is None
+        and use_secure_connection is None
+        and port is None
+        and location is None
+    ):
+        return _load_from_user_config(user)
+
+    referenced_server_section = None
+    if server_name:
+        referenced_server_section = _find_named_server(user, server_name)
+        if (referenced_server_section is None
+            and not any(
+                value is not None for value in (
+                    domain,
+                    use_secure_connection,
+                    port,
+                    location,
+                )
+            )
+        ):
+            LOG.e(
+                "The server referenced in the project configuration "
+                "cannot be found"
+            )
+            LOG.e("No server available with name '%s'", server_name)
+            raise InvalidConfigurationException("Missing configuration")
+
+    if referenced_server_section is not None:
+        domain, port, location, use_secure_connection = (
+            _merge_with_user_server(
+                referenced_server_section,
+                server_name,
+                domain,
+                port,
+                location,
+                use_secure_connection,
+            )
+        )
+    elif (
+        user.get_repeatable_sections(UserConfiguration.SERVER) and
+        (
+            domain is None
+            or port is None
+            or location is None
+            or use_secure_connection is None
+        )
+    ):
+        default_server = _load_from_user_config(user)
+        if domain is None:
+            domain = default_server.domain
+        if use_secure_connection is None:
+            use_secure_connection = default_server.secure_connection
+        if port is None:
+            port = default_server.port
+        if location is None:
+            location = default_server.location
+
+    if domain is None:
+        LOG.e(
+            "The server referenced in the project configuration "
+            "has no domain set"
+        )
+        raise InvalidConfigurationException(
+            "Missing configuration in user config"
         )
 
     server = ServerLocator(domain)
-    server.secure_connection = use_secure_connection
+    server.secure_connection = (
+        use_secure_connection
+        if use_secure_connection is not None
+        else True
+    )
     server.port = port
-    server.location = location_path
+    server.location = location
     return server
 
 
@@ -329,6 +424,31 @@ def load_server_locator(
     project_config: Configuration
 ) -> ServerLocator:
     """Retrieves the server location details.
+
+    This data is searched for in the following order, where a server specified
+    via the command line argument takes precedence over present
+    configuration files.
+
+    1. Command line arguments
+    2. Configuration files
+
+    In the second step, the project configuration file, if not empty,
+    is searched for server locator details. The project configuration may
+    refer to a specific server by name in its server section, in which case the
+    corresponding server information is looked up in the user configuration.
+    Any server information specified in the project configuration takes
+    precedence over the equivalent entry in the user configuration. So the
+    created server locator could reflect the combined configuration of project
+    and user configuration.
+
+    If there is no project configuration or it does not specify a server, the
+    user configuration is used to determine the server locator details. In that
+    case, and if multiple server sections exist in the user configuration, the
+    user is prompted to select the desired server. So this method may block
+    execution until the user enters a selection.
+
+    If the server location details cannot be determined, an exception
+    is raised.
 
     Args:
         args (AppArgs): The command line arguments. May be empty.

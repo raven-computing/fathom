@@ -402,6 +402,13 @@ class TestConfigurationSection(TestCase):
         value = section.value_of(key, default=None)
         self.assertIsNone(value)
 
+    def test_value_of_ignores_explicit_default_when_value_present(self):
+        section = ConfigurationSection(FakeTestConfig.SECTION_B)
+        key = FakeConfigSectionB.CONFIG_KEY_A
+        section.set_value(key, 7)
+        value = section.value_of(key, default=99)
+        self.assertEqual(value, 7)
+
     def test_raw_value_of(self):
         section = ConfigurationSection(self.section_key)
         key = self.config_key_a

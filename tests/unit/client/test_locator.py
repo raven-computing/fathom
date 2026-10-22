@@ -320,6 +320,173 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         self.assertEqual(locator.location, "/api")
         self.assertFalse(locator.secure_connection)
 
+    def test_project_server_values_override_user_values(self):
+        self.user_config_server_section.set_value(
+            UserConfiguration.SERVER.DOMAIN,
+            "this.example.com"
+        )
+        self.user_config_server_section.set_value(
+            UserConfiguration.SERVER.PORT,
+            8443
+        )
+        self.user_config_server_section.set_value(
+            UserConfiguration.SERVER.LOCATION,
+            "/api/user"
+        )
+        self.user_config_server_section.set_value(
+            UserConfiguration.SERVER.TRANSPORT_SECURE,
+            False
+        )
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.DOMAIN,
+            "that.example.com"
+        )
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.PORT,
+            9443
+        )
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.LOCATION,
+            "/api/project"
+        )
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.TRANSPORT_SECURE,
+            True
+        )
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            self.project_config
+        )
+
+        self.assertEqual(locator.domain,"that.example.com")
+        self.assertEqual(locator.port, 9443)
+        self.assertEqual(locator.location, "/api/project")
+        self.assertTrue(locator.secure_connection)
+
+    def test_project_direct_server_values_are_used_without_server_name(self):
+        project = Configuration()
+        project_section = ConfigurationSection(ProjectConfiguration.SERVER)
+        project_section.set_value(
+            ProjectConfiguration.SERVER.DOMAIN,
+            "project.example.com"
+        )
+        project_section.set_value(
+            ProjectConfiguration.SERVER.PORT,
+            9443
+        )
+        project_section.set_value(
+            ProjectConfiguration.SERVER.LOCATION,
+            "/api/project"
+        )
+        project_section.set_value(
+            ProjectConfiguration.SERVER.TRANSPORT_SECURE,
+            True
+        )
+        project.add_section(project_section)
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            project
+        )
+
+        self.assertEqual(locator.domain, "project.example.com")
+        self.assertEqual(locator.port, 9443)
+        self.assertEqual(locator.location, "/api/project")
+        self.assertTrue(locator.secure_connection)
+
+    def test_loads_from_user_config_when_project_has_no_server_section(self):
+        project = Configuration()
+        project_section = ConfigurationSection(ProjectConfiguration.PROJECT)
+        project_section.set_value(
+            ProjectConfiguration.PROJECT.IDENTIFIER,
+            "test-project-1"
+        )
+        project.add_section(project_section)
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            project
+        )
+
+        self.assertEqual(locator.domain, "localhost")
+        self.assertEqual(locator.port, 8080)
+        self.assertFalse(locator.secure_connection)
+        self.assertIsNone(locator.location)
+
+    def test_loads_from_user_config_when_project_server_section_is_empty(self):
+        project = Configuration()
+        project_section = ConfigurationSection(ProjectConfiguration.SERVER)
+        project.add_section(project_section)
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            project
+        )
+
+        self.assertEqual(locator.domain, "localhost")
+        self.assertEqual(locator.port, 8080)
+        self.assertFalse(locator.secure_connection)
+        self.assertIsNone(locator.location)
+
+    def test_raises_error_when_named_project_server_is_missing(self):
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.NAME,
+            "missing-server"
+        )
+
+        with self.assertRaises(InvalidConfigurationException) as raised:
+            load_server_locator(
+                AppArgs(),
+                self.user_config,
+                self.project_config
+            )
+
+        self.assertIn("Missing configuration", str(raised.exception))
+
+    def test_named_project_server_uses_user_fallback_for_missing_vals(self):
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.NAME,
+            "Test Server"
+        )
+        self.project_config_server_section.set_value(
+            ProjectConfiguration.SERVER.PORT,
+            9443
+        )
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            self.project_config
+        )
+
+        self.assertEqual(locator.domain, "localhost")
+        self.assertEqual(locator.port, 9443)
+        self.assertFalse(locator.secure_connection)
+        self.assertIsNone(locator.location)
+
+    def test_raises_error_when_user_config_has_no_server_sections(self):
+        project = Configuration()
+        project_section = ConfigurationSection(ProjectConfiguration.PROJECT)
+        project_section.set_value(
+            ProjectConfiguration.PROJECT.IDENTIFIER,
+            "test-project-1"
+        )
+        project.add_section(project_section)
+
+        with self.assertRaises(InvalidConfigurationException) as raised:
+            load_server_locator(
+                AppArgs(),
+                Configuration(),
+                project
+            )
+
+        self.assertIn("Missing server configuration", str(raised.exception))
+
     def test_multiple_server_sections_selects_correct_one(self):
         another_server = ConfigurationSection(
             UserConfiguration.SERVER,

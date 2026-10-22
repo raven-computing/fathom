@@ -394,6 +394,14 @@ class TestConfigurationSection(TestCase):
         self.assertIsInstance(section.value_of(key), int)
         self.assertEqual(section.value_of(key), key.default_value)
 
+    def test_value_of_uses_explicit_default_when_key_missing(self):
+        section = ConfigurationSection(FakeTestConfig.SECTION_B)
+        key = FakeConfigSectionB.CONFIG_KEY_A
+        value = section.value_of(key, default=99)
+        self.assertEqual(value, 99)
+        value = section.value_of(key, default=None)
+        self.assertIsNone(value)
+
     def test_raw_value_of(self):
         section = ConfigurationSection(self.section_key)
         key = self.config_key_a

@@ -155,7 +155,7 @@ import re
 import textwrap
 
 from io import StringIO
-from typing import Type, TypeAlias, Union, Optional, cast
+from typing import Type, TypeAlias, Union, Optional, Final, cast
 from typing import Generic, TypeVar, overload
 from collections.abc import MutableSequence
 
@@ -528,6 +528,16 @@ class ConfigurationKey(Generic[T]):
         return self.name
 
 
+class DefaultFromKeyDefinition:
+    """Sentinel type used to indicate that the default value should
+    be taken from the key definition.
+    """
+
+
+# Sentinel value
+KEY_DEFAULT_DECL: Final = DefaultFromKeyDefinition()
+
+
 class ConfigurationSection:
     """A section of a configuration object.
 
@@ -600,20 +610,26 @@ class ConfigurationSection:
         """
         return key.name in self._configs
 
-    def value_of(self, key: ConfigurationKey[T]) -> Optional[T]:
+    def value_of(
+        self,
+        key: ConfigurationKey[T],
+        default: Union[T, DefaultFromKeyDefinition, None] = KEY_DEFAULT_DECL
+    ) -> Optional[T]:
         """Obtains the configuration value associated with the specified key.
 
         Args:
             key (ConfigurationKey[T]): The key of the configuration
                 value of type `T` to obtain.
+            default (T): The default value to return if the configuration key
+                is not found. If not specified, the default value defined by
+                the key will be used. If the key definition does not declare
+                a default value, `None` will be returned.
 
         Returns:
             T: The configuration value associated with the specified key,
                 converted to its declared type `T`. Returns the default value
-                declared by the specified key if no such configuration value
-                can be found, or `None` if no configuration value can be found
-                for the given key and there is also no default value specified
-                by that key.
+                as specified by the `default` parameter if no such
+                configuration value can be found.
 
         Raises:
             MalformedConfigurationValueException: If the value exists in this
@@ -622,9 +638,13 @@ class ConfigurationSection:
         """
         value = self.raw_value_of(key)
         if value is not None:
-            value = self._convert_raw_value(key, value)
+            return self._convert_raw_value(key, value)
 
-        return value if value is not None else key.default_value
+        if default is KEY_DEFAULT_DECL:
+            return key.default_value
+
+        assert not isinstance(default, DefaultFromKeyDefinition)
+        return default
 
     def raw_value_of(self, key: ConfigurationKey) -> Optional[str]:
         """Obtains the raw configuration value for the specified key.

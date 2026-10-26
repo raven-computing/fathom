@@ -30,7 +30,7 @@ from typing import Union, Final
 import cherrypy
 
 from raven.fathom.base import MethodHTTP
-from raven.fathom.base import ServerResponse
+from raven.fathom.base import Interaction, ServerResponse
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
 from raven.fathom.base import ClientAuthentication
@@ -122,6 +122,9 @@ class _RequestProcessorHTTP(cherrypy.Tool):
 
     def _process(self):
         request = cherrypy.serving.request
+        params = request.params
+        request_action = params.get("action")
+        action_query = self._get_action_query(request_action)
         try:
             client_authentication = decode_client_auth_header()
             content_type = request.headers.get("Content-Type", "")
@@ -159,7 +162,29 @@ class _RequestProcessorHTTP(cherrypy.Tool):
                 "Bad request: Decode error"
             )
 
+        if client_request.action != action_query:
+            raise cherrypy.HTTPError(
+                400,
+                "Bad request: Action query paramter "
+                "does not match client request body action"
+            )
+
+        del params["action"]
         request.params["request"] = client_request
+
+    def _get_action_query(self, request_action):
+        if not request_action:
+            raise cherrypy.HTTPError(
+                400, "Bad request: Expected request action as query parameter"
+            )
+
+        try:
+            action_query = Interaction(request_action)
+        except ValueError:
+            raise cherrypy.HTTPError(
+                400, f"Bad request: Unknown request action '{request_action}'"
+            )
+        return action_query
 
 
 def _fathom_handler(*args, **kwargs):

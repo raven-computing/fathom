@@ -70,7 +70,8 @@ class ServerInteractionHTTP(ServerInteraction):
                 "Failed to decode JSON payload of server response"
             ) from ex
 
-    def _send_http(self, request):
+    def _send_http(self, request: ClientRequest) -> ServerResponse:
+        self._server_url.query["action"] = request.action
         http_request = RequestHTTP(MethodHTTP.POST, self._server_url)
         authentication = request.authentication
         if authentication is not None:

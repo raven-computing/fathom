@@ -16,9 +16,10 @@
 
 import sys
 
-from raven.fathom.base import ApplicationContext
+from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.client.logging import setup_cli_logger, setup_file_logger
 from raven.fathom.client.logging import shutdown_loggers
+from raven.fathom.client.logging import Logger
 from raven.fathom.client.context import determine_client_application_mode
 from raven.fathom.client.context import determine_client_working_directory
 from raven.fathom.client.config import UserConfiguration, ConfigurationManager
@@ -27,6 +28,9 @@ from raven.fathom.client.cli.utils import show_version
 from raven.fathom.client.cli.command import run
 from raven.fathom.client.cli.registry import create_command
 from raven.fathom.client.cli.status import ExitStatus
+
+
+LOG = Logger.get()
 
 
 def _check_version_option(args: AppArgs) -> ExitStatus | None:
@@ -44,6 +48,10 @@ def _setup_client(args: AppArgs):
     config = cm.get_user_config()
     if config[UserConfiguration.USER.LOGGING_ENABLED]:
         setup_file_logger(args)
+
+    app_mode = ApplicationContext.instance().get_application_mode()
+    if app_mode == ApplicationMode.DEVELOPMENT:
+        LOG.i("Running in a development environment")
 
 
 def main(argv: list[str]) -> ExitStatus:

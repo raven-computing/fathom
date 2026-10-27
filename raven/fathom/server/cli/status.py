@@ -28,4 +28,6 @@ class ExitStatus(enum.IntEnum):
 
     INTERNAL_ERROR = 3
 
+    CANCELLED = 7
+
     UNKNOWN_ERROR = 126

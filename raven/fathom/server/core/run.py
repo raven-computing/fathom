@@ -41,6 +41,7 @@ def run_server(args: AppArgs) -> ExitStatus:
     if app_mode == ApplicationMode.DEVELOPMENT:
         LOG.i("Running in a development environment")
 
+    command = None
     try:
         cm = ConfigurationManager()
         cm.load_configs(args)
@@ -55,6 +56,12 @@ def run_server(args: AppArgs) -> ExitStatus:
         LOG.i("The server has not been set up yet.")
         LOG.i("Run 'fathom-server setup' first.")
         return ExitStatus.MISSING_SETUP
+    except KeyboardInterrupt:
+        LOG.i("Cancelling...")
+        if command is not None:
+            command.cancel()
+
+        return ExitStatus.CANCELLED
     except Exception as ex:  # pylint: disable=broad-exception-caught
         LOG.e("Failed to run Fathom server")
         LOG.e(str(ex))

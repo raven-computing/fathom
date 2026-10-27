@@ -18,6 +18,7 @@ from raven.fathom.base import InputPrompt, User
 from raven.fathom.base import SecretToken
 from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.server.cli.command import ServerCommand
+from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger, log_stdout
 from raven.fathom.server.models import Settings
 from raven.fathom.server.security import UserAuthenticator
@@ -47,6 +48,11 @@ class SetupCommand(ServerCommand):
     """Implementation of the `setup` server command."""
 
     def execute(self) -> int:
+        user_mananger = UserManager(UserAuthenticator())
+        if user_mananger.is_setup_complete():
+            LOG.i("The server has already been set up")
+            return ExitStatus.FAILURE
+
         prompt = InputPrompt.instance()
         LOG.i(
             "Performing initial setup procedure "
@@ -117,7 +123,7 @@ class SetupCommand(ServerCommand):
         )
         LOG.i("")
         LOG.i("Setting system user '%s'.", SYSTEM_USER_IDENTIFIER)
-        UserManager(UserAuthenticator()).create_system_user(user)
+        user_mananger.create_system_user(user)
         LOG.i("Creating organisation settings for '%s'", organisation_name)
         Settings.create(
             organisation_name=organisation_name,

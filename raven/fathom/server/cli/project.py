@@ -15,6 +15,7 @@
 """CLI command handling for project management actions."""
 
 from raven.fathom.base import Project
+from raven.fathom.base import TableFormatter
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
@@ -46,13 +47,17 @@ class ProjectListCommand(ServerCommand):
     @require_privileges
     def execute(self) -> int:
         manager = ProjectManager()
+        formatter = TableFormatter().set_headers(
+            "Identifier", "Name", "Description"
+        )
         for project in manager.list_projects():
-            LOG.i(
-                "Project: '%s'\tName: '%s'\tDescription: '%s'",
+            formatter.add_row(
                 project.identifier,
                 project.name,
                 project.description,
             )
+
+        LOG.i(formatter.get_formatted_text())
         return 0
 
 

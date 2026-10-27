@@ -15,6 +15,7 @@
 """CLI command handling for user management actions."""
 
 from raven.fathom.base import User, UserState
+from raven.fathom.base import TableFormatter
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
@@ -54,15 +55,19 @@ class UserListCommand(ServerCommand):
     @require_privileges
     def execute(self) -> int:
         manager = UserManager(UserAuthenticator())
+        formatter = TableFormatter().set_headers(
+            "Identifier", "Name", "Role", "State"
+        )
         for user in manager.list_users():
             role = manager.get_user_role(user.identifier).value
-            LOG.i(
-                "User: '%s'\tName: '%s'\tRole: '%s'\tState: '%s'",
+            formatter.add_row(
                 user.identifier,
                 user.name,
                 role,
                 user.state,
             )
+
+        LOG.i(formatter.get_formatted_text())
         return 0
 
 

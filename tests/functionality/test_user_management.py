@@ -43,12 +43,14 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertNotIn("Fathom System User", self.client.stdout)
-        self.assertClientStdoutContains(
-            "alpha\tAlphanet Administrator\tadmin\tactive"
-        )
-        self.assertClientStdoutContains(
-            "managed-user\tManaged User\tregular\tonboarding"
-        )
+        self.assertClientStdoutContains("alpha")
+        self.assertClientStdoutContains("Alphanet Administrator")
+        self.assertClientStdoutContains("admin")
+        self.assertClientStdoutContains("active")
+        self.assertClientStdoutContains("managed-user")
+        self.assertClientStdoutContains("Managed User")
+        self.assertClientStdoutContains("regular")
+        self.assertClientStdoutContains("onboarding")
 
         self.client.stdin = ["secret", "secret-password", "secret-password"]
         self.client.execute("setup", "user", "managed-user")
@@ -64,13 +66,9 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "user", "list")
 
         self.assertClientSuccess()
-        self.assertNotIn(
-            "managed-user\tManaged User\tregular\tonboarding",
-            self.client.stdout
-        )
-        self.assertClientStdoutContains(
-            "alpha\tAlphanet Administrator\tadmin\tactive"
-        )
+        self.assertNotIn("managed-user", self.client.stdout)
+        self.assertClientStdoutContains("alpha")
+        self.assertClientStdoutContains("Alphanet Administrator")
 
     def test_system_user_is_rejected_for_remote_management(self):
         config = self.configuration_user
@@ -108,7 +106,8 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.assertClientStdoutContains(
             "Users assigned to project 'test-project-2':"
         )
-        self.assertClientStdoutContains("test-user-1\tTest User 1")
+        self.assertClientStdoutContains("test-user-1")
+        self.assertClientStdoutContains("Test User 1")
 
         self.client.execute(
             "manage", "user", "unassign", "test-user-1", "test-project-2"
@@ -192,11 +191,10 @@ class TestServerUserManagementCLI(TestCase):
         self.server.execute("user", "list")
 
         self.assertServerSuccess()
-        self.assertIn(
-            "User: 'local-admin'\tName: 'Local Admin'"
-            "\tRole: 'admin'\tState: 'onboarding'",
-            self.server.stdout
-        )
+        self.assertIn("local-admin", self.server.stdout)
+        self.assertIn("Local Admin", self.server.stdout)
+        self.assertIn("admin", self.server.stdout)
+        self.assertIn("onboarding", self.server.stdout)
 
         self.server.stdin = ["fathom", "fathom"]
         self.server.execute("user", "delete", "local-admin")

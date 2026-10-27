@@ -45,14 +45,12 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "project", "list")
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains(
-            "test-project-1\tTest Project 1\t"
-            "A Project for Testing Purposes (1)."
-        )
-        self.assertClientStdoutContains(
-            "managed-project\tManaged Project\t"
-            "Managed project description"
-        )
+        self.assertClientStdoutContains("test-project-1")
+        self.assertClientStdoutContains("Test Project 1")
+        self.assertClientStdoutContains("A Project for Testing Purposes (1).")
+        self.assertClientStdoutContains("managed-project")
+        self.assertClientStdoutContains("Managed Project")
+        self.assertClientStdoutContains("Managed project description")
 
         self.client.execute("manage", "project", "delete", "managed-project")
 
@@ -62,15 +60,10 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "project", "list")
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains(
-            "test-project-1\tTest Project 1\t"
-            "A Project for Testing Purposes (1)."
-        )
-        self.assertNotIn(
-            "managed-project\tManaged Project\t"
-            "Managed project description",
-            self.client.stdout
-        )
+        self.assertClientStdoutContains("test-project-1")
+        self.assertClientStdoutContains("Test Project 1")
+        self.assertClientStdoutContains("A Project for Testing Purposes (1).")
+        self.assertNotIn("managed-project", self.client.stdout)
 
     def test_non_admin_client_is_rejected(self):
         config = self.configuration_user
@@ -106,11 +99,9 @@ class TestServerProjectManagementCLI(TestCase):
         self.server.execute("project", "list")
 
         self.assertServerSuccess()
-        self.assertIn(
-            "Project: 'local-project'\tName: 'Local Project'"
-            "\tDescription: 'Local project description'",
-            self.server.stdout
-        )
+        self.assertIn("local-project", self.server.stdout)
+        self.assertIn("Local Project", self.server.stdout)
+        self.assertIn("Local project description", self.server.stdout)
 
         self.server.stdin = ["fathom", "fathom"]
         self.server.execute("project", "delete", "local-project")

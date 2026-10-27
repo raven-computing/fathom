@@ -16,6 +16,7 @@
 
 from raven.fathom.base import User
 from raven.fathom.base import Project
+from raven.fathom.base import TableFormatter
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.connection import Server
 from raven.fathom.client.connection import (
@@ -77,16 +78,16 @@ class ManageCommand(ClientCommand):
 
             if self.args.manage_command == AppCommand.LIST:
                 users = server.list_users()
+                formatter = TableFormatter(
+                    title="Fathom users:"
+                ).set_headers("Identifier", "Name", "Role", "State")
                 for user in users:
                     role = "admin" if user.is_admin else "regular"
-                    LOG.i("Fathom users:")
-                    LOG.i(
-                        " | %s\t%s\t%s\t%s",
-                        user.identifier,
-                        user.name,
-                        role,
-                        user.state
+                    formatter.add_row(
+                        user.identifier, user.name, role, user.state
                     )
+
+                LOG.i(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.DELETE:
@@ -137,29 +138,32 @@ class ManageCommand(ClientCommand):
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.LIST:
-                LOG.i("Fathom projects:")
-                for project in server.list_projects():
-                    LOG.i(
-                        " | %s\t%s\t%s",
+                projects = server.list_projects()
+                formatter = TableFormatter(
+                    title="Fathom projects:"
+                ).set_headers("Identifier", "Name", "Description")
+                for project in projects:
+                    formatter.add_row(
                         project.identifier,
                         project.name,
                         project.description,
                     )
+
+                LOG.i(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.LIST_USERS:
-                LOG.i(
-                    "Users assigned to project '%s':",
-                    self.args.project_identifier,
-                )
-                for user in server.list_project_users(
+                users = server.list_project_users(
                     self.args.project_identifier
-                ):
-                    LOG.i(
-                        " | %s\t%s",
-                        user.identifier,
-                        user.name,
-                    )
+                )
+                formatter = TableFormatter(
+                    title="Users assigned to "
+                          f"project '{self.args.project_identifier}':"
+                ).set_headers("Identifier", "Name")
+                for user in users:
+                    formatter.add_row(user.identifier, user.name)
+
+                LOG.i(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.DELETE:

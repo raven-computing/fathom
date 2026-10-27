@@ -136,6 +136,7 @@ from .system import OperatingSystem
 from .system import InputPrompt
 from .system import InputReadException
 from .system import FileSystem
+from .table import TableFormatter
 from .time import Clock
 from .time import SystemClock
 from .time import ConstantClock

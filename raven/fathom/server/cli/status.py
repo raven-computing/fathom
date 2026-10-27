@@ -24,6 +24,8 @@ class ExitStatus(enum.IntEnum):
 
     FAILURE = 1
 
+    MISSING_SETUP = 2
+
     INTERNAL_ERROR = 3
 
     UNKNOWN_ERROR = 126

@@ -26,6 +26,7 @@ from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.domain.staging import StagingArea
 from raven.fathom.server.updates import FailedApplicationUpdateException
 from raven.fathom.server.updates import UpdateManager
+from raven.fathom.server.core.exceptions import FathomServerException
 from raven.fathom.server.core.user_management import UserManager
 
 if TYPE_CHECKING:
@@ -33,6 +34,12 @@ if TYPE_CHECKING:
 
 
 LOG = Logger.get()
+
+
+class MissingServerSetupException(FathomServerException):
+    """Raised when the server is started but the initial setup procedure
+    has not been executed yet.
+    """
 
 
 def _setup_database():
@@ -121,12 +128,10 @@ def ensure_connected_to_database():
 
 
 def require_server_setup():
-    """Raises if server setup has not been completed yet."""
+    """Raises `MissingServerSetupException` if server setup
+    has not been completed yet.
+    """
     ensure_connected_to_database()
 
-    if UserManager(UserAuthenticator()).is_setup_complete():
-        return
-
-    raise ValueError(
-        "The server has not been set up yet. Run 'fathom-server setup' first."
-    )
+    if not UserManager(UserAuthenticator()).is_setup_complete():
+        raise MissingServerSetupException()

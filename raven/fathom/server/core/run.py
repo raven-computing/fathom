@@ -22,6 +22,7 @@ from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.setup import require_server_setup
 from raven.fathom.server.core.setup import setup_application
+from raven.fathom.server.core.setup import MissingServerSetupException
 
 
 LOG = Logger.get()
@@ -50,6 +51,10 @@ def run_server(args: AppArgs) -> ExitStatus:
             require_server_setup()
 
         return ExitStatus(command.execute())
+    except MissingServerSetupException:
+        LOG.i("The server has not been set up yet.")
+        LOG.i("Run 'fathom-server setup' first.")
+        return ExitStatus.MISSING_SETUP
     except Exception as ex:  # pylint: disable=broad-exception-caught
         LOG.e("Failed to run Fathom server")
         LOG.e(str(ex))

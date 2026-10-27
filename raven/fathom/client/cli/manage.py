@@ -51,12 +51,14 @@ class ManageCommand(ClientCommand):
         config = ConfigurationManager()
         user_config = config.get_user_config()
         project_config = config.get_project_config()
+        location = load_server_locator(self.args, user_config, project_config)
         server = Server(
-            load_server_locator(self.args, user_config, project_config),
+            location,
             load_client_authentication(
                 self.args,
                 user_config,
-                project_config
+                project_config,
+                location.server_name,
             ),
         )
 

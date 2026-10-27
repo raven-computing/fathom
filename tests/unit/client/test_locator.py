@@ -15,6 +15,7 @@
 """Unit tests for the client locator module."""
 
 from raven.fathom.base import Configuration, ConfigurationSection
+from raven.fathom.base.testing import SystemInputPromptMock
 from raven.fathom.client.locator import ServerLocator, load_server_locator
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.exceptions import InvalidConfigurationException
@@ -30,12 +31,18 @@ class TestServerLocator(TestCase):
     def test_initializer_accepts_domain(self):
         locator = ServerLocator("example.com")
         self.assertEqual(locator.domain, "example.com")
+        self.assertIsNone(locator.server_name)
         self.assertIsNone(locator.port)
         self.assertIsNone(locator.location)
         self.assertTrue(
             locator.secure_connection,
             "Connections should be secure by default"
         )
+
+    def test_initializer_accepts_optional_server_name(self):
+        locator = ServerLocator("example.com")
+        locator.server_name = "primary"
+        self.assertEqual(locator.server_name, "primary")
 
     def test_initializer_rejects_empty_domain(self):
         with self.assertRaises(ValueError) as raised:
@@ -126,6 +133,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
         args = AppArgs(server="https://fathom.example.com")
         locator = load_server_locator(args, Configuration(), Configuration())
         self.assertEqual(locator.domain, "fathom.example.com")
+        self.assertIsNone(locator.server_name)
         self.assertTrue(locator.secure_connection)
         self.assertIsNone(locator.port)
         self.assertIsNone(locator.location)
@@ -193,6 +201,7 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             self.user_config,
             self.project_config
         )
+        self.assertEqual(locator.server_name, "Test Server")
         self.assertEqual(locator.domain, "localhost")
         self.assertFalse(locator.secure_connection)
         self.assertEqual(locator.port, 8080)
@@ -392,10 +401,46 @@ class TestLoadServerLocator(TestCase, ConfigurationFixture):
             project
         )
 
+        self.assertIsNone(locator.server_name)
         self.assertEqual(locator.domain, "project.example.com")
         self.assertEqual(locator.port, 9443)
         self.assertEqual(locator.location, "/api/project")
         self.assertTrue(locator.secure_connection)
+
+    def test_prompted_user_server_selection_sets_server_name(self):
+        another_server = ConfigurationSection(
+            UserConfiguration.SERVER,
+            sequence_number=2
+        )
+        another_server.set_value(
+            UserConfiguration.SERVER.NAME,
+            "Development"
+        )
+        another_server.set_value(
+            UserConfiguration.SERVER.DOMAIN,
+            "dev.example.com"
+        )
+        self.user_config.add_section(another_server)
+
+        project = Configuration()
+        project_section = ConfigurationSection(ProjectConfiguration.PROJECT)
+        project_section.set_value(
+            ProjectConfiguration.PROJECT.IDENTIFIER,
+            "test-project-1"
+        )
+        project.add_section(project_section)
+
+        sys_in = SystemInputPromptMock.instance()
+        sys_in.inputs.append("Development")
+
+        locator = load_server_locator(
+            AppArgs(),
+            self.user_config,
+            project
+        )
+
+        self.assertEqual(locator.server_name, "Development")
+        self.assertEqual(locator.domain, "dev.example.com")
 
     def test_loads_from_user_config_when_project_has_no_server_section(self):
         project = Configuration()

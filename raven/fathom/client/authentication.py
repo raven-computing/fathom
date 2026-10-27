@@ -14,7 +14,7 @@
 #
 """Implements a function to retrieve client authentication details."""
 
-from typing import Final
+from typing import Final, Optional
 
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import SystemEnvironment, InputPrompt
@@ -37,6 +37,13 @@ def _set_client_authentication(auth, username, password):
 
     if password:
         auth.password = password
+
+
+def _has_server_entry(project_config: Configuration) -> bool:
+    return (
+        not project_config.is_empty()
+        and project_config.has_section(ProjectConfiguration.SERVER)
+    )
 
 
 def _gather_from_user_configuration(
@@ -65,7 +72,7 @@ def _gather_from_user_configuration(
             break
     else:
         LOG.w(
-            "The project configuration refers to server '%s' but no such "
+            "Authentication references server '%s' but no such "
             "server could be found in the user configuration"
         )
         LOG.w("You might have an outdated or wrong configuration setup")
@@ -74,11 +81,12 @@ def _gather_from_user_configuration(
 def _gather_from_configuration(
     auth: ClientAuthentication,
     user_config: Configuration,
-    project_config: Configuration
+    project_config: Configuration,
+    server_name: Optional[str] = None,
 ):
     username = ""
     password = ""
-    if not project_config.is_empty():
+    if _has_server_entry(project_config):
         username = project_config.value_of(
             ProjectConfiguration.SERVER.USERNAME
         )
@@ -87,11 +95,14 @@ def _gather_from_configuration(
         )
         _set_client_authentication(auth, username, password)
         if not username or not password:
-            server_name = project_config.value_of(
-                    ProjectConfiguration.SERVER.NAME
-                )
+            server_name = (
+                server_name
+                or project_config.value_of(ProjectConfiguration.SERVER.NAME)
+            )
             if server_name:
                 _gather_from_user_configuration(auth, server_name, user_config)
+    elif server_name is not None:
+        _gather_from_user_configuration(auth, server_name, user_config)
 
 
 def _gather_from_environment(
@@ -120,7 +131,8 @@ def _gather_from_user_prompt(auth: ClientAuthentication, sys_in: InputPrompt):
 def load_client_authentication(
     args: AppArgs,
     user_config: Configuration,
-    project_config: Configuration
+    project_config: Configuration,
+    server_name: Optional[str] = None,
 ) -> ClientAuthentication:
     """Retrieves the client authentication details.
 
@@ -146,12 +158,20 @@ def load_client_authentication(
         user_config (Configuration): The user configuration. May be empty.
         project_config (Configuration): The project configuration.
             May be empty.
+        server_name (str): The name of the selected server.
+            If provided, it is used to resolve user credentials from the
+            matching configuration entry.
 
     Returns:
         ClientAuthentication: The loaded client authentication details.
     """
     authentication = ClientAuthentication()
-    _gather_from_configuration(authentication, user_config, project_config)
+    _gather_from_configuration(
+        authentication,
+        user_config,
+        project_config,
+        server_name,
+    )
     _gather_from_environment(authentication, SystemEnvironment.instance())
     _gather_from_cli_arguments(authentication, args)
     _gather_from_user_prompt(authentication, InputPrompt.instance())

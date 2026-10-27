@@ -22,6 +22,7 @@ from raven.fathom.client.authentication import (
     ENVIRONMENT_VARIABLE_USER_NAME,
     ENVIRONMENT_VARIABLE_USER_PASSWORD
 )
+from raven.fathom.client.locator import ServerLocator
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.cli.arguments import AppArgs
 
@@ -146,6 +147,77 @@ class TestClientAuthentication(TestCase):
             AppArgs(),
             self.user_config,
             self.project_config
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, "ProjectUser")
+        self.assertEqual(auth.password, self.user_password_config)
+
+    def test_selected_server_name_can_drive_user_config_lookup(self):
+        TestEnvironment.instance().env_vars.clear()
+
+        project_config = Configuration()
+        project_config.add_section(
+            ConfigurationSection(ProjectConfiguration.SERVER)
+        )
+
+        selected_server = ServerLocator("fathom.example.com")
+        selected_server.server_name = self.server_name
+        auth = load_client_authentication(
+            AppArgs(),
+            self.user_config,
+            project_config,
+            selected_server.server_name,
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, self.user_name_config)
+        self.assertEqual(auth.password, self.user_password_config)
+
+    def test_selected_server_name_overrides_mismatching_proj_server_name(self):
+        TestEnvironment.instance().env_vars.clear()
+
+        other_server = ConfigurationSection(
+            UserConfiguration.SERVER,
+            sequence_number=2,
+        )
+        other_server.set_value(UserConfiguration.SERVER.NAME, "Other")
+        other_server.set_value(UserConfiguration.SERVER.USERNAME, "OtherUser")
+        other_server.set_value(UserConfiguration.SERVER.PASSWORD, "OtherPass")
+        self.user_config.add_section(other_server)
+
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.NAME, "Other"
+        )
+        selected_server = ServerLocator("fathom.example.com")
+        selected_server.server_name = self.server_name
+
+        auth = load_client_authentication(
+            AppArgs(),
+            self.user_config,
+            self.project_config,
+            selected_server.server_name,
+        )
+
+        self.assertIsInstance(auth, ClientAuthentication)
+        self.assertEqual(auth.username, self.user_name_config)
+        self.assertEqual(auth.password, self.user_password_config)
+
+    def test_selected_server_name_supports_partial_project_merge(self):
+        TestEnvironment.instance().env_vars.clear()
+        self.project_server.remove(ProjectConfiguration.SERVER.NAME)
+        self.project_server.set_value(
+            ProjectConfiguration.SERVER.USERNAME,
+            "ProjectUser",
+        )
+
+        selected_server = ServerLocator("fathom.example.com")
+        selected_server.server_name = self.server_name
+        auth = load_client_authentication(
+            AppArgs(),
+            self.user_config,
+            self.project_config,
+            selected_server.server_name,
         )
 
         self.assertIsInstance(auth, ClientAuthentication)

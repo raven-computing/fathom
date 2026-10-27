@@ -54,6 +54,8 @@ class ServerLocator:
         secure_connection (bool): Indicates whether the connection to
             the Fathom server should be established via a secure connection
             or if potentially insecure connections are allowed.
+        server_name (str): The descriptive name of the server. Can be set.
+            May be `None`.
     """
 
     def __init__(self, domain: str):
@@ -70,6 +72,7 @@ class ServerLocator:
         self._port = None
         self._location = None
         self._secure_connection = True
+        self._server_name = None
 
     @property
     def domain(self) -> str:
@@ -122,9 +125,25 @@ class ServerLocator:
         TypeCheck.require_prop(value, bool, "secure_connection")
         self._secure_connection = value
 
+    @property
+    def server_name(self) -> Optional[str]:
+        """The descriptive name of the server that this locator points to.
+
+        May be `None`.
+        """
+        return self._server_name
+
+    @server_name.setter
+    def server_name(self, value: Optional[str]):
+        if value is not None:
+            TypeCheck.require_prop(value, str, "server_name")
+
+        self._server_name = value
+
     def __str__(self):
         return (
             f"ServerLocator(domain={self._domain}, "
+            f"name={self._server_name}, "
             f"port={self._port}, secure={self._secure_connection})"
         )
 
@@ -176,7 +195,7 @@ def _load_from_cli_args(args: "AppArgs") -> ServerLocator:
 def _load_from_user_config_section(
     config: ConfigurationSection
 )-> ServerLocator:
-    server_name = config.value_of(ProjectConfiguration.SERVER.NAME)
+    server_name = config.value_of(UserConfiguration.SERVER.NAME)
     if not server_name:
         LOG.e(
             "The server referenced in the user configuration "
@@ -186,7 +205,7 @@ def _load_from_user_config_section(
             "Missing configuration in user config"
         )
 
-    domain = config.value_of(ProjectConfiguration.SERVER.DOMAIN)
+    domain = config.value_of(UserConfiguration.SERVER.DOMAIN)
     if domain is None:
         LOG.e(
             "The server referenced in the user configuration "
@@ -202,17 +221,18 @@ def _load_from_user_config_section(
         )
 
     use_secure_connection = config.value_of(
-        ProjectConfiguration.SERVER.TRANSPORT_SECURE
+        UserConfiguration.SERVER.TRANSPORT_SECURE
     )
 
     server = ServerLocator(domain)
+    server.server_name = server_name
     server.secure_connection = (
         use_secure_connection
         if use_secure_connection is not None
         else True
     )
-    server.port = config.value_of(ProjectConfiguration.SERVER.PORT)
-    server.location = config.value_of(ProjectConfiguration.SERVER.LOCATION)
+    server.port = config.value_of(UserConfiguration.SERVER.PORT)
+    server.location = config.value_of(UserConfiguration.SERVER.LOCATION)
     return server
 
 
@@ -348,6 +368,7 @@ def _load_from_configs(
     ):
         return _load_from_user_config(user)
 
+    selected_server_name = None
     referenced_server_section = None
     if server_name:
         referenced_server_section = _find_named_server(user, server_name)
@@ -369,6 +390,7 @@ def _load_from_configs(
             raise InvalidConfigurationException("Missing configuration")
 
     if referenced_server_section is not None:
+        selected_server_name = server_name
         domain, port, location, use_secure_connection = (
             _merge_with_user_server(
                 referenced_server_section,
@@ -389,6 +411,7 @@ def _load_from_configs(
         )
     ):
         default_server = _load_from_user_config(user)
+        selected_server_name = default_server.server_name
         if domain is None:
             domain = default_server.domain
         if use_secure_connection is None:
@@ -408,6 +431,7 @@ def _load_from_configs(
         )
 
     server = ServerLocator(domain)
+    server.server_name = selected_server_name
     server.secure_connection = (
         use_secure_connection
         if use_secure_connection is not None

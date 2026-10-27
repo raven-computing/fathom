@@ -44,7 +44,9 @@ class DeployCommand(ClientCommand):
         LOG.i("Deploying project...")
 
         config = ConfigurationManager()
-        project = load_client_project(config.get_project_config())
+        user_config = config.get_user_config()
+        project_config = config.get_project_config()
+        project = load_client_project(project_config)
         if not project.identifier:
             LOG.e(
                 "Project identifier is missing. "
@@ -70,21 +72,22 @@ class DeployCommand(ClientCommand):
             LOG.e("at: '%s'", project.assets)
             return ExitStatus.FAILURE
 
-        for file_filter in load_filters(config.get_project_config()):
+        for file_filter in load_filters(project_config):
             docs.apply_filter(file_filter)
 
         location = load_server_locator(
             self.args,
-            config.get_user_config(),
-            config.get_project_config()
+            user_config,
+            project_config
         )
 
         deployment = FathomDeployment(location)
         deployment.use_authentication(
             load_client_authentication(
                 self.args,
-                config.get_user_config(),
-                config.get_project_config()
+                user_config,
+                project_config,
+                location.server_name,
             )
         )
         deployment.set_project(project)

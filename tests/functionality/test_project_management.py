@@ -40,7 +40,9 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
         )
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains("Created project 'managed-project'")
+        self.assertClientStdoutContains(
+            "Created project managed-project at Test Server"
+        )
 
         self.client.execute("manage", "project", "list")
 
@@ -55,7 +57,9 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "project", "delete", "managed-project")
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains("Deleted project 'managed-project'")
+        self.assertClientStdoutContains(
+            "Deleted project managed-project from Test Server"
+        )
 
         self.client.execute("manage", "project", "list")
 

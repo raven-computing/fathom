@@ -49,7 +49,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.assertClientStdoutContains("active")
         self.assertClientStdoutContains("managed-user")
         self.assertClientStdoutContains("Managed User")
-        self.assertClientStdoutContains("regular")
+        self.assertClientStdoutContains("user")
         self.assertClientStdoutContains("onboarding")
 
         self.client.stdin = ["secret", "secret-password", "secret-password"]
@@ -61,7 +61,9 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         self.client.execute("manage", "user", "delete", "managed-user")
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains("Deleted user 'managed-user'")
+        self.assertClientStdoutContains(
+            "Deleted user managed-user from Test Server"
+        )
 
         self.client.execute("manage", "user", "list")
 
@@ -95,7 +97,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "Assigned user 'test-user-1' to project 'test-project-2'"
+            "Assigned user test-user-1 to project test-project-2 at Test Server"
         )
 
         self.client.execute(
@@ -115,7 +117,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "Unassigned user 'test-user-1' from project 'test-project-2'"
+            "Unassigned user test-user-1 from project test-project-2 at Test Server"
         )
 
         self.client.execute(

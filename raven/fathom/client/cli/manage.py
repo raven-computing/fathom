@@ -105,6 +105,11 @@ class ManageCommand(ClientCommand):
 
         return ExitStatus.SUCCESS
 
+    def _print_data(self, formatter: TableFormatter):
+        log_stdout("")
+        log_stdout(formatter.get_formatted_text())
+        log_stdout("")
+
     def _create_user(self, server: Server):
         user = User(
             identifier=self.args.user_identifier,
@@ -118,20 +123,24 @@ class ManageCommand(ClientCommand):
 
     def _list_users(self, server: Server):
         users = server.list_users()
-        formatter = TableFormatter(
-            title="Fathom users:"
-        ).set_headers("Identifier", "Name", "Role", "State")
+        formatter = TableFormatter()
+        formatter.set_headers("Identifier", "Name", "Role", "State")
         for user in users:
-            role = "admin" if user.is_admin else "regular"
+            role = "admin" if user.is_admin else "user"
             formatter.add_row(
                 user.identifier, user.name, role, user.state
             )
 
-        log_stdout(formatter.get_formatted_text())
+        LOG.i("User list of %s", server.name or "Server")
+        self._print_data(formatter)
 
     def _delete_user(self, server: Server):
         server.delete_user(self.args.user_identifier)
-        LOG.i("Deleted user '%s'", self.args.user_identifier)
+        LOG.i(
+            "Deleted user %s from %s",
+            self.args.user_identifier,
+            server.name or "Server",
+        )
 
     def _assign_user(self, server: Server):
         server.assign_user_to_project(
@@ -139,9 +148,10 @@ class ManageCommand(ClientCommand):
             self.args.project_identifier,
         )
         LOG.i(
-            "Assigned user '%s' to project '%s'",
+            "Assigned user %s to project %s at %s",
             self.args.user_identifier,
             self.args.project_identifier,
+            server.name or "Server",
         )
 
     def _unassign_user(self, server: Server):
@@ -150,9 +160,10 @@ class ManageCommand(ClientCommand):
             self.args.project_identifier,
         )
         LOG.i(
-            "Unassigned user '%s' from project '%s'",
+            "Unassigned user %s from project %s at %s",
             self.args.user_identifier,
             self.args.project_identifier,
+            server.name or "Server",
         )
 
     def _create_project(self, server: Server):
@@ -165,13 +176,16 @@ class ManageCommand(ClientCommand):
             description=self.args.project_description,
         )
         created = server.create_project(project)
-        LOG.i("Created project '%s'", created.identifier)
+        LOG.i(
+            "Created project %s at %s",
+            created.identifier,
+            server.name or "Server",
+        )
 
     def _list_projects(self, server: Server):
         projects = server.list_projects()
-        formatter = TableFormatter(
-            title="Fathom projects:"
-        ).set_headers("Identifier", "Name", "Description")
+        formatter = TableFormatter()
+        formatter.set_headers("Identifier", "Name", "Description")
         for project in projects:
             formatter.add_row(
                 project.identifier,
@@ -179,7 +193,8 @@ class ManageCommand(ClientCommand):
                 project.description,
             )
 
-        log_stdout(formatter.get_formatted_text())
+        LOG.i("Project list of %s", server.name or "Server")
+        self._print_data(formatter)
 
     def _list_project_users(self, server: Server):
         users = server.list_project_users(
@@ -192,11 +207,17 @@ class ManageCommand(ClientCommand):
         for user in users:
             formatter.add_row(user.identifier, user.name)
 
-        log_stdout(formatter.get_formatted_text())
+        LOG.i(
+            "All users assigned to project %s at %s",
+            self.args.project_identifier,
+            server.name or "Server",
+        )
+        self._print_data(formatter)
 
     def _delete_project(self, server: Server):
         server.delete_project(self.args.project_identifier)
         LOG.i(
-            "Deleted project '%s'",
+            "Deleted project %s from %s",
             self.args.project_identifier,
+            server.name or "Server",
         )

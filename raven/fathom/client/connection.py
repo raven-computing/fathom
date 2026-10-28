@@ -63,6 +63,10 @@ class Server:
 
     Instances of `Server` can be used by clients to establish a connection
     to a potentially remote Fathom server and communicate with it.
+
+    Attributes:
+        name (str): The name of the server instance. Is taken from the
+            specified server locator object.
     """
 
     def __init__(
@@ -83,6 +87,14 @@ class Server:
         """
         self._location = location
         self._client_authentication = authentication
+
+    @property
+    def name(self) -> Optional[str]:
+        """The name of the server, as a `str`.
+
+        May be `None`.
+        """
+        return self._location.server_name
 
     def request_server_info(self):
         """Requests state information from the server.

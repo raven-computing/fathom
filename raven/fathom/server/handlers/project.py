@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.domain.project import (
     ProjectManager,
@@ -24,6 +25,9 @@ from raven.fathom.server.domain.project import (
 )
 
 from .handler import ActionHandler, require_admin_privileges
+
+
+LOG = Logger.get()
 
 
 class ProjectCreateHandler(ActionHandler):
@@ -54,8 +58,20 @@ class ProjectCreateHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to create a new project %s "
+                "but the operation has failed: %s",
+                request.authenticated_user_id,
+                project.identifier,
+                str(ex),
+            )
             return
 
+        LOG.i(
+            "User %s created new project %s",
+            request.authenticated_user_id,
+            project.identifier,
+        )
         response.projects = [project]
 
 
@@ -68,7 +84,27 @@ class ProjectListHandler(ActionHandler):
 
     @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        response.projects = self._manager.list_projects()
+        try:
+            response.projects = self._manager.list_projects()
+        except ProjectManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INTERNAL_ERROR,
+                    text=str(ex),
+                )
+            )
+            LOG.i(
+                "User %s requested to view a list of all available projects "
+                "but the operation has failed: %s",
+                request.authenticated_user_id,
+                str(ex),
+            )
+            return
+
+        LOG.i(
+            "User %s requested to view a list of all available projects",
+            request.authenticated_user_id,
+        )
 
 
 class ProjectUserListHandler(ActionHandler):
@@ -90,6 +126,7 @@ class ProjectUserListHandler(ActionHandler):
             )
             return
 
+
         try:
             response.users = self._manager.list_project_users(project)
         except ProjectNotFoundException as ex:
@@ -99,6 +136,13 @@ class ProjectUserListHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to view a list of users assigned "
+                "to project %s but no such project exists",
+                request.authenticated_user_id,
+                project.identifier,
+            )
+            return
         except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
@@ -106,6 +150,20 @@ class ProjectUserListHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to view a list of users assigned "
+                "to project %s but the operation has failed: %s",
+                request.authenticated_user_id,
+                project.identifier,
+                str(ex),
+            )
+            return
+
+        LOG.i(
+            "User %s requested to view a list of users assigned to project %s",
+            request.authenticated_user_id,
+            project.identifier,
+        )
 
 
 class ProjectUserAssignHandler(ActionHandler):
@@ -146,6 +204,14 @@ class ProjectUserAssignHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to assign user %s to project %s "
+                "but no such project exists",
+                request.authenticated_user_id,
+                user.identifier,
+                project.identifier,
+            )
+            return
         except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
@@ -153,6 +219,22 @@ class ProjectUserAssignHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to assign user %s to project %s "
+                "but the operation has failed: %s",
+                request.authenticated_user_id,
+                user.identifier,
+                project.identifier,
+                str(ex),
+            )
+            return
+
+        LOG.i(
+            "User %s assigned user %s to project %s",
+            request.authenticated_user_id,
+            user.identifier,
+            project.identifier,
+        )
 
 
 class ProjectUserUnassignHandler(ActionHandler):
@@ -193,6 +275,14 @@ class ProjectUserUnassignHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to unassign user %s from project %s "
+                "but no such project exists",
+                request.authenticated_user_id,
+                user.identifier,
+                project.identifier,
+            )
+            return
         except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
@@ -200,6 +290,22 @@ class ProjectUserUnassignHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested to unassign user %s from project %s "
+                "but the operation has failed: %s",
+                request.authenticated_user_id,
+                user.identifier,
+                project.identifier,
+                str(ex),
+            )
+            return
+
+        LOG.i(
+            "User %s unassigned user %s from project %s",
+            request.authenticated_user_id,
+            user.identifier,
+            project.identifier,
+        )
 
 
 class ProjectDeleteHandler(ActionHandler):
@@ -230,6 +336,13 @@ class ProjectDeleteHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested the deletion of project %s "
+                "but no such project exists",
+                request.authenticated_user_id,
+                project.identifier,
+            )
+            return
         except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(
@@ -237,3 +350,17 @@ class ProjectDeleteHandler(ActionHandler):
                     text=str(ex),
                 )
             )
+            LOG.i(
+                "User %s requested the deletion of project %s "
+                "but the operation has failed: %s",
+                request.authenticated_user_id,
+                project.identifier,
+                str(ex),
+            )
+            return
+
+        LOG.i(
+            "User %s deleted project %s",
+            request.authenticated_user_id,
+            project.identifier,
+        )

@@ -16,10 +16,11 @@
 
 from raven.fathom.base import InputPrompt, User
 from raven.fathom.base import SecretToken
+from raven.fathom.base import log_stdout
 from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.status import ExitStatus
-from raven.fathom.server.core.logging import Logger, log_stdout
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.models import Settings
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import SYSTEM_USER_IDENTIFIER

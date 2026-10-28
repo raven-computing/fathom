@@ -18,11 +18,11 @@ from typing import Final
 
 from raven.fathom.base import SystemEnvironment, ApplicationMode
 from raven.fathom.base import File, FileIOException
+from raven.fathom.base import log_stderr
 from raven.fathom.base.decorators import noexcept
 from raven.fathom.base.context import determine_application_mode
 from raven.fathom.base.context import determine_working_directory
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
-from raven.fathom.server.core.logging import log_stderr
 
 
 _ENV_VAR_FATHOM_HOME: Final[str] = "A_FATHOM_HOME"

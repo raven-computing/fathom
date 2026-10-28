@@ -102,6 +102,8 @@ from .interaction import ResponseMessage
 from .interaction import InteractionException
 from .interaction import TransmissionException
 from .interaction import ProcessingException
+from .logging import log_stdout
+from .logging import log_stderr
 from .logging import LogLevel
 from .logging import Logger
 from .logging import LogFormatterCLI

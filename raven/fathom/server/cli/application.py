@@ -18,8 +18,9 @@ import sys
 
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import File
+from raven.fathom.base import log_stderr
 
-from raven.fathom.server.core.logging import setup_server_logging, log_stderr
+from raven.fathom.server.core.logging import setup_server_logging
 from raven.fathom.server.core.logging import shutdown_loggers
 from raven.fathom.server.core.context import determine_server_application_mode
 from raven.fathom.server.core.context import determine_server_working_directory

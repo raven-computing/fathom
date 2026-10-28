@@ -14,7 +14,6 @@
 #
 """Fathom server logging utilities."""
 
-import sys
 import logging
 
 from datetime import datetime
@@ -48,30 +47,6 @@ class FathomLogHandlerFile(LogHandlerFile):
         log_dir = Logger.server_log_file_directory()
         log_file = log_dir / FATHOM_SERVER_LOG_FILE_NAME
         super().__init__(log_file)
-
-
-def log_stdout(message: str):
-    """Logs a message to standard output.
-
-    Is used to log messages that are not part of the Fathom server logging
-    system, such as when interacting with a CLI user.
-
-    Args:
-        message (str): The message to log.
-    """
-    print(message, file=sys.stdout)
-
-
-def log_stderr(message: str):
-    """Logs a message to standard error.
-
-    Is used to log messages that are not part of the Fathom server logging
-    system, such as errors during startup.
-
-    Args:
-        message (str): The message to log.
-    """
-    print(message, file=sys.stderr)
 
 
 def _setup_server_application_logging(args):

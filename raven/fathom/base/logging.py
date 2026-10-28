@@ -25,6 +25,30 @@ from raven.fathom.base import File
 from raven.fathom.base.decorators import singleton
 
 
+def log_stdout(message: str):
+    """Logs a message to the standard output stream.
+
+    Is used to log messages that are not part of the Fathom application
+    logging system, such as when interacting with a CLI user.
+
+    Args:
+        message (str): The message to log.
+    """
+    print(message, file=sys.stdout)
+
+
+def log_stderr(message: str):
+    """Logs a message to the standard error stream.
+
+    Is used to log messages that are not part of the Fathom application
+    logging system, such as errors during startup.
+
+    Args:
+        message (str): The message to log.
+    """
+    print(message, file=sys.stderr)
+
+
 class LogLevel(IntEnum):
     """Enumeration of supported logging levels.
 

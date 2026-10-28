@@ -17,6 +17,7 @@
 from raven.fathom.base import User
 from raven.fathom.base import Project
 from raven.fathom.base import TableFormatter
+from raven.fathom.base import log_stdout
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.connection import Server
 from raven.fathom.client.connection import (
@@ -87,7 +88,7 @@ class ManageCommand(ClientCommand):
                         user.identifier, user.name, role, user.state
                     )
 
-                LOG.i(formatter.get_formatted_text())
+                log_stdout(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.DELETE:
@@ -149,7 +150,7 @@ class ManageCommand(ClientCommand):
                         project.description,
                     )
 
-                LOG.i(formatter.get_formatted_text())
+                log_stdout(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.LIST_USERS:
@@ -163,7 +164,7 @@ class ManageCommand(ClientCommand):
                 for user in users:
                     formatter.add_row(user.identifier, user.name)
 
-                LOG.i(formatter.get_formatted_text())
+                log_stdout(formatter.get_formatted_text())
                 return ExitStatus.SUCCESS
 
             if self.args.manage_command == AppCommand.DELETE:

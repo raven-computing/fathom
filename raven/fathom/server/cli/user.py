@@ -16,6 +16,7 @@
 
 from raven.fathom.base import User, UserState
 from raven.fathom.base import TableFormatter
+from raven.fathom.base import log_stdout
 from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
@@ -67,7 +68,7 @@ class UserListCommand(ServerCommand):
                 user.state,
             )
 
-        LOG.i(formatter.get_formatted_text())
+        log_stdout(formatter.get_formatted_text())
         return 0
 
 

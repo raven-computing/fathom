@@ -171,6 +171,17 @@ class ClientRequest:
         default=None,
     )
 
+    @property
+    def authenticated_user_id(self) -> str:
+        """The identifier of the authenticated user, if applicable,
+        or 'n/a' if this request context has no bound authenticated user.
+        """
+        return (
+            "n/a"
+            if self.authenticated_user is None
+            else self.authenticated_user.identifier
+        )
+
 
 class ResponseCode(IntEnum):
     """Enumerates numeric response codes of message in server responses."""

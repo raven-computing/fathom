@@ -117,7 +117,8 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "Unassigned user test-user-1 from project test-project-2 at Test Server"
+            "Unassigned user test-user-1 "
+            "from project test-project-2 at Test Server"
         )
 
         self.client.execute(

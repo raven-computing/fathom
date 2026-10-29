@@ -33,7 +33,8 @@ LOG = Logger.get()
 
 class ProjectHandler(ActionHandler):
     """An `ActionHandler` that wraps another `ActionHandler` to handle
-    all exceptions of type `ProjectManagementException`.
+    all exceptions of type `ProjectManagementException` and to enforce
+    that the user making the request has admin privileges.
     """
 
     def __init__(
@@ -46,7 +47,10 @@ class ProjectHandler(ActionHandler):
         the given `ActionHandler`.
 
         Args:
-            
+            authorizer (UserAuthorizer): The user authorizer to use
+                for admin-privilege checks.
+            action (ActionHandler): The action to delegate to.
+            action_term (str): Description of the action. Is used for logging.
         """
         super().__init__(authorizer)
         self._action = action

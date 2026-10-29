@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
+from raven.fathom.base import Project, User
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.domain.project import (
@@ -29,6 +30,38 @@ from .handler import ActionHandler, require_admin_privileges
 
 
 LOG = Logger.get()
+
+
+def _has_project_identifier_set(
+    project: Project | None,
+    response: ServerResponse
+) -> bool:
+    if project is None or not project.identifier:
+        response.add_error(
+            ResponseMessage(
+                code=ResponseCode.INCOMPLETE_REQUEST,
+                text="No managed project identifier provided.",
+            )
+        )
+        return False
+
+    return True
+
+
+def _has_user_identifier_set(
+    user: User | None,
+    response: ServerResponse
+) -> bool:
+    if user is None or not user.identifier:
+        response.add_error(
+            ResponseMessage(
+                code=ResponseCode.INCOMPLETE_REQUEST,
+                text="No managed user identifier provided.",
+            )
+        )
+        return False
+
+    return True
 
 
 class ProjectHandler(ActionHandler):
@@ -121,15 +154,10 @@ class ProjectCreateHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         project = request.project
-        if project is None or not project.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed project identifier provided.",
-                )
-            )
+        if not _has_project_identifier_set(project, response):
             return
 
+        assert project is not None
         self._manager.create_project(project)
         LOG.i(
             "User %s created new project %s",
@@ -163,15 +191,10 @@ class ProjectUserListHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         project = request.project
-        if project is None or not project.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed project identifier provided.",
-                )
-            )
+        if not _has_project_identifier_set(project, response):
             return
 
+        assert project is not None
         response.users = self._manager.list_project_users(project)
         LOG.i(
             "User %s requested to view a list of users assigned to project %s",
@@ -189,24 +212,15 @@ class ProjectUserAssignHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         user = request.user
-        if user is None or not user.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
-                )
-            )
+        if not _has_user_identifier_set(user, response):
             return
 
         project = request.project
-        if project is None or not project.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed project identifier provided.",
-                )
-            )
+        if not _has_project_identifier_set(project, response):
             return
+
+        assert user is not None
+        assert project is not None
 
         self._manager.assign_user_to_project(user, project)
         LOG.i(
@@ -226,24 +240,15 @@ class ProjectUserUnassignHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         user = request.user
-        if user is None or not user.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
-                )
-            )
+        if not _has_user_identifier_set(user, response):
             return
 
         project = request.project
-        if project is None or not project.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed project identifier provided.",
-                )
-            )
+        if not _has_project_identifier_set(project, response):
             return
+
+        assert user is not None
+        assert project is not None
 
         self._manager.unassign_user_from_project(user, project)
         LOG.i(
@@ -263,14 +268,10 @@ class ProjectDeleteHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         project = request.project
-        if project is None or not project.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed project identifier provided.",
-                )
-            )
+        if not _has_project_identifier_set(project, response):
             return
+
+        assert project is not None
 
         self._manager.delete_project(project)
         LOG.i(

@@ -28,6 +28,7 @@ from .factory import HandlerFactory
 from .user import UserCreateHandler
 from .user import UserListHandler
 from .user import UserDeleteHandler
+from .project import ProjectHandler
 from .project import ProjectCreateHandler
 from .project import ProjectListHandler
 from .project import ProjectDeleteHandler

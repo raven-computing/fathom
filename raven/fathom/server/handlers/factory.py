@@ -33,6 +33,7 @@ from .user import (
     UserCreateHandler, UserListHandler, UserDeleteHandler,
 )
 from .project import (
+    ProjectHandler,
     ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
     ProjectDeleteHandler, ProjectUserAssignHandler, ProjectUserUnassignHandler,
 )
@@ -86,25 +87,40 @@ class HandlerFactory:
                 UserManager(UserAuthenticator())
             )
         elif client_action == Interaction.ASSIGN_USER:
-            handler = ProjectUserAssignHandler(
+            handler = ProjectHandler(
                 UserAuthorizer(),
-                ProjectManager()
+                ProjectUserAssignHandler(ProjectManager()),
+                "assignment of user in project",
             )
         elif client_action == Interaction.UNASSIGN_USER:
-            handler = ProjectUserUnassignHandler(
+            handler = ProjectHandler(
                 UserAuthorizer(),
-                ProjectManager()
+                ProjectUserUnassignHandler(ProjectManager()),
+                "unassignment of user in project",
             )
         elif client_action == Interaction.CREATE_PROJECT:
-            handler = ProjectCreateHandler(UserAuthorizer(), ProjectManager())
-        elif client_action == Interaction.LIST_PROJECTS:
-            handler = ProjectListHandler(UserAuthorizer(), ProjectManager())
-        elif client_action == Interaction.LIST_PROJECT_USERS:
-            handler = ProjectUserListHandler(
+            handler = ProjectHandler(
                 UserAuthorizer(),
-                ProjectManager(),
+                ProjectCreateHandler(ProjectManager()),
+                "creation of new project",
+            )
+        elif client_action == Interaction.LIST_PROJECTS:
+            handler = ProjectHandler(
+                UserAuthorizer(),
+                ProjectListHandler(ProjectManager()),
+                "listing of available projects",
+            )
+        elif client_action == Interaction.LIST_PROJECT_USERS:
+            handler = ProjectHandler(
+                UserAuthorizer(),
+                ProjectUserListHandler(ProjectManager()),
+                "listing of assigned users to project",
             )
         elif client_action == Interaction.DELETE_PROJECT:
-            handler = ProjectDeleteHandler(UserAuthorizer(), ProjectManager())
+            handler = ProjectHandler(
+                UserAuthorizer(),
+                ProjectDeleteHandler(ProjectManager()),
+                "deletion of project",
+            )
 
         return handler

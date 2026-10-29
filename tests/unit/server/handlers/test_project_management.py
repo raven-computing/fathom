@@ -17,8 +17,9 @@
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, User, Project
 from raven.fathom.server.handlers.project import (
-    ProjectCreateHandler, ProjectListHandler, ProjectUserListHandler,
-    ProjectDeleteHandler, ProjectUserAssignHandler, ProjectUserUnassignHandler,
+    ProjectHandler, ProjectCreateHandler, ProjectListHandler,
+    ProjectUserListHandler, ProjectDeleteHandler, ProjectUserAssignHandler,
+    ProjectUserUnassignHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.domain.project import (
@@ -45,9 +46,11 @@ class TestProjectManagementHandlers(TestCase):
         request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.CREATE_PROJECT)
 
-        ProjectCreateHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectCreateHandler(self.manager),
+            "creation of new project",
+        ).handle(request, response)
 
         self.assertEqual(
             response.errors[0].code,
@@ -66,9 +69,11 @@ class TestProjectManagementHandlers(TestCase):
         )
         response = ServerResponse(Interaction.CREATE_PROJECT)
 
-        ProjectCreateHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectCreateHandler(self.manager),
+            "creation of new project",
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         assert response.projects is not None
@@ -90,9 +95,11 @@ class TestProjectManagementHandlers(TestCase):
         request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.LIST_PROJECTS)
 
-        ProjectListHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectListHandler(self.manager),
+            "listing of available projects",
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         self.assertEqual(
@@ -107,9 +114,11 @@ class TestProjectManagementHandlers(TestCase):
         request.project = Project(identifier="proj-one")
         response = ServerResponse(Interaction.LIST_PROJECT_USERS)
 
-        ProjectUserListHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectUserListHandler(self.manager),
+            "listing of assigned users to project",
+        ).handle(request, response)
 
         self.assertEqual(
             response.errors[0].code,
@@ -127,9 +136,11 @@ class TestProjectManagementHandlers(TestCase):
         request.project = Project(identifier="proj-one")
         response = ServerResponse(Interaction.LIST_PROJECT_USERS)
 
-        ProjectUserListHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectUserListHandler(self.manager),
+            "listing of assigned users to project",
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         self.assertEqual(
@@ -147,9 +158,11 @@ class TestProjectManagementHandlers(TestCase):
         request.project = Project(identifier="proj-one")
         response = ServerResponse(Interaction.DELETE_PROJECT)
 
-        ProjectDeleteHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectDeleteHandler(self.manager),
+            "deletion of project",
+        ).handle(request, response)
 
         self.assertEqual(response.errors[0].code, ResponseCode.NOT_FOUND)
 
@@ -161,9 +174,11 @@ class TestProjectManagementHandlers(TestCase):
         request.project = Project(identifier="project-1")
         response = ServerResponse(Interaction.ASSIGN_USER)
 
-        ProjectUserAssignHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectUserAssignHandler(self.manager),
+            "assignment of user",
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         self.manager.assign_user_to_project.assert_called_once_with(
@@ -179,9 +194,11 @@ class TestProjectManagementHandlers(TestCase):
         request.project = Project(identifier="project-1")
         response = ServerResponse(Interaction.UNASSIGN_USER)
 
-        ProjectUserUnassignHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        ProjectHandler(
+            self.admin_authorizer,
+            ProjectUserUnassignHandler(self.manager),
+            "unassignment of user in project",
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         self.manager.unassign_user_from_project.assert_called_once_with(

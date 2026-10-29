@@ -24,16 +24,7 @@ from raven.fathom.server.handlers.deployment_intent import (
 from raven.fathom.server.handlers.deployment_transaction import (
     DeploymentTransactionHandler,
 )
-from raven.fathom.server.handlers.project import (
-    ProjectCreateHandler,
-    ProjectListHandler,
-    ProjectUserListHandler,
-    ProjectDeleteHandler,
-)
-from raven.fathom.server.handlers.project import (
-    ProjectUserAssignHandler,
-    ProjectUserUnassignHandler,
-)
+from raven.fathom.server.handlers.project import ProjectHandler
 
 from tests.unit import TestCase, TestFixture
 
@@ -59,32 +50,32 @@ class TestHandlerFactory(TestCase, TestFixture):
     def test_creates_project_create_handler_for_project_creation(self):
         request = ClientRequest(Interaction.CREATE_PROJECT)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectCreateHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_creates_project_list_handler_for_project_listing(self):
         request = ClientRequest(Interaction.LIST_PROJECTS)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectListHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_creates_project_delete_handler_for_project_deletion(self):
         request = ClientRequest(Interaction.DELETE_PROJECT)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectDeleteHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_creates_project_user_list_handler_for_project_users(self):
         request = ClientRequest(Interaction.LIST_PROJECT_USERS)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectUserListHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_creates_user_assign_handler_for_user_assignment(self):
         request = ClientRequest(Interaction.ASSIGN_USER)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectUserAssignHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_creates_user_unassign_handler_for_user_unassignment(self):
         request = ClientRequest(Interaction.UNASSIGN_USER)
         handler = HandlerFactory().create_action_handler_for(request)
-        self.assertIsInstance(handler, ProjectUserUnassignHandler)
+        self.assertIsInstance(handler, ProjectHandler)
 
     def test_returns_none_for_unrecognized_action(self):
         request = ClientRequest("unknown-action") # type: ignore

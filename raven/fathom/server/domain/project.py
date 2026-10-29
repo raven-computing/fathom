@@ -18,10 +18,10 @@ from raven.fathom.base import TypeCheck
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.dao import FailedQueryException
 from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedReadQueryException
 from raven.fathom.server.dao import FailedUpdateQueryException
-from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.models import Project as ProjectModel
 from raven.fathom.server.core.exceptions import DomainException
 
@@ -321,19 +321,19 @@ class ProjectManager:
                 "Project identifier must not be empty"
             )
 
-        project_record = self._ds.projects().find_by_identifier(
-            project.identifier
-        )
-        if project_record is None:
-            raise ProjectNotFoundException(
-                f"Cannot delete project '{project.identifier}'. "
-                "The project does not exist"
-            )
-
         try:
+            project_record = self._ds.projects().find_by_identifier(
+                project.identifier
+            )
+            if project_record is None:
+                raise ProjectNotFoundException(
+                    f"Cannot delete project '{project.identifier}'. "
+                    "The project does not exist"
+                )
+
             self._ds.projects().delete_by_identifier(project.identifier)
-        except FailedDeleteQueryException as ex:
+        except FailedQueryException as ex:
             raise ProjectInternalException(
                 f"Failed to delete project '{project.identifier}'. "
-                "An internal error has occurred."
+                "A data access error has occurred."
             ) from ex

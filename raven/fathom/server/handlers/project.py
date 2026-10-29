@@ -22,6 +22,7 @@ from raven.fathom.server.domain.project import (
     ProjectManager,
     ProjectManagementException,
     ProjectNotFoundException,
+    ProjectInternalException,
 )
 
 from .handler import ActionHandler, require_admin_privileges
@@ -343,16 +344,32 @@ class ProjectDeleteHandler(ActionHandler):
                 project.identifier,
             )
             return
-        except ProjectManagementException as ex:
+        except ProjectInternalException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INTERNAL_ERROR,
+                    text="An internal server error has occurred.",
+                )
+            )
+            LOG.e(
+                "User %s requested the deletion of project %s "
+                "but an internal error has occurred: %s",
+                request.authenticated_user_id,
+                project.identifier,
+                str(ex),
+            )
+            LOG.e(ex)
+            return
+        except ProjectManagementException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
                     text=str(ex),
                 )
             )
             LOG.i(
                 "User %s requested the deletion of project %s "
-                "but the operation has failed: %s",
+                "but the operation was rejected: %s",
                 request.authenticated_user_id,
                 project.identifier,
                 str(ex),

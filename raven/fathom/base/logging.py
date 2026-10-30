@@ -347,6 +347,9 @@ class Logger:
         ...
     def e(self, message, *args, **kwargs):
         """Logs a message with level ERROR."""
+        kwargs["exc_info"] = (
+            message if isinstance(message, Exception) else None
+        )
         self._log.error(
             message,
             *args,
@@ -374,6 +377,9 @@ class Logger:
         ...
     def d(self, message, *args, **kwargs):
         """Logs a message with level DEBUG."""
+        kwargs["exc_info"] = (
+            message if isinstance(message, Exception) else None
+        )
         self._log.debug(
             message,
             *args,

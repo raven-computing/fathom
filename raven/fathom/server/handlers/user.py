@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
+from raven.fathom.base import ProcessingException
 from raven.fathom.base import UserState
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.core.user_management import (
@@ -86,12 +87,9 @@ class UserListHandler(ActionHandler):
         try:
             response.users = self._manager.list_users()
         except UserManagementException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INTERNAL_ERROR,
-                    text=str(ex),
-                )
-            )
+            raise ProcessingException(
+                "Internal error while handling request about user entity"
+            ) from ex
 
 
 class UserDeleteHandler(ActionHandler):
@@ -123,9 +121,6 @@ class UserDeleteHandler(ActionHandler):
                 )
             )
         except UserManagementException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INTERNAL_ERROR,
-                    text=str(ex),
-                )
-            )
+            raise ProcessingException(
+                "Internal error while handling request about project entity"
+            ) from ex

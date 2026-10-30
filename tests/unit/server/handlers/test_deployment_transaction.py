@@ -17,6 +17,7 @@
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, Package
 from raven.fathom.base import DeploymentAuthorization, ClientDeploymentIntent
+from raven.fathom.base import ProcessingException
 from raven.fathom.server.security import DeploymentAuthorizer
 from raven.fathom.server.domain.deployment import DeploymentManager
 from raven.fathom.server.domain.deployment import DeploymentResult
@@ -161,27 +162,19 @@ class TestDeploymentTransactionHandler(TestCase):
     def test_handle_deployment_execution_exception(self):
         self.mock_manager_failure.deploy.side_effect = (
             DeploymentExecutionException(
-                "Deployment failure exception message"
+                "Internal deployment failure exception message"
             )
         )
 
         handler = DeploymentTransactionHandler(
             self.mock_authorizer_grant, self.mock_manager_failure
         )
-        handler.handle(self.client_request, self.server_response)
+        with self.assertRaises(ProcessingException) as raised:
+            handler.handle(self.client_request, self.server_response)
 
-        error_message = self.server_response.errors[0]
-        self.assertEqual(error_message.code, ResponseCode.INTERNAL_ERROR)
         self.assertEqual(
-            error_message.text,
-            "Deployment failure exception message"
-        )
-        self.assertIsNotNone(self.server_response.deployment_message)
-        assert self.server_response.deployment_message is not None
-        self.assertFalse(self.server_response.deployment_message.is_successful)
-        self.assertEqual(
-            self.server_response.deployment_message.message,
-            "Deployment has failed"
+            "An error has occurred while deploying package",
+            str(raised.exception)
         )
 
 

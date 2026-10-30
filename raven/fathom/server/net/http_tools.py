@@ -41,12 +41,24 @@ from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.core.parcel import ParcelValidatorJSON
 from raven.fathom.server.core.parcel import ParcelValidationException
+from raven.fathom.server.net.http_status import ResponseStatusHTTP
 from raven.fathom.server.schemas import SchemaLoaderJSON
 
 
 LOG = Logger.get()
 
 _INTERACTION_CONTENT_TYPE: Final[str] = "application/json"
+
+
+def _exec_transactional(controller_method, *args, **kwargs):
+    with DatabaseManager().get_database():
+        http_response = controller_method(*args, **kwargs)
+        if isinstance(http_response, ResponseStatusHTTP):
+            raise cherrypy.HTTPError(
+                http_response.code, http_response.message
+            )
+
+        return http_response
 
 
 def expose(methods: Union[MethodHTTP, list[MethodHTTP]]):
@@ -65,11 +77,15 @@ def expose(methods: Union[MethodHTTP, list[MethodHTTP]]):
         @wraps(controller_method)
         def wrapper(*args, **kwargs):
             try:
-                with DatabaseManager().get_database():
-                    return controller_method(*args, **kwargs)
+                return _exec_transactional(controller_method, *args, **kwargs)
+            except cherrypy.HTTPError:
+                raise
             except Exception as ex:
-                LOG.e("Error occurred while processing request")
-                LOG.e(ex, exc_info=ex)
+                LOG.e(
+                    "An unhandled error has occurred "
+                    "while processing a request"
+                )
+                LOG.e(ex)
                 raise
 
         return cherrypy.expose(wrapper)
@@ -197,8 +213,8 @@ def _fathom_handler(*args, **kwargs):
         LOG.e(
             "A controller method has returned a value of an invalid type "
             "in a Fathom interaction. "
-            "Return value must be a ServerResponse object"
-            "This is a programming error."
+            "Return value must be a ServerResponse or ResponseStatusHTTP "
+            "object. This is a programming error."
         )
         raise cherrypy.HTTPError(500, "Internal server error.")
 
@@ -210,11 +226,11 @@ def _fathom_handler(*args, **kwargs):
     except ParcelEncodingException as ex:
         LOG.e("An error occurred while encoding server response:")
         LOG.e(ex)
-        raise cherrypy.HTTPError(500, "Internal server error.")
+        raise cherrypy.HTTPError(500, "An internal server error has occurred.")
     except ParcelValidationException as ex:
         LOG.e("An error occurred while validating server response:")
         LOG.e(ex)
-        raise cherrypy.HTTPError(500, "Internal server error.")
+        raise cherrypy.HTTPError(500, "An internal server error has occurred.")
 
     return response_parcel
 

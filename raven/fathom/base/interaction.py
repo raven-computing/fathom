@@ -188,8 +188,6 @@ class ResponseCode(IntEnum):
 
     INCOMPLETE_REQUEST = 3
 
-    INTERNAL_ERROR = 4
-
     NO_PRODUCTION_USE = 5
 
     NOT_AUTHENTICATED = 6
@@ -316,6 +314,20 @@ class ServerResponse:
                 response.
         """
         self.warnings.append(warning)
+
+    def has_code(self, code: ResponseCode) -> bool:
+        """Checks if any response message object carries the given code.
+
+        Args:
+            code (ResponseCode): The response code to check.
+
+        Returns:
+            bool: `True` if any message has the specified code, else `False`.
+        """
+        return (
+            any(error.code == code for error in self.errors)
+            or any(warning.code == code for warning in self.warnings)
+        )
 
 
 @inject

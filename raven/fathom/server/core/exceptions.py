@@ -23,5 +23,13 @@ class FathomServerException(FathomException):
     """
 
 
+class InternalException(FathomServerException):
+    """Base exception class for internal infrastructure-related errors.
+
+    Unhandled exceptions of this type will cause an active transaction that
+    is bound to an underlying request context to be rolled back.
+    """
+
+
 class DomainException(FathomServerException):
     """Base exception class to be used by code in the domain layer."""

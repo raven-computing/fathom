@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
+from raven.fathom.base import ProcessingException
 from raven.fathom.base import Project, User
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthorizer
@@ -111,22 +112,17 @@ class ProjectHandler(ActionHandler):
             )
             return
         except ProjectInternalException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INTERNAL_ERROR,
-                    text="An internal server error has occurred.",
-                )
-            )
             LOG.e(
                 "User %s requested %s %s"
-                "but an internal error has occurred: %s",
+                "but an internal error has occurred:",
                 request.authenticated_user_id,
                 self._action_term,
                 project_id,
-                str(ex),
             )
             LOG.e(ex)
-            return
+            raise ProcessingException(
+                "Internal error while handling request about project entity"
+            ) from ex
         except ProjectManagementException as ex:
             response.add_error(
                 ResponseMessage(

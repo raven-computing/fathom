@@ -16,17 +16,13 @@
 
 from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ServerInteraction
-from raven.fathom.base import ResponseMessage
 from raven.fathom.base import ProcessingException
 from raven.fathom.base import ClientRequest, ServerResponse
-from raven.fathom.base import ResponseCode
-from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.net.http_status import ResponseStatusHTTP
+from raven.fathom.server.net.http_status import ResponseHTTP
 from raven.fathom.server.net.http_tools import fathom_client_request
 from raven.fathom.server.net.http_tools import fathom_server_response
 from raven.fathom.server.net.http_tools import expose
-
-
-LOG = Logger.get()
 
 
 class InteractionController:
@@ -35,17 +31,11 @@ class InteractionController:
     @expose(MethodHTTP.POST)
     @fathom_client_request()
     @fathom_server_response()
-    def call(self, request: ClientRequest) -> ServerResponse:
+    def call(self, request: ClientRequest) -> ResponseHTTP[ServerResponse]:
         """Controller method to handle a client interaction."""
         try:
             return ServerInteraction.instance().process(request)
-        except ProcessingException as ex:
-            LOG.e(ex)
-            response = ServerResponse(action=request.action)
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INTERNAL_ERROR,
-                    text="Internal server error.",
-                )
+        except ProcessingException:
+            return ResponseStatusHTTP(
+                500, "An internal server error has occurred."
             )
-            return response

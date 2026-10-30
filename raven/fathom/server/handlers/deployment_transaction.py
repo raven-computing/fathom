@@ -22,6 +22,7 @@ from raven.fathom.base import TypeCheck
 from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.base import DeploymentMessage
 from raven.fathom.base import ClientRequest, ServerResponse
+from raven.fathom.base import ProcessingException
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
@@ -103,12 +104,8 @@ class DeploymentTransactionHandler(ActionHandler):
         )
 
     def _respond_failed_deployment(self, response, ex):
-        self._set_error(
-            response,
-            ResponseMessage(
-                code=ResponseCode.INTERNAL_ERROR,
-                text=str(ex)
-            )
+        raise ProcessingException(
+            "An error has occurred while deploying package"
         )
 
     def _respond_missing_package(self, response):

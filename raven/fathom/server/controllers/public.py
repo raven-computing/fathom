@@ -18,18 +18,17 @@ Content served by this controller is publicly accessible
 and does not require authentication.
 """
 
-import cherrypy
-
-from raven.fathom.base import MethodHTTP
+from raven.fathom.base import MethodHTTP, StatusHTTP
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.version import Version
+from raven.fathom.server.net.http.controller import Controller
 from raven.fathom.server.net.http.decorators import expose, output_json
 
 
 LOG = Logger.get()
 
 
-class PublicController:
+class PublicController(Controller):
     """Controller for the public endpoints which require no authentication."""
 
     @expose(MethodHTTP.GET)
@@ -40,11 +39,12 @@ class PublicController:
         version = Version.current()
         if version is None:
             LOG.e("Failed to determine server version")
-            cherrypy.response.status = 500
+            self.set_response_status(StatusHTTP.INTERNAL_SERVER_ERROR)
             return {
                 "status": "Failure",
             }
 
+        self.set_response_status(StatusHTTP.OK)
         return {
             "status": "OK",
             "serverVersion": {

@@ -20,9 +20,9 @@ from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.net.http import assign
-from raven.fathom.server.net.http import ServerHTTP
-from raven.fathom.server.net.http import HTTPServerStartException
+from raven.fathom.server.net.http.http import assign
+from raven.fathom.server.net.http.http import ServerHTTP
+from raven.fathom.server.net.http.http import HTTPServerStartException
 from raven.fathom.server.net.routes import FathomServer
 
 

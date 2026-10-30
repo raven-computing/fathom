@@ -18,7 +18,7 @@ from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.net.http import ServerHTTP
+from raven.fathom.server.net.http.http import ServerHTTP
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_ADDRESS_LISTEN
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 

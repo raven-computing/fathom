@@ -33,9 +33,6 @@ from raven.fathom.base import MethodHTTP
 from raven.fathom.base import Interaction, ServerResponse
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
-from raven.fathom.base import ClientAuthentication
-from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
-from raven.fathom.base import ClientAuthenticationHeader
 from raven.fathom.base import HTTPDecodeException
 from raven.fathom.base import ResponseStatusHTTP
 from raven.fathom.server.core.logging import Logger
@@ -43,6 +40,7 @@ from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.core.parcel import ParcelValidatorJSON
 from raven.fathom.server.core.parcel import ParcelValidationException
 from raven.fathom.server.schemas import SchemaLoaderJSON
+from raven.fathom.server.net.http.auth import decode_client_auth_header
 
 
 LOG = Logger.get()
@@ -90,37 +88,6 @@ def expose(methods: Union[MethodHTTP, list[MethodHTTP]]):
 
         return cherrypy.expose(wrapper)
     return decorator
-
-
-def decode_client_auth_header() -> ClientAuthentication:
-    """Decodes the client authentication header from the currently
-    serving HTTP request.
-
-    Returns:
-        ClientAuthentication: The authentication credentials submitted
-            by a client in the underlying request header.
-
-    Raises:
-        HTTPError: If an HTTP error response should be submitted.
-        HTTPDecodeException: If the submitted HTTP header is malformed.
-    """
-    request = cherrypy.serving.request
-    auth_header = request.headers.get(HTTP_HEADER_CLIENT_AUTHENTICATION)
-    if not auth_header:
-        raise cherrypy.HTTPError(
-            401, "Unauthenticated request"
-        )
-
-    redacted_auth_val = "*****REDACTED*****"
-    request.headers[HTTP_HEADER_CLIENT_AUTHENTICATION] = redacted_auth_val
-    auth_header_lower = HTTP_HEADER_CLIENT_AUTHENTICATION.lower()
-    for i, item in enumerate(request.header_list):
-        name, _ = item
-        if name.lower() == auth_header_lower:
-            request.header_list[i] = (name, redacted_auth_val)
-            break
-
-    return ClientAuthenticationHeader(auth_header).decode()
 
 
 class _RequestProcessorHTTP(cherrypy.Tool):

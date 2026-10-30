@@ -19,9 +19,9 @@ from raven.fathom.base import ServerInteraction
 from raven.fathom.base import ProcessingException
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.net.http.status import ResponseHTTP
-from raven.fathom.server.net.http.tools import fathom_client_request
-from raven.fathom.server.net.http.tools import fathom_server_response
-from raven.fathom.server.net.http.tools import expose
+from raven.fathom.server.net.http.decorators import fathom_client_request
+from raven.fathom.server.net.http.decorators import fathom_server_response
+from raven.fathom.server.net.http.decorators import expose
 
 
 class InteractionController:

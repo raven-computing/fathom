@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-"""Fathom server networking implementations for the HTTP protocol."""
+"""Fathom server networking implementations using the HTTP protocol."""

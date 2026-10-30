@@ -20,8 +20,9 @@ from raven.fathom.base import MethodHTTP
 from raven.fathom.base import HTTPDecodeException
 from raven.fathom.base import User, UserState
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.net.http.tools import expose, input_json, output_json
-from raven.fathom.server.net.http.tools import decode_client_auth_header
+from raven.fathom.server.net.http.decorators import expose
+from raven.fathom.server.net.http.decorators import input_json, output_json
+from raven.fathom.server.net.http.auth import decode_client_auth_header
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import UserManager
 

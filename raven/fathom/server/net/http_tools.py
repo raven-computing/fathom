@@ -34,14 +34,14 @@ from raven.fathom.base import Interaction, ServerResponse
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
 from raven.fathom.base import ClientAuthentication
-from raven.fathom.base.http import HTTP_HEADER_CLIENT_AUTHENTICATION
-from raven.fathom.base.http import ClientAuthenticationHeader
-from raven.fathom.base.http import HTTPDecodeException
+from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
+from raven.fathom.base import ClientAuthenticationHeader
+from raven.fathom.base import HTTPDecodeException
+from raven.fathom.base import ResponseStatusHTTP
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.core.parcel import ParcelValidatorJSON
 from raven.fathom.server.core.parcel import ParcelValidationException
-from raven.fathom.server.net.http_status import ResponseStatusHTTP
 from raven.fathom.server.schemas import SchemaLoaderJSON
 
 

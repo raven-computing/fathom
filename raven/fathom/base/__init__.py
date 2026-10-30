@@ -91,6 +91,7 @@ from .http import ResponseClassHTTP
 from .http import StatusCodeHTTP
 from .http import StatusCodeRangeHTTP
 from .http import ResponseStatusHTTP
+from .http import StatusHTTP
 from .http import HttpException
 from .http import ConnectionException
 from .http import HTTPEncodeException

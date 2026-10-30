@@ -14,11 +14,10 @@
 #
 """HTTP-server client-server-interaction web controller."""
 
-from raven.fathom.base import MethodHTTP
+from raven.fathom.base import MethodHTTP, StatusHTTP
 from raven.fathom.base import ServerInteraction
 from raven.fathom.base import ProcessingException
 from raven.fathom.base import ClientRequest, ServerResponse
-from raven.fathom.server.net.http_status import ResponseStatusHTTP
 from raven.fathom.server.net.http_status import ResponseHTTP
 from raven.fathom.server.net.http_tools import fathom_client_request
 from raven.fathom.server.net.http_tools import fathom_server_response
@@ -36,6 +35,4 @@ class InteractionController:
         try:
             return ServerInteraction.instance().process(request)
         except ProcessingException:
-            return ResponseStatusHTTP(
-                500, "An internal server error has occurred."
-            )
+            return StatusHTTP.INTERNAL_SERVER_ERROR

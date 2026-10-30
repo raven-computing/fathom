@@ -64,7 +64,7 @@ import json
 
 from abc import abstractmethod
 from enum import Enum, StrEnum
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional, Final, Union, Annotated
 
 from raven.fathom.base.typing import Interface, TypeCheck
@@ -148,18 +148,37 @@ class ResponseClassHTTP(Enum):
     SERVER_ERROR = StatusCodeRangeHTTP(500, 599)
 
 
-@dataclass(frozen=True)
 class ResponseStatusHTTP:
     """An HTTP response status that can be returned by a HTTP server.
+
+    This class is immutable.
 
     Attributes:
         code (StatusCodeHTTP): The numeric HTTP status code.
         reason (str): The reason phrase.
     """
 
-    code: StatusCodeHTTP
+    __slots__ = ("_code", "_reason")
 
-    reason: str = field(compare=False)
+    def __init__(self, code: StatusCodeHTTP, reason: str):
+        if not _is_valid_http_status_code(code):
+            raise ValueError(
+                "ResponseStatusHTTP.code must be in range [100, 599] but "
+                f"got {code!r}"
+            )
+
+        self._code = code
+        self._reason = reason
+
+    @property
+    def code(self) -> StatusCodeHTTP:
+        """The numeric HTTP status code, as a `StatusCodeHTTP`."""
+        return self._code
+
+    @property
+    def reason(self) -> str:
+        """The HTTP reason phrase, as a `str`."""
+        return self._reason
 
     def is_informational(self) -> bool:
         """Indicates whether the status code belongs in
@@ -214,13 +233,6 @@ class ResponseStatusHTTP:
     def _is_in_class_range(self, response: ResponseClassHTTP) -> bool:
         return response.value.minimum <= self.code <= response.value.maximum
 
-    def __post_init__(self):
-        if not _is_valid_http_status_code(self.code):
-            raise ValueError(
-                "ResponseStatusHTTP.code must be in range [100, 599] but "
-                f"got {self.code!r}"
-            )
-
     def __eq__(self, other):
         if isinstance(other, int):
             return self.code == other
@@ -240,6 +252,12 @@ class ResponseStatusHTTP:
 
     def __hash__(self):
         return hash(self.code)
+
+    def __repr__(self):
+        return (
+            "ResponseStatusHTTP("
+            f"code={self.code!r}, reason={self.reason!r})"
+        )
 
 
 class MethodHTTP(StrEnum):
@@ -267,7 +285,7 @@ class ResponseHTTP:
 
     def __init__(
         self,
-        status: Union[ResponseStatusHTTP, "StatusHTTP"],
+        status: ResponseStatusHTTP,
         headers: dict[str, str],
         body_data: Optional[bytes]
     ):
@@ -288,11 +306,7 @@ class ResponseHTTP:
     @property
     def status(self) -> ResponseStatusHTTP:
         """The response status sent by the server, as a `ResponseStatusHTTP`"""
-        return (
-            self._status.value
-            if isinstance(self._status, StatusHTTP)
-            else self._status
-        )
+        return self._status
 
     @property
     def ok(self) -> bool:
@@ -733,163 +747,144 @@ class ClientAuthenticationHeader:
         ).decode("UTF-8")
 
 
-class StatusHTTP(Enum):
+class StatusHTTP(ResponseStatusHTTP, Enum):
     """Enumeration of standard HTTP response status codes."""
 
-    CONTINUE = ResponseStatusHTTP(100, "Continue")
+    def __new__(cls, code: StatusCodeHTTP, reason: str):
+        obj = object.__new__(cls)
+        obj._value_ = ResponseStatusHTTP(code, reason)
+        return obj
 
-    SWITCHING_PROTOCOLS = ResponseStatusHTTP(101, "Switching Protocols")
+    CONTINUE = 100, "Continue"
 
-    PROCESSING = ResponseStatusHTTP(102, "Processing")
+    SWITCHING_PROTOCOLS = 101, "Switching Protocols"
 
-    EARLY_HINTS = ResponseStatusHTTP(103, "Early Hints")
+    PROCESSING = 102, "Processing"
 
-    OK = ResponseStatusHTTP(200, "OK")
+    EARLY_HINTS = 103, "Early Hints"
 
-    CREATED = ResponseStatusHTTP(201, "Created")
+    OK = 200, "OK"
 
-    ACCEPTED = ResponseStatusHTTP(202, "Accepted")
+    CREATED = 201, "Created"
 
-    NON_AUTHORITATIVE_INFORMATION = ResponseStatusHTTP(
-        203, "Non-Authoritative Information"
-    )
+    ACCEPTED = 202, "Accepted"
 
-    NO_CONTENT = ResponseStatusHTTP(204, "No Content")
+    NON_AUTHORITATIVE_INFORMATION = 203, "Non-Authoritative Information"
 
-    RESET_CONTENT = ResponseStatusHTTP(205, "Reset Content")
+    NO_CONTENT = 204, "No Content"
 
-    PARTIAL_CONTENT = ResponseStatusHTTP(206, "Partial Content")
+    RESET_CONTENT = 205, "Reset Content"
 
-    MULTI_STATUS = ResponseStatusHTTP(207, "Multi-Status")
+    PARTIAL_CONTENT = 206, "Partial Content"
 
-    ALREADY_REPORTED = ResponseStatusHTTP(208, "Already Reported")
+    MULTI_STATUS = 207, "Multi-Status"
 
-    IM_USED = ResponseStatusHTTP(226, "IM Used")
+    ALREADY_REPORTED = 208, "Already Reported"
 
-    MULTIPLE_CHOICES = ResponseStatusHTTP(300, "Multiple Choices")
+    IM_USED = 226, "IM Used"
 
-    MOVED_PERMANENTLY = ResponseStatusHTTP(301, "Moved Permanently")
+    MULTIPLE_CHOICES = 300, "Multiple Choices"
 
-    FOUND = ResponseStatusHTTP(302, "Found")
+    MOVED_PERMANENTLY = 301, "Moved Permanently"
 
-    SEE_OTHER = ResponseStatusHTTP(303, "See Other")
+    FOUND = 302, "Found"
 
-    NOT_MODIFIED = ResponseStatusHTTP(304, "Not Modified")
+    SEE_OTHER = 303, "See Other"
 
-    USE_PROXY = ResponseStatusHTTP(305, "Use Proxy")
+    NOT_MODIFIED = 304, "Not Modified"
+
+    USE_PROXY = 305, "Use Proxy"
 
     USE_PROXY_DEPRECATED = USE_PROXY
 
-    UNUSED = ResponseStatusHTTP(306, "Unused")
+    UNUSED = 306, "Unused"
 
-    TEMPORARY_REDIRECT = ResponseStatusHTTP(307, "Temporary Redirect")
+    TEMPORARY_REDIRECT = 307, "Temporary Redirect"
 
-    PERMANENT_REDIRECT = ResponseStatusHTTP(308, "Permanent Redirect")
+    PERMANENT_REDIRECT = 308, "Permanent Redirect"
 
-    BAD_REQUEST = ResponseStatusHTTP(400, "Bad Request")
+    BAD_REQUEST = 400, "Bad Request"
 
-    UNAUTHORIZED = ResponseStatusHTTP(401, "Unauthorized")
+    UNAUTHORIZED = 401, "Unauthorized"
 
-    PAYMENT_REQUIRED = ResponseStatusHTTP(402, "Payment Required")
+    PAYMENT_REQUIRED = 402, "Payment Required"
 
-    FORBIDDEN = ResponseStatusHTTP(403, "Forbidden")
+    FORBIDDEN = 403, "Forbidden"
 
-    NOT_FOUND = ResponseStatusHTTP(404, "Not Found")
+    NOT_FOUND = 404, "Not Found"
 
-    METHOD_NOT_ALLOWED = ResponseStatusHTTP(405, "Method Not Allowed")
+    METHOD_NOT_ALLOWED = 405, "Method Not Allowed"
 
-    NOT_ACCEPTABLE = ResponseStatusHTTP(406, "Not Acceptable")
+    NOT_ACCEPTABLE = 406, "Not Acceptable"
 
-    PROXY_AUTHENTICATION_REQUIRED = ResponseStatusHTTP(
-        407, "Proxy Authentication Required"
-    )
+    PROXY_AUTHENTICATION_REQUIRED = 407, "Proxy Authentication Required"
 
-    REQUEST_TIMEOUT = ResponseStatusHTTP(408, "Request Timeout")
+    REQUEST_TIMEOUT = 408, "Request Timeout"
 
-    CONFLICT = ResponseStatusHTTP(409, "Conflict")
+    CONFLICT = 409, "Conflict"
 
-    GONE = ResponseStatusHTTP(410, "Gone")
+    GONE = 410, "Gone"
 
-    LENGTH_REQUIRED = ResponseStatusHTTP(411, "Length Required")
+    LENGTH_REQUIRED = 411, "Length Required"
 
-    PRECONDITION_FAILED = ResponseStatusHTTP(412, "Precondition Failed")
+    PRECONDITION_FAILED = 412, "Precondition Failed"
 
-    PAYLOAD_TOO_LARGE = ResponseStatusHTTP(413, "Payload Too Large")
+    PAYLOAD_TOO_LARGE = 413, "Payload Too Large"
 
     CONTENT_TOO_LARGE = PAYLOAD_TOO_LARGE
 
-    URI_TOO_LONG = ResponseStatusHTTP(414, "URI Too Long")
+    URI_TOO_LONG = 414, "URI Too Long"
 
-    UNSUPPORTED_MEDIA_TYPE = ResponseStatusHTTP(415, "Unsupported Media Type")
+    UNSUPPORTED_MEDIA_TYPE = 415, "Unsupported Media Type"
 
-    RANGE_NOT_SATISFIABLE = ResponseStatusHTTP(416, "Range Not Satisfiable")
+    RANGE_NOT_SATISFIABLE = 416, "Range Not Satisfiable"
 
-    EXPECTATION_FAILED = ResponseStatusHTTP(417, "Expectation Failed")
+    EXPECTATION_FAILED = 417, "Expectation Failed"
 
-    IM_A_TEAPOT = ResponseStatusHTTP(418, "I'm a teapot")
+    IM_A_TEAPOT = 418, "I'm a teapot"
 
     I_AM_A_TEAPOT = IM_A_TEAPOT
 
-    MISDIRECTED_REQUEST = ResponseStatusHTTP(421, "Misdirected Request")
+    MISDIRECTED_REQUEST = 421, "Misdirected Request"
 
-    UNPROCESSABLE_ENTITY = ResponseStatusHTTP(422, "Unprocessable Entity")
+    UNPROCESSABLE_ENTITY = 422, "Unprocessable Entity"
 
     UNPROCESSABLE_CONTENT = UNPROCESSABLE_ENTITY
 
-    LOCKED = ResponseStatusHTTP(423, "Locked")
+    LOCKED = 423, "Locked"
 
-    FAILED_DEPENDENCY = ResponseStatusHTTP(424, "Failed Dependency")
+    FAILED_DEPENDENCY = 424, "Failed Dependency"
 
-    TOO_EARLY = ResponseStatusHTTP(425, "Too Early")
+    TOO_EARLY = 425, "Too Early"
 
-    UPGRADE_REQUIRED = ResponseStatusHTTP(426, "Upgrade Required")
+    UPGRADE_REQUIRED = 426, "Upgrade Required"
 
-    PRECONDITION_REQUIRED = ResponseStatusHTTP(428, "Precondition Required")
+    PRECONDITION_REQUIRED = 428, "Precondition Required"
 
-    TOO_MANY_REQUESTS = ResponseStatusHTTP(429, "Too Many Requests")
+    TOO_MANY_REQUESTS = 429, "Too Many Requests"
 
-    REQUEST_HEADER_FIELDS_TOO_LARGE = ResponseStatusHTTP(
-        431, "Request Header Fields Too Large"
-    )
+    REQUEST_HEADER_FIELDS_TOO_LARGE = 431, "Request Header Fields Too Large"
 
-    UNAVAILABLE_FOR_LEGAL_REASONS = ResponseStatusHTTP(
-        451, "Unavailable For Legal Reasons"
-    )
+    UNAVAILABLE_FOR_LEGAL_REASONS = 451, "Unavailable For Legal Reasons"
 
-    INTERNAL_SERVER_ERROR = ResponseStatusHTTP(500, "Internal Server Error")
+    INTERNAL_SERVER_ERROR = 500, "Internal Server Error"
 
-    NOT_IMPLEMENTED = ResponseStatusHTTP(501, "Not Implemented")
+    NOT_IMPLEMENTED = 501, "Not Implemented"
 
-    BAD_GATEWAY = ResponseStatusHTTP(502, "Bad Gateway")
+    BAD_GATEWAY = 502, "Bad Gateway"
 
-    SERVICE_UNAVAILABLE = ResponseStatusHTTP(503, "Service Unavailable")
+    SERVICE_UNAVAILABLE = 503, "Service Unavailable"
 
-    GATEWAY_TIMEOUT = ResponseStatusHTTP(504, "Gateway Timeout")
+    GATEWAY_TIMEOUT = 504, "Gateway Timeout"
 
-    HTTP_VERSION_NOT_SUPPORTED = ResponseStatusHTTP(
-        505, "HTTP Version Not Supported"
-    )
+    HTTP_VERSION_NOT_SUPPORTED = 505, "HTTP Version Not Supported"
 
-    VARIANT_ALSO_NEGOTIATES = ResponseStatusHTTP(
-        506, "Variant Also Negotiates"
-    )
+    VARIANT_ALSO_NEGOTIATES = 506, "Variant Also Negotiates"
 
-    INSUFFICIENT_STORAGE = ResponseStatusHTTP(507, "Insufficient Storage")
+    INSUFFICIENT_STORAGE = 507, "Insufficient Storage"
 
-    LOOP_DETECTED = ResponseStatusHTTP(508, "Loop Detected")
+    LOOP_DETECTED = 508, "Loop Detected"
 
-    NOT_EXTENDED = ResponseStatusHTTP(510, "Not Extended")
+    NOT_EXTENDED = 510, "Not Extended"
 
-    NETWORK_AUTHENTICATION_REQUIRED = ResponseStatusHTTP(
-        511, "Network Authentication Required"
-    )
-
-    @property
-    def code(self) -> StatusCodeHTTP:
-        """The numeric HTTP status code, as a `StatusCodeHTTP`."""
-        return self.value.code
-
-    @property
-    def reason(self) -> str:
-        """The HTTP reason phrase, as a `str`."""
-        return self.value.reason
+    NETWORK_AUTHENTICATION_REQUIRED = 511, "Network Authentication Required"

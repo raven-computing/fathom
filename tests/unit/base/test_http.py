@@ -332,6 +332,11 @@ class TestResponseHTTP(TestCase):
         self.assertEqual(ResponseStatusHTTP(200, "OK"), StatusHTTP.OK)
         self.assertEqual(StatusHTTP.OK, ResponseStatusHTTP(200, "OK"))
 
+    def test_status_enum_members_are_response_status_instances(self):
+        self.assertIsInstance(StatusHTTP.OK, ResponseStatusHTTP)
+        self.assertIsInstance(StatusHTTP.CREATED, ResponseStatusHTTP)
+        self.assertIsInstance(StatusHTTP.NOT_FOUND, ResponseStatusHTTP)
+
     def test_server_error_is_true_for_5xx(self):
         e1 = StatusHTTP.INTERNAL_SERVER_ERROR
         e2 = StatusHTTP.SERVICE_UNAVAILABLE

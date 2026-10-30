@@ -225,8 +225,10 @@ class ResponseStatusHTTP:
         if isinstance(other, int):
             return self.code == other
 
-        if isinstance(other, StatusHTTP):
-            return self.code == other.code
+        if isinstance(other, Enum):
+            value = getattr(other, "value", None)
+            if isinstance(value, ResponseStatusHTTP):
+                return self.code == value.code
 
         if isinstance(other, ResponseStatusHTTP):
             return self.code == other.code

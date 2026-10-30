@@ -328,6 +328,10 @@ class TestResponseHTTP(TestCase):
             ResponseHTTP(StatusHTTP.INTERNAL_SERVER_ERROR, {}, None).not_found
         )
 
+    def test_response_status_equals_status_enum_value(self):
+        self.assertEqual(ResponseStatusHTTP(200, "OK"), StatusHTTP.OK)
+        self.assertEqual(StatusHTTP.OK, ResponseStatusHTTP(200, "OK"))
+
     def test_server_error_is_true_for_5xx(self):
         e1 = StatusHTTP.INTERNAL_SERVER_ERROR
         e2 = StatusHTTP.SERVICE_UNAVAILABLE

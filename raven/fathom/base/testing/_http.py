@@ -22,6 +22,7 @@ from raven.fathom.base.http import (
     ConnectionHTTP,
     RequestHTTP,
     ResponseHTTP,
+    StatusHTTP,
     ConnectionException,
 )
 
@@ -57,7 +58,7 @@ class ConnectionHTTPMock(ConnectionHTTP):
     def __init__(self):
         """Initializes a new `ConnectionHTTPMock` with default values."""
         self.default_response: ResponseHTTP = ResponseHTTP(
-            status_code=200,
+            status=StatusHTTP.OK,
             headers=dict(),
             body_data=None,
         )

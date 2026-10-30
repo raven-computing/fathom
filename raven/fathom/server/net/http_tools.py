@@ -55,7 +55,7 @@ def _exec_transactional(controller_method, *args, **kwargs):
         http_response = controller_method(*args, **kwargs)
         if isinstance(http_response, ResponseStatusHTTP):
             raise cherrypy.HTTPError(
-                http_response.code, http_response.message
+                http_response.code, http_response.reason
             )
 
         return http_response

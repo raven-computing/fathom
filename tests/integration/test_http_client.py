@@ -187,7 +187,7 @@ class TestConnectionHTTPImpl(TestCase):
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
         self.assertTrue(response.ok)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_get_request_response_has_body_as_bytes(self):
         request = RequestHTTP.get(self.url("/"))
@@ -211,7 +211,7 @@ class TestConnectionHTTPImpl(TestCase):
     def test_get_request_json_response_body(self):
         request = RequestHTTP.get(self.url("/json"))
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
         body = response.get_body_json()
         self.assertIsInstance(body, dict)
         self.assertEqual(body.get("status"), "ok")
@@ -220,7 +220,7 @@ class TestConnectionHTTPImpl(TestCase):
         request = RequestHTTP.post(self.url("/echo"))
         request.set_body(b"test-body")
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
         self.assertEqual(response.get_body(), b"test-body")
 
     def test_post_request_with_json_body(self):
@@ -228,7 +228,7 @@ class TestConnectionHTTPImpl(TestCase):
         request = RequestHTTP.post(self.url("/echo"))
         request.set_json_body(payload)
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
         echoed = json.loads(response.get_body())
         self.assertEqual(echoed, payload)
 
@@ -237,50 +237,50 @@ class TestConnectionHTTPImpl(TestCase):
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
         self.assertTrue(response.not_found)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status, 404)
 
     def test_http_500_response_is_returned_not_raised(self):
         request = RequestHTTP.get(self.url("/error"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertTrue(response.server_error)
-        self.assertEqual(response.status_code, 500)
+        self.assertTrue(response.status.is_server_error())
+        self.assertEqual(response.status, 500)
 
     def test_head_request_returns_successful_response(self):
         request = RequestHTTP(MethodHTTP.HEAD, self.url("/"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_put_request_returns_successful_response(self):
         request = RequestHTTP.put(self.url("/resource"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_delete_request_returns_successful_response(self):
         request = RequestHTTP.delete(self.url("/resource"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_patch_request_returns_successful_response(self):
         request = RequestHTTP.patch(self.url("/resource"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_options_request_returns_successful_response(self):
         request = RequestHTTP(MethodHTTP.OPTIONS, self.url("/"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_trace_request_returns_successful_response(self):
         request = RequestHTTP(MethodHTTP.TRACE, self.url("/"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
 
     def test_connection_to_unreachable_host_raises_connection_exception(self):
         # Use port 1 which is a privileged port, so a connection
@@ -306,7 +306,7 @@ class TestConnectionHTTPImpl(TestCase):
         request.set_header("X-Test-Foo", "bar")
         request.set_header("X-Test-Answer", "42")
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
         echoed = response.get_body_json()
         # HTTP header names are case-insensitive; compare lower-case keys.
         echoed_lower = {k.lower(): v for k, v in echoed.items()}
@@ -317,14 +317,14 @@ class TestConnectionHTTPImpl(TestCase):
         request = RequestHTTP.get(self.url("/created"))
         response = self.connection.send(request)
         self.assertIsInstance(response, ResponseHTTP)
-        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.status, 201)
         self.assertTrue(response.created)
         self.assertFalse(response.ok)
 
     def test_get_body_json_raises_value_error_on_non_json_content_type(self):
         request = RequestHTTP.get(self.url("/"))
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status, 200)
         with self.assertRaises(ValueError) as raised:
             response.get_body_json()
 
@@ -336,7 +336,7 @@ class TestConnectionHTTPImpl(TestCase):
     def test_get_body_returns_empty_bytes_when_body_is_absent(self):
         request = RequestHTTP.get(self.url("/not-found"))
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status, 404)
         body = response.get_body()
         self.assertIsInstance(body, bytes)
         self.assertEqual(body, b"")
@@ -344,13 +344,13 @@ class TestConnectionHTTPImpl(TestCase):
     def test_get_body_text_returns_empty_string_when_body_is_absent(self):
         request = RequestHTTP.get(self.url("/not-found"))
         response = self.connection.send(request)
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status, 404)
         self.assertEqual(response.get_body_text(), "")
 
     def test_server_error_property_is_false_for_non_5xx_response(self):
         request = RequestHTTP.get(self.url("/not-found"))
         response = self.connection.send(request)
-        self.assertFalse(response.server_error)
+        self.assertFalse(response.status.is_server_error())
 
     def test_not_found_property_is_false_for_non_404_response(self):
         request = RequestHTTP.get(self.url("/"))

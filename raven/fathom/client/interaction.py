@@ -90,7 +90,7 @@ class ServerInteractionHTTP(ServerInteraction):
         if not http_response.ok:
             raise TransmissionException(
                 "Server has responded "
-                f"with HTTP status code {http_response.status_code}"
+                f"with HTTP status code {http_response.status}"
             )
 
         return ResponseParcelJSON(http_response.get_body()).decode()

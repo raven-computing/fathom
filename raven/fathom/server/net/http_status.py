@@ -14,27 +14,9 @@
 #
 """HTTP response and status code types."""
 
-from typing import Annotated, TypeAlias, TypeVar
-from dataclasses import dataclass
+from typing import TypeAlias, TypeVar
 
-
-StatusCodeHTTP = Annotated[int, "must be in range [100, 599]"]
-
-
-@dataclass
-class ResponseStatusHTTP:
-    """An HTTP response status that can be returned by web controllers."""
-
-    code: StatusCodeHTTP
-
-    message: str
-
-    def __post_init__(self):
-        if self.code < 100 or self.code > 599:
-            raise ValueError(
-                "ResponseStatusHTTP.code must be in range [100, 599] but "
-                f"got {self.code!r}"
-            )
+from raven.fathom.base import ResponseStatusHTTP
 
 
 T = TypeVar("T")

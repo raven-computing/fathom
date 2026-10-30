@@ -18,7 +18,7 @@ import urllib.request
 import urllib.error
 
 from raven.fathom.base.http import ConnectionHTTP, RequestHTTP, ResponseHTTP
-from raven.fathom.base.http import ConnectionException
+from raven.fathom.base.http import ResponseStatusHTTP, ConnectionException
 
 
 class ConnectionHTTPImpl(ConnectionHTTP):
@@ -59,7 +59,10 @@ class ConnectionHTTPImpl(ConnectionHTTP):
 
     def _create_response_obj_from(self, urllib_resp):
         response = ResponseHTTP(
-            urllib_resp.code,
+            ResponseStatusHTTP(
+                urllib_resp.code,
+                getattr(urllib_resp, "reason", "") or ""
+            ),
             dict(urllib_resp.headers),
             urllib_resp.read()
         )

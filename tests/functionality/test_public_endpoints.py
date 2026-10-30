@@ -33,7 +33,7 @@ class TestPublicEndpoints(TestCase):
     def test_server_responds_with_correct_version_identifier(self):
         response = self.http(MethodHTTP.GET, "/public/server-version").send()
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(200, response.status)
         json_response = response.get_body_json()
         self.assertIn("serverVersion", json_response)
         expected_version = str(
@@ -46,7 +46,7 @@ class TestPublicEndpoints(TestCase):
     def test_server_version_response_contains_complete_fields(self):
         response = self.http(MethodHTTP.GET, "/public/server-version").send()
 
-        self.assertEqual(200, response.status_code)
+        self.assertEqual(200, response.status)
         json_response = response.get_body_json()
 
         self.assertIn("status", json_response)
@@ -73,12 +73,12 @@ class TestPublicEndpoints(TestCase):
     def test_server_rejects_non_get_method_on_version_endpoint(self):
         response = self.http(MethodHTTP.POST, "/public/server-version").send()
 
-        self.assertEqual(405, response.status_code)
+        self.assertEqual(405, response.status)
 
     def test_server_returns_404_for_unknown_endpoint(self):
         response = self.http(MethodHTTP.GET, "/public/nonexistent").send()
 
-        self.assertEqual(404, response.status_code)
+        self.assertEqual(404, response.status)
 
 
 if __name__ == "__main__":

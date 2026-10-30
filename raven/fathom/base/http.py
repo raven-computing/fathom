@@ -22,11 +22,16 @@ Fathom clients and servers.
 #### Enumerations:
 
 * `MethodHTTP`
+* `ResponseClassHTTP`
+* `StatusHTTP`
 
 #### Classes:
 
 * `RequestHTTP`
 * `ResponseHTTP`
+* `StatusCodeHTTP`
+* `StatusCodeRangeHTTP`
+* `ResponseStatusHTTP`
 * `ConnectionHTTP`
 * `ClientAuthenticationHeader`
 
@@ -58,8 +63,9 @@ import binascii
 import json
 
 from abc import abstractmethod
-from enum import StrEnum
-from typing import Optional, Final, Union
+from enum import Enum, StrEnum
+from dataclasses import dataclass, field
+from typing import Optional, Final, Union, Annotated
 
 from raven.fathom.base.typing import Interface, TypeCheck
 from raven.fathom.base.url import URL
@@ -88,6 +94,152 @@ class HTTPDecodeException(HttpException):
     """A decoding error has occurred for some HTTP-related part."""
 
 
+StatusCodeHTTP = Annotated[int, "must be in range [100, 599]"]
+
+
+def _is_valid_http_status_code(code: StatusCodeHTTP) -> bool:
+    return 100 <= code <= 599
+
+
+@dataclass(frozen=True)
+class StatusCodeRangeHTTP:
+    """Represents a range of HTTP status codes.
+
+    Attributes:
+        minimum (StatusCodeHTTP): The lowest status code
+            in the range (inclusive).
+        maximum (StatusCodeHTTP): The highest status code
+            in the range (inclusive).
+    """
+
+    minimum: StatusCodeHTTP
+
+    maximum: StatusCodeHTTP
+
+    def __post_init__(self):
+        if not _is_valid_http_status_code(self.minimum):
+            raise ValueError(
+                f"Invalid HTTP status code for minimum {self.minimum}"
+            )
+
+        if not _is_valid_http_status_code(self.maximum):
+            raise ValueError(
+                f"Invalid HTTP status code for maximum {self.maximum}"
+            )
+
+        if self.minimum > self.maximum:
+            raise ValueError(
+                "Invalid HTTP status code range. "
+                "Minimum must be less than or equal maximum"
+            )
+
+
+class ResponseClassHTTP(Enum):
+    """Enumeration of standard HTTP response status code classes."""
+
+    INFORMATIONAL = StatusCodeRangeHTTP(100, 199)
+
+    SUCCESS = StatusCodeRangeHTTP(200, 299)
+
+    REDIRECTION = StatusCodeRangeHTTP(300, 399)
+
+    CLIENT_ERROR = StatusCodeRangeHTTP(400, 499)
+
+    SERVER_ERROR = StatusCodeRangeHTTP(500, 599)
+
+
+@dataclass(frozen=True)
+class ResponseStatusHTTP:
+    """An HTTP response status that can be returned by a HTTP server.
+
+    Attributes:
+        code (StatusCodeHTTP): The numeric HTTP status code.
+        reason (str): The reason phrase.
+    """
+
+    code: StatusCodeHTTP
+
+    reason: str = field(compare=False)
+
+    def is_informational(self) -> bool:
+        """Indicates whether the status code belongs in
+        the **informational** responses class.
+
+        Returns:
+            bool:`True` if the numeric status code is in the range [100, 199],
+                `False` otherwise.
+        """
+        return self._is_in_class_range(ResponseClassHTTP.INFORMATIONAL)
+
+    def is_success(self) -> bool:
+        """Indicates whether the status code belongs in
+        the **success** responses class.
+
+        Returns:
+            bool:`True` if the numeric status code is in the range [200, 299],
+                `False` otherwise.
+        """
+        return self._is_in_class_range(ResponseClassHTTP.SUCCESS)
+
+    def is_redirection(self) -> bool:
+        """Indicates whether the status code belongs in
+        the **redirection** responses class.
+
+        Returns:
+            bool:`True` if the numeric status code is in the range [300, 399],
+                `False` otherwise.
+        """
+        return self._is_in_class_range(ResponseClassHTTP.REDIRECTION)
+
+    def is_client_error(self) -> bool:
+        """Indicates whether the status code belongs in
+        the **client error** responses class.
+
+        Returns:
+            bool:`True` if the numeric status code is in the range [400, 499],
+                `False` otherwise.
+        """
+        return self._is_in_class_range(ResponseClassHTTP.CLIENT_ERROR)
+
+    def is_server_error(self) -> bool:
+        """Indicates whether the status code belongs in
+        the **server error** responses class.
+
+        Returns:
+            bool:`True` if the numeric status code is in the range [500, 599],
+                `False` otherwise.
+        """
+        return self._is_in_class_range(ResponseClassHTTP.SERVER_ERROR)
+
+    def _is_in_class_range(self, response: ResponseClassHTTP) -> bool:
+        return response.value.minimum <= self.code <= response.value.maximum
+
+    def __post_init__(self):
+        if not _is_valid_http_status_code(self.code):
+            raise ValueError(
+                "ResponseStatusHTTP.code must be in range [100, 599] but "
+                f"got {self.code!r}"
+            )
+
+    def __eq__(self, other):
+        if isinstance(other, int):
+            return self.code == other
+
+        if isinstance(other, StatusHTTP):
+            return self.code == other.code
+
+        if isinstance(other, ResponseStatusHTTP):
+            return self.code == other.code
+
+        raise TypeError(
+            "Cannot compare ResponseStatusHTTP instance "
+            f"with object of type {type(other)}"
+        )
+
+    def __hash__(self):
+        return hash(self.code)
+
+
 class MethodHTTP(StrEnum):
     """Enumeration of HTTP methods."""
 
@@ -113,55 +265,53 @@ class ResponseHTTP:
 
     def __init__(
         self,
-        status_code: int,
+        status: Union[ResponseStatusHTTP, "StatusHTTP"],
         headers: dict[str, str],
         body_data: Optional[bytes]
     ):
         """Initializes a new `ResponseHTTP` instance.
 
         Args:
-            status_code (int): The status code sent by the server.
+            status (ResponseStatusHTTP): The response status sent
+                by the server.
             headers (dict): The response HTTP headers.
             body_data (bytes): The raw response body data, as `bytes`.
                 May be `None` if the server has not responded
                 with any body data.
         """
-        self._status_code = status_code
+        self._status = status
         self._headers = headers or dict()
         self._body = body_data
 
     @property
-    def status_code(self) -> int:
-        """The response status code sent by the server, as an `int`"""
-        return self._status_code
+    def status(self) -> ResponseStatusHTTP:
+        """The response status sent by the server, as a `ResponseStatusHTTP`"""
+        return (
+            self._status.value
+            if isinstance(self._status, StatusHTTP)
+            else self._status
+        )
 
     @property
     def ok(self) -> bool:
         """Indicates whether the server has responded with a status code
         of **200 OK**, as a `bool`.
         """
-        return self.status_code == 200
+        return self.status == StatusHTTP.OK
 
     @property
     def created(self) -> bool:
         """Indicates whether the server has responded with a status code
         of **201 Created**, as a `bool`.
         """
-        return self.status_code == 201
+        return self.status == StatusHTTP.CREATED
 
     @property
     def not_found(self) -> bool:
         """Indicates whether the server has responded with a status code
         of **404 Not Found**, as a `bool`.
         """
-        return self.status_code == 404
-
-    @property
-    def server_error(self) -> bool:
-        """Indicates whether the server has responded with a **5xx** status
-        code, as a `bool`.
-        """
-        return 500 <= self.status_code < 600
+        return self.status == StatusHTTP.NOT_FOUND
 
     def get_headers(self) -> dict[str, str]:
         """Gets the response headers.
@@ -246,7 +396,7 @@ class ResponseHTTP:
         body_suffix = " [...] " if body_size > preview_size else ""
         return (
             "ResponseHTTP("
-            f"status_code={self._status_code}, "
+            f"status={self._status}, "
             f"headers={self._headers!r}, "
             f"body_size={body_size}, "
             f"body_preview={body_preview!r}{body_suffix}"
@@ -579,3 +729,165 @@ class ClientAuthenticationHeader:
             self._obj.encode("UTF-8"),
             validate=True,
         ).decode("UTF-8")
+
+
+class StatusHTTP(Enum):
+    """Enumeration of standard HTTP response status codes."""
+
+    CONTINUE = ResponseStatusHTTP(100, "Continue")
+
+    SWITCHING_PROTOCOLS = ResponseStatusHTTP(101, "Switching Protocols")
+
+    PROCESSING = ResponseStatusHTTP(102, "Processing")
+
+    EARLY_HINTS = ResponseStatusHTTP(103, "Early Hints")
+
+    OK = ResponseStatusHTTP(200, "OK")
+
+    CREATED = ResponseStatusHTTP(201, "Created")
+
+    ACCEPTED = ResponseStatusHTTP(202, "Accepted")
+
+    NON_AUTHORITATIVE_INFORMATION = ResponseStatusHTTP(
+        203, "Non-Authoritative Information"
+    )
+
+    NO_CONTENT = ResponseStatusHTTP(204, "No Content")
+
+    RESET_CONTENT = ResponseStatusHTTP(205, "Reset Content")
+
+    PARTIAL_CONTENT = ResponseStatusHTTP(206, "Partial Content")
+
+    MULTI_STATUS = ResponseStatusHTTP(207, "Multi-Status")
+
+    ALREADY_REPORTED = ResponseStatusHTTP(208, "Already Reported")
+
+    IM_USED = ResponseStatusHTTP(226, "IM Used")
+
+    MULTIPLE_CHOICES = ResponseStatusHTTP(300, "Multiple Choices")
+
+    MOVED_PERMANENTLY = ResponseStatusHTTP(301, "Moved Permanently")
+
+    FOUND = ResponseStatusHTTP(302, "Found")
+
+    SEE_OTHER = ResponseStatusHTTP(303, "See Other")
+
+    NOT_MODIFIED = ResponseStatusHTTP(304, "Not Modified")
+
+    USE_PROXY = ResponseStatusHTTP(305, "Use Proxy")
+
+    USE_PROXY_DEPRECATED = USE_PROXY
+
+    UNUSED = ResponseStatusHTTP(306, "Unused")
+
+    TEMPORARY_REDIRECT = ResponseStatusHTTP(307, "Temporary Redirect")
+
+    PERMANENT_REDIRECT = ResponseStatusHTTP(308, "Permanent Redirect")
+
+    BAD_REQUEST = ResponseStatusHTTP(400, "Bad Request")
+
+    UNAUTHORIZED = ResponseStatusHTTP(401, "Unauthorized")
+
+    PAYMENT_REQUIRED = ResponseStatusHTTP(402, "Payment Required")
+
+    FORBIDDEN = ResponseStatusHTTP(403, "Forbidden")
+
+    NOT_FOUND = ResponseStatusHTTP(404, "Not Found")
+
+    METHOD_NOT_ALLOWED = ResponseStatusHTTP(405, "Method Not Allowed")
+
+    NOT_ACCEPTABLE = ResponseStatusHTTP(406, "Not Acceptable")
+
+    PROXY_AUTHENTICATION_REQUIRED = ResponseStatusHTTP(
+        407, "Proxy Authentication Required"
+    )
+
+    REQUEST_TIMEOUT = ResponseStatusHTTP(408, "Request Timeout")
+
+    CONFLICT = ResponseStatusHTTP(409, "Conflict")
+
+    GONE = ResponseStatusHTTP(410, "Gone")
+
+    LENGTH_REQUIRED = ResponseStatusHTTP(411, "Length Required")
+
+    PRECONDITION_FAILED = ResponseStatusHTTP(412, "Precondition Failed")
+
+    PAYLOAD_TOO_LARGE = ResponseStatusHTTP(413, "Payload Too Large")
+
+    CONTENT_TOO_LARGE = PAYLOAD_TOO_LARGE
+
+    URI_TOO_LONG = ResponseStatusHTTP(414, "URI Too Long")
+
+    UNSUPPORTED_MEDIA_TYPE = ResponseStatusHTTP(415, "Unsupported Media Type")
+
+    RANGE_NOT_SATISFIABLE = ResponseStatusHTTP(416, "Range Not Satisfiable")
+
+    EXPECTATION_FAILED = ResponseStatusHTTP(417, "Expectation Failed")
+
+    IM_A_TEAPOT = ResponseStatusHTTP(418, "I'm a teapot")
+
+    I_AM_A_TEAPOT = IM_A_TEAPOT
+
+    MISDIRECTED_REQUEST = ResponseStatusHTTP(421, "Misdirected Request")
+
+    UNPROCESSABLE_ENTITY = ResponseStatusHTTP(422, "Unprocessable Entity")
+
+    UNPROCESSABLE_CONTENT = UNPROCESSABLE_ENTITY
+
+    LOCKED = ResponseStatusHTTP(423, "Locked")
+
+    FAILED_DEPENDENCY = ResponseStatusHTTP(424, "Failed Dependency")
+
+    TOO_EARLY = ResponseStatusHTTP(425, "Too Early")
+
+    UPGRADE_REQUIRED = ResponseStatusHTTP(426, "Upgrade Required")
+
+    PRECONDITION_REQUIRED = ResponseStatusHTTP(428, "Precondition Required")
+
+    TOO_MANY_REQUESTS = ResponseStatusHTTP(429, "Too Many Requests")
+
+    REQUEST_HEADER_FIELDS_TOO_LARGE = ResponseStatusHTTP(
+        431, "Request Header Fields Too Large"
+    )
+
+    UNAVAILABLE_FOR_LEGAL_REASONS = ResponseStatusHTTP(
+        451, "Unavailable For Legal Reasons"
+    )
+
+    INTERNAL_SERVER_ERROR = ResponseStatusHTTP(500, "Internal Server Error")
+
+    NOT_IMPLEMENTED = ResponseStatusHTTP(501, "Not Implemented")
+
+    BAD_GATEWAY = ResponseStatusHTTP(502, "Bad Gateway")
+
+    SERVICE_UNAVAILABLE = ResponseStatusHTTP(503, "Service Unavailable")
+
+    GATEWAY_TIMEOUT = ResponseStatusHTTP(504, "Gateway Timeout")
+
+    HTTP_VERSION_NOT_SUPPORTED = ResponseStatusHTTP(
+        505, "HTTP Version Not Supported"
+    )
+
+    VARIANT_ALSO_NEGOTIATES = ResponseStatusHTTP(
+        506, "Variant Also Negotiates"
+    )
+
+    INSUFFICIENT_STORAGE = ResponseStatusHTTP(507, "Insufficient Storage")
+
+    LOOP_DETECTED = ResponseStatusHTTP(508, "Loop Detected")
+
+    NOT_EXTENDED = ResponseStatusHTTP(510, "Not Extended")
+
+    NETWORK_AUTHENTICATION_REQUIRED = ResponseStatusHTTP(
+        511, "Network Authentication Required"
+    )
+
+    @property
+    def code(self) -> StatusCodeHTTP:
+        """The numeric HTTP status code, as a `StatusCodeHTTP`."""
+        return self.value.code
+
+    @property
+    def reason(self) -> str:
+        """The HTTP reason phrase, as a `str`."""
+        return self.value.reason

@@ -19,6 +19,7 @@ import json
 from raven.fathom.base.testing import ConnectionHTTPMock
 from raven.fathom.base.http import ClientAuthenticationHeader
 from raven.fathom.base.http import MethodHTTP, RequestHTTP, ResponseHTTP
+from raven.fathom.base.http import StatusHTTP, ResponseStatusHTTP
 from raven.fathom.base.http import HTTPEncodeException, HTTPDecodeException
 from raven.fathom.base.http import ConnectionException
 from raven.fathom.base.authentication import ClientAuthentication
@@ -243,7 +244,7 @@ class TestRequestHTTP(TestCase):
 
     def test_send_uses_connection_http_instance(self):
         connection = ConnectionHTTPMock()
-        expected_response = ResponseHTTP(200, {}, b"ok")
+        expected_response = ResponseHTTP(StatusHTTP.OK, {}, b"ok")
         connection.default_response = expected_response
         request = RequestHTTP(MethodHTTP.POST, self.url)
         response = request.send()
@@ -295,85 +296,100 @@ class TestResponseHTTP(TestCase):
     """Unit tests for the `ResponseHTTP` class."""
 
     def test_status_code_property(self):
-        response = ResponseHTTP(200, {}, None)
-        self.assertEqual(response.status_code, 200)
+        response = ResponseHTTP(StatusHTTP.OK, {}, None)
+        self.assertEqual(response.status, 200)
 
     def test_ok_is_true_for_200(self):
-        response = ResponseHTTP(200, {}, None)
+        response = ResponseHTTP(StatusHTTP.OK, {}, None)
         self.assertTrue(response.ok)
 
     def test_ok_is_false_for_non_200(self):
-        self.assertFalse(ResponseHTTP(201, {}, None).ok)
-        self.assertFalse(ResponseHTTP(404, {}, None).ok)
-        self.assertFalse(ResponseHTTP(500, {}, None).ok)
+        self.assertFalse(ResponseHTTP(StatusHTTP.CREATED, {}, None).ok)
+        self.assertFalse(ResponseHTTP(StatusHTTP.NOT_FOUND, {}, None).ok)
+        self.assertFalse(
+            ResponseHTTP(StatusHTTP.INTERNAL_SERVER_ERROR, {}, None).ok
+        )
 
     def test_created_is_true_for_201(self):
-        response = ResponseHTTP(201, {}, None)
+        response = ResponseHTTP(StatusHTTP.CREATED, {}, None)
         self.assertTrue(response.created)
 
     def test_created_is_false_for_non_201(self):
-        self.assertFalse(ResponseHTTP(200, {}, None).created)
-        self.assertFalse(ResponseHTTP(404, {}, None).created)
+        self.assertFalse(ResponseHTTP(StatusHTTP.OK, {}, None).created)
+        self.assertFalse(ResponseHTTP(StatusHTTP.NOT_FOUND, {}, None).created)
 
     def test_not_found_is_true_for_404(self):
-        response = ResponseHTTP(404, {}, None)
+        response = ResponseHTTP(StatusHTTP.NOT_FOUND, {}, None)
         self.assertTrue(response.not_found)
 
     def test_not_found_is_false_for_non_404(self):
-        self.assertFalse(ResponseHTTP(200, {}, None).not_found)
-        self.assertFalse(ResponseHTTP(500, {}, None).not_found)
+        self.assertFalse(ResponseHTTP(StatusHTTP.OK, {}, None).not_found)
+        self.assertFalse(
+            ResponseHTTP(StatusHTTP.INTERNAL_SERVER_ERROR, {}, None).not_found
+        )
 
     def test_server_error_is_true_for_5xx(self):
-        for code in (500, 503, 599):
-            self.assertTrue(ResponseHTTP(code, {}, None).server_error)
+        e1 = StatusHTTP.INTERNAL_SERVER_ERROR
+        e2 = StatusHTTP.SERVICE_UNAVAILABLE
+        e3 = ResponseStatusHTTP(599, "Custom")
+        for code in (e1, e2, e3):
+            response = ResponseHTTP(code, {}, None)
+            self.assertTrue(response.status.is_server_error())
 
     def test_server_error_is_false_for_non_5xx(self):
-        for code in (200, 201, 404, 499):
-            self.assertFalse(ResponseHTTP(code, {}, None).server_error)
+        e1 = StatusHTTP.OK
+        e2 = StatusHTTP.CREATED
+        e3 = StatusHTTP.NOT_FOUND
+        e4 = ResponseStatusHTTP(499, "Custom")
+        for code in (e1, e2, e3, e4):
+            response = ResponseHTTP(code, {}, None)
+            self.assertFalse(response.status.is_server_error())
 
     def test_get_headers_returns_headers_dict(self):
         headers = {"Content-Type": "application/json", "X-Custom": "value"}
-        response = ResponseHTTP(200, headers, None)
+        response = ResponseHTTP(StatusHTTP.OK, headers, None)
         self.assertEqual(response.get_headers(), headers)
 
     def test_get_body_returns_empty_bytes_when_no_body(self):
-        response = ResponseHTTP(200, {}, None)
+        response = ResponseHTTP(StatusHTTP.OK, {}, None)
         self.assertEqual(response.get_body(), b"")
 
     def test_get_body_returns_body_bytes(self):
         body = b"Hello, World!"
-        response = ResponseHTTP(200, {}, body)
+        response = ResponseHTTP(StatusHTTP.OK, {}, body)
         self.assertEqual(response.get_body(), body)
 
     def test_get_body_text_returns_empty_string_when_no_body(self):
-        response = ResponseHTTP(200, {}, None)
+        response = ResponseHTTP(StatusHTTP.OK, {}, None)
         self.assertEqual(response.get_body_text(), "")
 
     def test_get_body_text_decodes_utf8_by_default(self):
         text = "Hello, World!"
-        response = ResponseHTTP(200, {}, text.encode("UTF-8"))
+        response = ResponseHTTP(StatusHTTP.OK, {}, text.encode("UTF-8"))
         self.assertEqual(response.get_body_text(), text)
 
     def test_get_body_text_uses_charset_from_content_type_header(self):
         text = "Héllo"
         headers = {"Content-Type": "text/plain; charset=UTF-8"}
-        response = ResponseHTTP(200, headers, text.encode("UTF-8"))
+        response = ResponseHTTP(StatusHTTP.OK, headers, text.encode("UTF-8"))
         self.assertEqual(response.get_body_text(), text)
 
     def test_get_body_json_returns_parsed_dict(self):
         data = {"key": "value", "number": 42}
         headers = {"Content-Type": "application/json"}
-        response = ResponseHTTP(200, headers, json.dumps(data).encode("UTF-8"))
+        response = ResponseHTTP(
+            StatusHTTP.OK, headers, json.dumps(data).encode("UTF-8")
+        )
         self.assertEqual(response.get_body_json(), data)
 
     def test_get_body_json_raises_when_no_content_type_header(self):
-        response = ResponseHTTP(200, {}, b'{"key": "value"}')
+        response = ResponseHTTP(StatusHTTP.OK, {}, b'{"key": "value"}')
         with self.assertRaises(ValueError):
             response.get_body_json()
 
     def test_get_body_json_raises_when_wrong_content_type(self):
         headers = {"Content-Type": "text/plain"}
-        response = ResponseHTTP(200, headers, b'{"key": "value"}')
+        response = ResponseHTTP(StatusHTTP.OK, headers, b'{"key": "value"}')
         with self.assertRaises(ValueError):
             response.get_body_json()
 

@@ -14,8 +14,8 @@
 #
 """Definition of the Fathom `ServerApplication` with its exposed routes."""
 
-from raven.fathom.server.net.http.http import ServerApplication
 from raven.fathom.server.net.defaults import SERVER_ROOT_PATH_V1
+from raven.fathom.server.net.http.application import ServerApplication
 from raven.fathom.server.controllers import InteractionController
 from raven.fathom.server.controllers import PublicController
 from raven.fathom.server.controllers import SignupController

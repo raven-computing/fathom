@@ -16,12 +16,13 @@
 
 from raven.fathom.base import ServerInteraction
 from raven.fathom.base import ClientRequest, ServerResponse
-from raven.fathom.base import TransmissionException
+from raven.fathom.base import TransmissionException, ProcessingException
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
 from raven.fathom.base import HTTPEncodeException
 from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ConnectionException
+from raven.fathom.base import ResponseHTTP
 from raven.fathom.client.http import RequestHTTP
 from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 from raven.fathom.client.logging import Logger
@@ -63,12 +64,26 @@ class ServerInteractionHTTP(ServerInteraction):
             ) from ex
         except ConnectionException as ex:
             raise TransmissionException(
-                f"Could not connect to server at '{self._server_url}'"
+                "Could not connect to server "
+                f"at '{self._server_url.authority}'"
             ) from ex
         except ParcelDecodingException as ex:
             raise TransmissionException(
                 "Failed to decode JSON payload of server response"
             ) from ex
+
+    def _handle_failure_status(self, response: ResponseHTTP):
+        if response.status.is_server_error():
+            raise ProcessingException(
+                "The server has failed to process the request and "
+                f"has responded with HTTP status code {response.status}"
+            )
+
+        raise TransmissionException(
+            "The connection to the server was established but the application "
+            "server did not get to process the request. The server "
+            f"has responded with HTTP status code {response.status}"
+        )
 
     def _send_http(self, request: ClientRequest) -> ServerResponse:
         self._server_url.query["action"] = request.action
@@ -80,6 +95,7 @@ class ServerInteractionHTTP(ServerInteraction):
         parcel = RequestParcelJSON(request)
         http_request.set_body(parcel.encode())
         http_request.set_header("Content-Type", parcel.content_type())
+
         LOG.d("Sending HTTP request:")
         LOG.d("%r", http_request)
 
@@ -87,10 +103,8 @@ class ServerInteractionHTTP(ServerInteraction):
 
         LOG.d("Received HTTP response:")
         LOG.d("%r", http_response)
+
         if not http_response.ok:
-            raise TransmissionException(
-                "Server has responded "
-                f"with HTTP status code {http_response.status}"
-            )
+            self._handle_failure_status(http_response)
 
         return ResponseParcelJSON(http_response.get_body()).decode()

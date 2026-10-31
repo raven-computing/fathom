@@ -63,8 +63,10 @@ class TransmissionException(InteractionException):
     Raised when the interaction between a Fathom client and server fails
     due to transmission errors. For example, an interaction fails with a
     transmission error when the client cannot reach the server over
-    the network. Semantically, an interaction never took place because the
-    transmission of that interaction did not succeed.
+    the network or if the server is reachable but the request of the client
+    is malformed in such a way that it cannot be processed by the server.
+    Semantically, an interaction never took place because the transmission
+    of that interaction did not succeed.
 
     Is primarily used by the `ServerInteraction` interface.
     """

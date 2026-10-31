@@ -20,7 +20,8 @@ from typing import TYPE_CHECKING, Optional
 from raven.fathom.base import ServerInteraction
 from raven.fathom.base import Interaction
 from raven.fathom.base import ClientRequest, ClientAuthentication
-from raven.fathom.base import TransmissionException
+from raven.fathom.base import TransmissionException, ProcessingException
+from raven.fathom.base import InteractionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import DeploymentAuthorization
 from raven.fathom.base import Package
@@ -460,12 +461,27 @@ class Server:
         try:
             return ServerInteraction.instance(self._location).process(request)
         except TransmissionException as ex:
-            LOG.v(
-                "Failed to interact with %s server: %s",
-                APPLICATION_NAME, ex
-            )
+            LOG.v("Failed to transmit request to %s server:", APPLICATION_NAME)
+            LOG.v("%s", ex)
             raise ServerConnectionException(
                 "Could not establish a connection to the server"
+            ) from ex
+        except ProcessingException as ex:
+            LOG.v(
+                "The request was transmitted to the %s server "
+                "but an error was encountered:",
+                APPLICATION_NAME,
+            )
+            LOG.v("%s", ex)
+            raise ServerConnectionException(
+                "The server failed to process the request"
+            ) from ex
+        except InteractionException as ex:
+            LOG.v("Failed to interact with %s server:", APPLICATION_NAME)
+            LOG.v("%s", ex)
+            raise ServerConnectionException(
+                "An unknown error has occurred while communicating "
+                "with the server"
             ) from ex
 
     def _raise_on_errors(self, response):

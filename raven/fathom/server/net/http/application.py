@@ -82,7 +82,7 @@ class ServerApplication:
         other processing.
         """
         cherrypy.response.headers["Content-Type"] = "text/plain;charset=utf-8"
-        return f"{status}\n\n{message}"
+        return f"{status}\n\n{message}" if message not in status else status
 
     def on_unhandled_error(self):
         """Handles an unanticipated error that occurred during

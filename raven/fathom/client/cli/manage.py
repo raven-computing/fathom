@@ -42,9 +42,11 @@ class ManageCommand(ClientCommand):
             return self._manage()
         except ServerConnectionException as ex:
             LOG.e(str(ex))
+            LOG.d(ex)
             return ExitStatus.SERVER_UNREACHABLE
         except ServerOperationException as ex:
             LOG.e(str(ex))
+            LOG.d(ex)
             return ExitStatus.FAILURE
 
     def _manage(self):

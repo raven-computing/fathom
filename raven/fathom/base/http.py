@@ -795,8 +795,6 @@ class StatusHTTP(ResponseStatusHTTP, Enum):
 
     USE_PROXY = 305, "Use Proxy"
 
-    USE_PROXY_DEPRECATED = USE_PROXY
-
     UNUSED = 306, "Unused"
 
     TEMPORARY_REDIRECT = 307, "Temporary Redirect"
@@ -829,9 +827,7 @@ class StatusHTTP(ResponseStatusHTTP, Enum):
 
     PRECONDITION_FAILED = 412, "Precondition Failed"
 
-    PAYLOAD_TOO_LARGE = 413, "Payload Too Large"
-
-    CONTENT_TOO_LARGE = PAYLOAD_TOO_LARGE
+    CONTENT_TOO_LARGE = 413, "Content Too Large"
 
     URI_TOO_LONG = 414, "URI Too Long"
 
@@ -847,9 +843,7 @@ class StatusHTTP(ResponseStatusHTTP, Enum):
 
     MISDIRECTED_REQUEST = 421, "Misdirected Request"
 
-    UNPROCESSABLE_ENTITY = 422, "Unprocessable Entity"
-
-    UNPROCESSABLE_CONTENT = UNPROCESSABLE_ENTITY
+    UNPROCESSABLE_CONTENT = 422, "Unprocessable Content"
 
     LOCKED = 423, "Locked"
 

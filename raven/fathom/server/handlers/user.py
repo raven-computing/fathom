@@ -17,36 +17,127 @@
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base import ResponseCode, ResponseMessage
 from raven.fathom.base import ProcessingException
-from raven.fathom.base import UserState
+from raven.fathom.base import User, UserState
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.core.user_management import (
     UserManager,
     UserManagementException,
     UserNotFoundException,
+    UserInternalException,
 )
 
 from .handler import ActionHandler, require_admin_privileges
 
 
-class UserCreateHandler(ActionHandler):
-    """Handles remote user creation requests."""
+LOG = Logger.get()
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
+
+def _has_user_identifier_set(
+    user: User | None,
+    response: ServerResponse
+) -> bool:
+    if user is None or not user.identifier:
+        response.add_error(
+            ResponseMessage(
+                code=ResponseCode.INCOMPLETE_REQUEST,
+                text="No managed user identifier provided.",
+            )
+        )
+        return False
+
+    return True
+
+
+class UserHandler(ActionHandler):
+    """An `ActionHandler` that wraps another `ActionHandler` to handle
+    all exceptions of type `UserManagementException` and to enforce
+    that the user making the request has admin privileges.
+    """
+
+    def __init__(
+        self,
+        authorizer: UserAuthorizer,
+        action: ActionHandler,
+        action_term: str
+    ):
+        """Initializes a new `UserHandler` instance to wrap
+        the given `ActionHandler`.
+
+        Args:
+            authorizer (UserAuthorizer): The user authorizer to use
+                for admin-privilege checks.
+            action (ActionHandler): The action to delegate to.
+            action_term (str): Description of the action. Is used for logging.
+        """
         super().__init__(authorizer)
-        self._manager = manager
+        self._action = action
+        self._action_term = action_term
 
     @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
         user = request.user
-        if user is None or not user.identifier:
+        user_id = user.identifier + " " if user is not None else ""
+        try:
+            self._action.handle(request, response)
+        except UserNotFoundException as ex:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.NOT_FOUND,
+                    text=str(ex),
+                )
+            )
+            LOG.i(
+                "User %s requested %s %s"
+                "but no such user exists",
+                request.authenticated_user_id,
+                self._action_term,
+                user_id,
+            )
+            return
+        except UserInternalException as ex:
+            LOG.e(
+                "User %s requested %s %s"
+                "but an internal error has occurred:",
+                request.authenticated_user_id,
+                self._action_term,
+                user_id,
+            )
+            LOG.e(ex)
+            raise ProcessingException(
+                "Internal error while handling request about user entity"
+            ) from ex
+        except UserManagementException as ex:
             response.add_error(
                 ResponseMessage(
                     code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
+                    text=str(ex),
                 )
+            )
+            LOG.i(
+                "User %s requested %s %s"
+                "but the operation was rejected: %s",
+                request.authenticated_user_id,
+                self._action_term,
+                user_id,
+                str(ex),
             )
             return
 
+
+class UserCreateHandler(ActionHandler):
+    """Handles remote user creation requests."""
+
+    def __init__(self, manager: UserManager):
+        super().__init__(None)
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        user = request.user
+        if not _has_user_identifier_set(user, response):
+            return
+
+        assert user is not None
         if user.is_admin:
             response.add_error(
                 ResponseMessage(
@@ -61,66 +152,47 @@ class UserCreateHandler(ActionHandler):
 
         user.state = UserState.ONBOARDING
 
-        try:
-            self._manager.create_user(user)
-        except UserManagementException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text=str(ex),
-                )
-            )
-            return
-
+        self._manager.create_user(user)
+        LOG.i(
+            "User %s created new user %s",
+            request.authenticated_user_id,
+            user.identifier,
+        )
         response.users = [user]
 
 
 class UserListHandler(ActionHandler):
     """Handles remote user listing requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        super().__init__(authorizer)
+    def __init__(self, manager: UserManager):
+        super().__init__(None)
         self._manager = manager
 
-    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
-        try:
-            response.users = self._manager.list_users()
-        except UserManagementException as ex:
-            raise ProcessingException(
-                "Internal error while handling request about user entity"
-            ) from ex
+        response.users = self._manager.list_users()
+        LOG.i(
+            "User %s requested to view a list of all registered users",
+            request.authenticated_user_id,
+        )
 
 
 class UserDeleteHandler(ActionHandler):
     """Handles remote user deletion requests."""
 
-    def __init__(self, authorizer: UserAuthorizer, manager: UserManager):
-        super().__init__(authorizer)
+    def __init__(self, manager: UserManager):
+        super().__init__(None)
         self._manager = manager
 
-    @require_admin_privileges
     def handle(self, request: ClientRequest, response: ServerResponse):
         user = request.user
-        if user is None or not user.identifier:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.INCOMPLETE_REQUEST,
-                    text="No managed user identifier provided.",
-                )
-            )
+        if not _has_user_identifier_set(user, response):
             return
 
-        try:
-            self._manager.delete_user(user)
-        except UserNotFoundException as ex:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.NOT_FOUND,
-                    text=str(ex),
-                )
-            )
-        except UserManagementException as ex:
-            raise ProcessingException(
-                "Internal error while handling request about project entity"
-            ) from ex
+        assert user is not None
+
+        self._manager.delete_user(user)
+        LOG.i(
+            "User %s deleted user %s",
+            request.authenticated_user_id,
+            user.identifier,
+        )

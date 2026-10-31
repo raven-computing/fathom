@@ -18,7 +18,7 @@ from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ResponseCode, User, UserState
 from raven.fathom.server.security import UserAuthorizer
 from raven.fathom.server.handlers.user import (
-    UserCreateHandler, UserListHandler, UserDeleteHandler,
+    UserHandler, UserCreateHandler, UserListHandler, UserDeleteHandler,
 )
 from raven.fathom.server.core.user_management import (
     UserManager,
@@ -44,9 +44,11 @@ class TestUserManagementHandlers(TestCase):
         request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.CREATE_USER)
 
-        UserCreateHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        UserHandler(
+            self.admin_authorizer,
+            UserCreateHandler(self.manager),
+            "creation of new user"
+        ).handle(request, response)
 
         self.assertEqual(
             response.errors[0].code,
@@ -66,9 +68,11 @@ class TestUserManagementHandlers(TestCase):
         request.user = User(identifier="someone", name="Some User")
         response = ServerResponse(Interaction.CREATE_USER)
 
-        UserCreateHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        UserHandler(
+            self.admin_authorizer,
+            UserCreateHandler(self.manager),
+            "creation of new user"
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         assert response.users is not None
@@ -92,9 +96,11 @@ class TestUserManagementHandlers(TestCase):
         request.authenticated_user = self.request_user
         response = ServerResponse(Interaction.LIST_USERS)
 
-        UserListHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        UserHandler(
+            self.admin_authorizer,
+            UserListHandler(self.manager),
+            "listing of registered users"
+        ).handle(request, response)
 
         self.assertFalse(response.has_errors())
         self.assertEqual(
@@ -112,9 +118,11 @@ class TestUserManagementHandlers(TestCase):
         request.user = User(identifier="bla")
         response = ServerResponse(Interaction.DELETE_USER)
 
-        UserDeleteHandler(self.admin_authorizer, self.manager).handle(
-            request, response
-        )
+        UserHandler(
+            self.admin_authorizer,
+            UserDeleteHandler(self.manager),
+            "deletion of user"
+        ).handle(request, response)
 
         self.assertEqual(response.errors[0].code, ResponseCode.NOT_FOUND)
 

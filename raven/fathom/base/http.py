@@ -253,6 +253,10 @@ class ResponseStatusHTTP:
     def __hash__(self):
         return hash(self.code)
 
+    def __str__(self):
+        reason_phrase = f" {self._reason}" if self._reason else ""
+        return f"{self._code}{reason_phrase}"
+
     def __repr__(self):
         return (
             "ResponseStatusHTTP("

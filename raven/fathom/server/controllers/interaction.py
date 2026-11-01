@@ -32,7 +32,7 @@ class InteractionController(Controller):
     @fathom_client_request()
     @fathom_server_response()
     def call(self, request: ClientRequest) -> ResponseHTTP[ServerResponse]:
-        """Controller method to handle a client interaction."""
+        """Processes a client interaction."""
         try:
             return ServerInteraction.instance().process(request)
         except ProcessingException:

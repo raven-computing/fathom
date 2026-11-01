@@ -139,7 +139,7 @@ class ResponseClassHTTP(Enum):
 
     INFORMATIONAL = StatusCodeRangeHTTP(100, 199)
 
-    SUCCESS = StatusCodeRangeHTTP(200, 299)
+    SUCCESSFUL = StatusCodeRangeHTTP(200, 299)
 
     REDIRECTION = StatusCodeRangeHTTP(300, 399)
 
@@ -190,15 +190,15 @@ class ResponseStatusHTTP:
         """
         return self._is_in_class_range(ResponseClassHTTP.INFORMATIONAL)
 
-    def is_success(self) -> bool:
+    def is_successful(self) -> bool:
         """Indicates whether the status code belongs in
-        the **success** responses class.
+        the **successful** responses class.
 
         Returns:
             bool:`True` if the numeric status code is in the range [200, 299],
                 `False` otherwise.
         """
-        return self._is_in_class_range(ResponseClassHTTP.SUCCESS)
+        return self._is_in_class_range(ResponseClassHTTP.SUCCESSFUL)
 
     def is_redirection(self) -> bool:
         """Indicates whether the status code belongs in

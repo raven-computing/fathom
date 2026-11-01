@@ -335,6 +335,19 @@ class Logger:
         LogManager().set_log_level(self._log.name, value)
         self._level = value
 
+    def has_level(self, level: LogLevel) -> bool:
+        """Indicates whether this logger has at least the specified log level.
+
+        Args:
+            level (LogLevel): The minimum log level to check for.
+
+        Returns:
+            bool:`True` if this logger has at least the specified log level,
+                `False` if this logger's current log level is below the
+                specified log level.
+        """
+        return self._level >= level
+
     def critical(self, message: str, *args, **kwargs):
         """Logs a message with level CRITICAL."""
         self._log.critical(message, *args, **kwargs)

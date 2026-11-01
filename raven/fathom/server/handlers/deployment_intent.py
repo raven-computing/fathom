@@ -55,6 +55,13 @@ class DeploymentIntentHandler(ActionHandler):
 
         authorization = self._authorizer.authorize_intent(intent)
         response.deployment_authorization = authorization
+        if authorization.is_granted():
+            response.add_informational(
+                ResponseMessage(
+                    code=ResponseCode.SUCCESSFUL_COMPLETION,
+                    text="Deployment authorization has been granted."
+                )
+            )
 
     def _project_info_is_set(self, intent):
         return (

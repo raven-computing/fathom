@@ -23,7 +23,7 @@ from raven.fathom.base import ParcelDecodingException
 from raven.fathom.base import PackageOperationException
 from raven.fathom.base import ClientRequest, Interaction, ServerResponse
 from raven.fathom.base import ClientAuthentication, Package, User
-from raven.fathom.base import Project
+from raven.fathom.base import Project, ResponseCode, ResponseMessage
 from raven.fathom.base.parcel import PARCEL_TEXT_ENCODING
 
 from tests.unit import TestCase
@@ -312,6 +312,38 @@ class TestResponseParcelJSON(TestCase, ClientServerInteractionFixture):
         data = self.decode_from_json_bytes(encoded)
         self.assertNotIn("errors", data)
         self.assertNotIn("warnings", data)
+
+    def test_encode_decode_information_messages(self):
+        resp = ServerResponse(self.action)
+        resp.add_informational(
+            ResponseMessage(
+                ResponseCode.SUCCESSFUL_COMPLETION,
+                "Deployment authorization has been granted.",
+            )
+        )
+
+        encoded = ResponseParcelJSON(resp).encode()
+        data = self.decode_from_json_bytes(encoded)
+
+        self.assertIn("infos", data)
+        self.assertEqual(
+            data["infos"],
+            [
+                {"code": ResponseCode.SUCCESSFUL_COMPLETION,
+                 "message": "Deployment authorization has been granted."}
+            ],
+        )
+
+        decoded = ResponseParcelJSON(encoded).decode()
+        self.assertTrue(decoded.has_informational())
+        self.assertEqual(
+            decoded.infos[0].code,
+            ResponseCode.SUCCESSFUL_COMPLETION
+        )
+        self.assertEqual(
+            decoded.infos[0].text,
+            "Deployment authorization has been granted."
+        )
 
     def test_encode_missing_deployment_authorization(self):
         resp = ServerResponse(self.action)

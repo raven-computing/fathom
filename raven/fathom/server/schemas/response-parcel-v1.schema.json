@@ -8,6 +8,23 @@
     "action": {
       "type": "string"
     },
+    "infos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "description": "The numeric info code.",
+            "type": "integer"
+          },
+          "message": {
+            "description": "The descriptive informational message.",
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"]
+      }
+    },
     "errors": {
       "type": "array",
       "items": {

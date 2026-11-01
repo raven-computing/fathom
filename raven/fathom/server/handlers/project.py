@@ -161,6 +161,12 @@ class ProjectCreateHandler(ActionHandler):
             project.identifier,
         )
         response.projects = [project]
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text=f"Project {project.identifier} has been created."
+            )
+        )
 
 
 class ProjectListHandler(ActionHandler):
@@ -175,6 +181,12 @@ class ProjectListHandler(ActionHandler):
         LOG.i(
             "User %s requested to view a list of all available projects",
             request.authenticated_user_id,
+        )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text="Success."
+            )
         )
 
 
@@ -196,6 +208,12 @@ class ProjectUserListHandler(ActionHandler):
             "User %s requested to view a list of users assigned to project %s",
             request.authenticated_user_id,
             project.identifier,
+        )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text="Success."
+            )
         )
 
 
@@ -225,6 +243,15 @@ class ProjectUserAssignHandler(ActionHandler):
             user.identifier,
             project.identifier,
         )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text=(
+                    f"User {user.identifier} "
+                    f"has been assigned to project {project.identifier}."
+                )
+            )
+        )
 
 
 class ProjectUserUnassignHandler(ActionHandler):
@@ -253,6 +280,15 @@ class ProjectUserUnassignHandler(ActionHandler):
             user.identifier,
             project.identifier,
         )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text=(
+                    f"User {user.identifier} "
+                    f"has been unassigned from project {project.identifier}."
+                )
+            )
+        )
 
 
 class ProjectDeleteHandler(ActionHandler):
@@ -274,4 +310,10 @@ class ProjectDeleteHandler(ActionHandler):
             "User %s deleted project %s",
             request.authenticated_user_id,
             project.identifier,
+        )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text=f"Project {project.identifier} has been deleted."
+            )
         )

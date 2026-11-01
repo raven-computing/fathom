@@ -188,6 +188,8 @@ class ClientRequest:
 class ResponseCode(IntEnum):
     """Enumerates numeric response codes of message in server responses."""
 
+    SUCCESSFUL_COMPLETION = 0
+
     INCOMPLETE_REQUEST = 3
 
     NO_PRODUCTION_USE = 5
@@ -226,6 +228,8 @@ class ServerResponse:
     Attributes:
         action (Interaction): The action that the server is responding to.
             Should match the request action.
+        infos (MutableSequence[ResponseMessage]): A sequence of informational
+            messages.
         errors (MutableSequence[ResponseMessage]): A sequence of error
             messages. An error indicates a failure or refusal of the server to
             fulfill the client's request.
@@ -245,6 +249,11 @@ class ServerResponse:
 
     action: Interaction = field(
         init=True,
+    )
+
+    infos: MutableSequence[ResponseMessage] = field(
+        init=False,
+        default_factory=list,
     )
 
     errors: MutableSequence[ResponseMessage] = field(
@@ -281,6 +290,23 @@ class ServerResponse:
         init=False,
         default=None,
     )
+
+    def has_informational(self) -> bool:
+        """Indicates whether the response contains any infos.
+
+        Returns:
+            bool: `True` if this response contains informational messages,
+                `False` if it has no info messages.
+        """
+        return len(self.infos) > 0
+
+    def add_informational(self, info: ResponseMessage):
+        """Adds an info message to the response.
+
+        Args:
+            info (ResponseMessage): The info message to add to the response.
+        """
+        self.infos.append(info)
 
     def has_errors(self) -> bool:
         """Indicates whether the response contains any errors.
@@ -327,8 +353,21 @@ class ServerResponse:
             bool: `True` if any message has the specified code, else `False`.
         """
         return (
-            any(error.code == code for error in self.errors)
+            any(info.code == code for info in self.infos)
+            or any(error.code == code for error in self.errors)
             or any(warning.code == code for warning in self.warnings)
+        )
+
+    def get_all_codes(self) -> list[ResponseCode]:
+        """Returns all response codes.
+        
+        Returns:
+            list: A `list` of all response codes part of this response.
+        """
+        return (
+            [info.code for info in self.infos]
+            + [warning.code for warning in self.warnings]
+            + [error.code for error in self.errors]
         )
 
 

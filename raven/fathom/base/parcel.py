@@ -534,6 +534,7 @@ class ResponseParcelJSON(Parcel):
         obj = {
             "action": str(self._response.action.value),
         }
+        self._encode_info_messages(obj)
         self._encode_error_messages(obj)
         self._encode_warning_messages(obj)
         self._encode_server_info(obj)
@@ -558,6 +559,7 @@ class ResponseParcelJSON(Parcel):
     def _create_server_response_obj(self):
         assert isinstance(self._response, dict)
         response = ServerResponse(Interaction(self._response.get("action")))
+        response.infos = self._decode_info_messages() or []
         response.errors = self._decode_error_messages() or []
         response.warnings = self._decode_warning_messages() or []
         response.server_info = self._decode_server_info()
@@ -567,6 +569,15 @@ class ResponseParcelJSON(Parcel):
         response.projects = self._decode_projects()
         return response
 
+    def _encode_info_messages(self, structure):
+        assert isinstance(self._response, ServerResponse)
+        if self._response.has_informational():
+            structure["infos"] = [
+                {"code": info.code,
+                 "message": info.text}
+                 for info in self._response.infos
+            ]
+
     def _encode_error_messages(self, structure):
         assert isinstance(self._response, ServerResponse)
         if self._response.has_errors():
@@ -575,6 +586,7 @@ class ResponseParcelJSON(Parcel):
                  "message": error.text}
                  for error in self._response.errors
             ]
+
     def _encode_warning_messages(self, structure):
         assert isinstance(self._response, ServerResponse)
         if self._response.has_warnings():
@@ -640,6 +652,18 @@ class ResponseParcelJSON(Parcel):
                     "description": project.description,
                 } for project in self._response.projects
             ]
+
+    def _decode_info_messages(self):
+        assert isinstance(self._response, dict)
+        infos = self._response.get("infos")
+        if infos is None:
+            return None
+
+        assert isinstance(infos, list)
+        return [
+            ResponseMessage(info["code"], info["message"])
+            for info in infos
+        ]
 
     def _decode_error_messages(self):
         assert isinstance(self._response, dict)

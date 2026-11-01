@@ -95,6 +95,13 @@ class DeploymentTransactionHandler(ActionHandler):
             is_successful=result.successful,
             message=result.user_message,
         )
+        if result.successful:
+            response.add_informational(
+                ResponseMessage(
+                    code=ResponseCode.SUCCESSFUL_COMPLETION,
+                    text="Deployment succeeded."
+                )
+            )
 
     def _set_error(self, response, message):
         response.add_error(message)

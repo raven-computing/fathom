@@ -22,6 +22,10 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.handlers import HandlerFactory
+from raven.fathom.server.core.logging import Logger, LogLevel
+
+
+LOG = Logger.get()
 
 
 class ServerInteractionImpl(ServerInteraction):
@@ -52,6 +56,8 @@ class ServerInteractionImpl(ServerInteraction):
             raise ProcessingException(f"Unknown action {request.action}")
 
         handler.handle(request, response)
+
+        self._log_interaction(request, response)
         return response
 
     def _unauthenticated(self, response):
@@ -67,3 +73,12 @@ class ServerInteractionImpl(ServerInteraction):
             )
         )
         return response
+
+    def _log_interaction(self, request, response):
+        if LOG.has_level(LogLevel.VERBOSE):
+            LOG.v(
+                "Responding to %s request of user %s with %s",
+                request.action,
+                request.authenticated_user_id,
+                response.get_all_codes()
+            )

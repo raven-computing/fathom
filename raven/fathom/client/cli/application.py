@@ -17,6 +17,7 @@
 import sys
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
+from raven.fathom.base import log_stderr
 from raven.fathom.client.logging import setup_cli_logger, setup_file_logger
 from raven.fathom.client.logging import shutdown_loggers
 from raven.fathom.client.logging import Logger
@@ -76,8 +77,8 @@ def main(argv: list[str]) -> ExitStatus:
             _setup_client(args)
             return run(create_command(args))
         except Exception as ex:  # pylint: disable=broad-exception-caught
-            print("Failed to setup Fathom client:", file=sys.stderr)
-            print(str(ex), file=sys.stderr)
+            log_stderr("Failed to setup Fathom client:")
+            log_stderr(str(ex))
             return ExitStatus.INTERNAL_ERROR
         finally:
             shutdown_loggers()

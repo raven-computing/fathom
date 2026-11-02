@@ -14,6 +14,7 @@
 #
 """Fathom client CLI utilities."""
 
+from raven.fathom.base import log_stderr, log_stdout
 from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.client.version import Version
 
@@ -30,17 +31,17 @@ def show_version(short_version: bool) -> bool:
     """
     version = Version.current()
     if version is None:
-        print("Error: Application version could not be determined.")
+        log_stderr("Error: Application version could not be determined.")
         return False
 
     if short_version:
-        print(version)
+        log_stdout(str(version))
     else:
         dev = (
             " (DEVELOPMENT VERSION)"
             if version.is_development_version()
             else ""
         )
-        print(f"{APPLICATION_NAME} client v{version}{dev}")
+        log_stdout(f"{APPLICATION_NAME} client v{version}{dev}")
 
     return True

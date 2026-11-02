@@ -31,7 +31,7 @@ LOG = Logger.get()
 
 def _start(server: ServerHTTP):
     try:
-        LOG.d("Starting server on port %d", server.port)
+        LOG.d("Starting HTTP server on port %d", server.port)
         server.start()
     except HTTPServerStartException:
         LOG.e("Failed to start Fathom server")

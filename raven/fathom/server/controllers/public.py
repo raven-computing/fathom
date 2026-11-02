@@ -23,6 +23,7 @@ from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.version import Version
 from raven.fathom.server.net.http.controller import Controller
 from raven.fathom.server.net.http.decorators import expose, output_json
+from raven.fathom.server.net.http.status import ResponseObjectJSON
 
 
 LOG = Logger.get()
@@ -33,8 +34,8 @@ class PublicController(Controller):
 
     @expose(MethodHTTP.GET)
     @output_json()
-    def server_version(self):
-        """Controller method to query the server version."""
+    def server_version(self) -> ResponseObjectJSON:
+        """Queries the server version."""
 
         version = Version.current()
         if version is None:

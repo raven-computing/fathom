@@ -14,7 +14,7 @@
 #
 """HTTP response and status code types."""
 
-from typing import TypeAlias, TypeVar
+from typing import TypeAlias, TypeVar, Any
 
 from raven.fathom.base import ResponseStatusHTTP
 
@@ -23,3 +23,5 @@ T = TypeVar("T")
 
 # pylint: disable=invalid-name
 ResponseHTTP: TypeAlias = ResponseStatusHTTP | T
+
+ResponseObjectJSON: TypeAlias = dict[str, Any]

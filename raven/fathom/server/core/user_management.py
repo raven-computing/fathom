@@ -170,7 +170,7 @@ class UserManager:
         try:
             system_user.create(self._authenticator, user.password)
         except FailedCreateQueryException as ex:
-            raise UserManagementException(
+            raise UserInternalException(
                 f"Failed to create system user '{_SystemUser.IDENTIFIER}'. "
                 "An internal error has occurred."
             ) from ex
@@ -238,7 +238,7 @@ class UserManager:
         try:
             self._ds.users().create_new_user(user_record)
         except FailedCreateQueryException as ex:
-            raise UserManagementException(
+            raise UserInternalException(
                 f"Failed to create user '{user_record.identifier}'. "
                 "An internal error has occurred."
             ) from ex
@@ -260,7 +260,7 @@ class UserManager:
         TypeCheck.require_arg(password, str)
         if not identifier:
             raise InvalidUserRequestException(
-                "User sign-up failed.User identifier must not be empty"
+                "User sign-up failed. User identifier must not be empty"
             )
 
         if not password:
@@ -281,7 +281,7 @@ class UserManager:
         try:
             self._ds.users().update(user_record)
         except FailedUpdateQueryException as ex:
-            raise UserManagementException(
+            raise UserInternalException(
                 f"Failed to update user '{user_record.identifier}'. "
                 "An internal error has occurred."
             ) from ex
@@ -311,7 +311,7 @@ class UserManager:
                         )
                     )
         except FailedReadQueryException as ex:
-            raise UserManagementException(
+            raise UserInternalException(
                 "Failed to list users. An internal error has occurred."
             ) from ex
 

@@ -17,16 +17,48 @@
 from raven.fathom.base import MethodHTTP, StatusHTTP
 from raven.fathom.base import HTTPDecodeException
 from raven.fathom.base import User, UserState
+from raven.fathom.base import ClientAuthentication
+from raven.fathom.base import ResponseStatusHTTP
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.user_management import UserManager
+from raven.fathom.server.core.user_management import UserInternalException
+from raven.fathom.server.core.user_management import UserManagementException
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.net.http.controller import Controller
 from raven.fathom.server.net.http.decorators import expose
 from raven.fathom.server.net.http.decorators import input_json, output_json
 from raven.fathom.server.net.http.auth import decode_client_auth_header
+from raven.fathom.server.net.http.status import ResponseObjectJSON
 
 
 LOG = Logger.get()
+
+
+def signup_user(
+    authenticator: UserAuthenticator,
+    authentication: ClientAuthentication,
+    user: User
+) -> tuple[ResponseStatusHTTP, ResponseObjectJSON]:
+    """Performs a user sign-up, including the necessary
+    request authentication.
+    """
+    auth = authenticator.authenticate_signup_request(authentication)
+    if not auth.is_authenticated():
+        return StatusHTTP.UNAUTHORIZED, {
+            "status": "Failure",
+            "message": "Authentication failed",
+        }
+
+    UserManager(authenticator).sign_up_user(user)
+
+    LOG.i("User %s has been signed up", user.identifier)
+    return StatusHTTP.OK, {
+        "status": "OK",
+        "message": (
+            f"User {user.identifier} "
+            "has been successfully signed up."
+        )
+    }
 
 
 class SignupController(Controller):
@@ -35,46 +67,51 @@ class SignupController(Controller):
     @expose(MethodHTTP.POST)
     @input_json()
     @output_json()
-    def signup(self):
-        """Controller method to handle user sign-up."""
+    def signup(self) -> ResponseObjectJSON:
+        """Handles a user sign-up."""
+        authentication = ClientAuthentication()
         try:
-            client_authentication = decode_client_auth_header()
-            authenticator = UserAuthenticator()
-            user = authenticator.authenticate_signup_request(
-                client_authentication
-            )
-            if not user.is_authenticated():
-                self.set_response_status(StatusHTTP.UNAUTHORIZED)
-                return {
-                    "status": "Failure",
-                    "message": "Authentication failed",
-                }
-
+            authentication = decode_client_auth_header()
             request_body = self.get_request_body_json()
-            user = User(
-                identifier=client_authentication.username,
-                password=request_body.get("set_password", ""),
-                state=UserState.ONBOARDING,
+            http_status, response_object = signup_user(
+                UserAuthenticator(),
+                authentication,
+                User(
+                    identifier=authentication.username,
+                    password=request_body.get("set_password", ""),
+                    state=UserState.ONBOARDING,
+                )
             )
-            UserManager(authenticator).sign_up_user(user)
-        except ValueError as error:
-            LOG.e(error)
-            self.set_response_status(StatusHTTP.INTERNAL_SERVER_ERROR)
-            return {
-                "status": "Failure",
-                "message": "An error has occurred.",
-            }
+            self.set_response_status(http_status)
+            return response_object
         except HTTPDecodeException as ex:
+            LOG.e(ex)
+            self.set_response_status(StatusHTTP.BAD_REQUEST)
+            return {
+                "status": "Error",
+                "message": "The request is malformed.",
+            }
+        except UserInternalException as ex:
+            LOG.e(
+                "User %s requested a user sign-up"
+                "but an internal error has occurred:",
+                authentication.username,
+            )
             LOG.e(ex)
             self.set_response_status(StatusHTTP.INTERNAL_SERVER_ERROR)
             return {
-                "status": "Failure",
-                "message": "An error has occurred.",
+                "status": "Error",
+                "message": "An internal error has occurred.",
             }
-
-        LOG.i("User '%s' has been signed up", user.identifier)
-        self.set_response_status(StatusHTTP.OK)
-        return {
-            "status": "OK",
-            "message": "User signed up successfully."
-        }
+        except UserManagementException as ex:
+            LOG.i(
+                "User %s requested a user sign-up"
+                "but the operation was rejected: %s",
+                authentication.username,
+                str(ex),
+            )
+            self.set_response_status(StatusHTTP.BAD_REQUEST)
+            return {
+                "status": "Failure",
+                "message": str(ex),
+            }

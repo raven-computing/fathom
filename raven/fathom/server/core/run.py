@@ -16,6 +16,7 @@
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.server.cli.arguments import AppArgs, AppCommand
+from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.registry import create_command
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.config import ConfigurationManager
@@ -26,6 +27,18 @@ from raven.fathom.server.core.setup import MissingServerSetupException
 
 
 LOG = Logger.get()
+
+
+def _run(command: ServerCommand, args: AppArgs) -> ExitStatus:
+    cm = ConfigurationManager()
+    cm.load_configs(args)
+    config = cm.get_server_config()
+    setup_application(args, config)
+    if args.command != AppCommand.SETUP:
+        require_server_setup()
+
+    LOG.d("Executing command %s", command)
+    return ExitStatus(command.execute())
 
 
 def run_server_command(args: AppArgs) -> ExitStatus:
@@ -42,18 +55,9 @@ def run_server_command(args: AppArgs) -> ExitStatus:
     if app_mode == ApplicationMode.DEVELOPMENT:
         LOG.i("Running in a development environment")
 
-    command = None
+    command = create_command(args)
     try:
-        cm = ConfigurationManager()
-        cm.load_configs(args)
-        config = cm.get_server_config()
-        setup_application(args, config)
-        command = create_command(args)
-        if args.command != AppCommand.SETUP:
-            require_server_setup()
-
-        LOG.d("Executing command %s", command)
-        return ExitStatus(command.execute())
+        return _run(command, args)
     except MissingServerSetupException:
         LOG.i("The server has not been set up yet.")
         LOG.i("Run 'fathom-server setup' first.")

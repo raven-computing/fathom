@@ -28,7 +28,7 @@ from raven.fathom.server.core.setup import MissingServerSetupException
 LOG = Logger.get()
 
 
-def run_server(args: AppArgs) -> ExitStatus:
+def run_server_command(args: AppArgs) -> ExitStatus:
     """Runs a command of the Fathom server application.
 
     Args:
@@ -69,4 +69,4 @@ def run_server(args: AppArgs) -> ExitStatus:
         LOG.e("Failed to run Fathom server")
         LOG.e(str(ex))
         LOG.d(str(ex), exc_info=True)
-        return ExitStatus.FAILURE
+        return ExitStatus.INTERNAL_ERROR

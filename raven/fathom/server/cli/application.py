@@ -26,7 +26,7 @@ from raven.fathom.server.core.context import determine_server_working_directory
 from raven.fathom.server.cli.arguments import parse_args
 from raven.fathom.server.cli.utils import show_version
 from raven.fathom.server.cli.status import ExitStatus
-from raven.fathom.server.core.run import run_server
+from raven.fathom.server.core.run import run_server_command
 
 
 def _check_version_option(args) -> ExitStatus | None:
@@ -74,7 +74,7 @@ def main(argv: list[str]) -> ExitStatus:
                 return status
 
             setup_server_logging(args)
-            return run_server(args)
+            return run_server_command(args)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log_stderr(f"Error: {ex}")
             return ExitStatus.INTERNAL_ERROR

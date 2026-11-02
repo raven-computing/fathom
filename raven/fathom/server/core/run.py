@@ -72,5 +72,5 @@ def run_server_command(args: AppArgs) -> ExitStatus:
     except Exception as ex:  # pylint: disable=broad-exception-caught
         LOG.e("Failed to run Fathom server")
         LOG.e(str(ex))
-        LOG.d(str(ex), exc_info=True)
+        LOG.d(ex)
         return ExitStatus.INTERNAL_ERROR

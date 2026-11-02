@@ -64,13 +64,11 @@ def run_server_command(args: AppArgs) -> ExitStatus:
         return ExitStatus.MISSING_SETUP
     except KeyboardInterrupt:
         LOG.i("Cancelling...")
-        if command is not None:
-            LOG.d("Invoking command cancellation for %s", command)
-            command.cancel()
-
+        LOG.d("Invoking command cancellation for %s", command)
+        command.cancel()
         return ExitStatus.CANCELLED
     except Exception as ex:  # pylint: disable=broad-exception-caught
-        LOG.e("Failed to run Fathom server")
+        LOG.e("Failed to run server application")
         LOG.e(str(ex))
         LOG.d(ex)
         return ExitStatus.INTERNAL_ERROR

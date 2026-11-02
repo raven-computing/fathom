@@ -38,6 +38,9 @@ class Command(ABC):
 
         Returns:
             int: The exit status code of the command execution.
+        
+        Raises:
+            Exception: For any error that the command itself cannot handle.
         """
 
     def cancel(self):

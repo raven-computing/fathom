@@ -14,10 +14,14 @@
 #
 """Unit tests for the server serve command."""
 
+from unittest.mock import patch
+
 from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.serve import ServeCommand
+from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.config import ServerConfiguration
+from raven.fathom.server.net.http.application import ServerApplication
 from raven.fathom.server.net.http.server import ServerHTTP
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_ADDRESS_LISTEN
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
@@ -31,7 +35,6 @@ class TestServeCommand(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.server_mock = Mock(spec_set=ServerHTTP)
         self.config = Configuration()
         self.config.add_section(
             ConfigurationSection(ServerConfiguration.SERVER)
@@ -46,17 +49,26 @@ class TestServeCommand(TestCase):
         )
 
     def test_execute_starts_and_runs_server(self):
-        command = ServeCommand(AppArgs(), self.config)
+        command = ServeCommand(AppArgs())
         mock_status = 42
-        self.server_mock.status_code.return_value = mock_status
-        command.server = self.server_mock
 
-        status = command.execute()
+        with patch.object(
+            ConfigurationManager,
+            "get_server_config",
+            return_value=self.config,
+        ), patch.object(ServerHTTP, "start"), patch.object(
+            ServerHTTP,
+            "run",
+            autospec=True,
+        ) as run_mock, patch.object(
+            ServerHTTP,
+            "status_code",
+            return_value=mock_status,
+        ):
+            status = command.execute()
 
         self.assertEqual(status, mock_status)
-        self.server_mock.start.assert_called_once()
-        self.server_mock.run.assert_called_once()
-        self.server_mock.status_code.assert_called_once()
+        run_mock.assert_called_once()
 
     def test_server_is_started_on_configured_port(self):
         mock_addr = "42.42.42.42"
@@ -64,10 +76,10 @@ class TestServeCommand(TestCase):
         self.config[ServerConfiguration.SERVER.ADDRESS_LISTEN] = mock_addr
         self.config[ServerConfiguration.SERVER.PORT_LISTEN] = mock_port
 
-        command = ServeCommand(AppArgs(), self.config)
+        server = ServerHTTP(Mock(spec_set=ServerApplication), self.config)
 
-        self.assertEqual(command.server.address, mock_addr)
-        self.assertEqual(command.server.port, mock_port)
+        self.assertEqual(server.address, mock_addr)
+        self.assertEqual(server.port, mock_port)
 
 
 if __name__ == "__main__":

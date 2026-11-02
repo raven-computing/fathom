@@ -20,6 +20,8 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeVar, TypeAlias
 
 from raven.fathom.base import Command
+from raven.fathom.base import TableFormatter
+from raven.fathom.base import log_stdout
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.core.setup import confirm_system_privileges
 
@@ -38,6 +40,11 @@ class ServerCommand(Command):
     def __init__(self, args: "AppArgs"):
         self.args = args
         super().__init__(args.command)
+
+    def _print_table(self, formatter: TableFormatter):
+        log_stdout("")
+        log_stdout(formatter.get_formatted_text())
+        log_stdout("")
 
 
 S = TypeVar("S", bound=ServerCommand)

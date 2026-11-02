@@ -8,6 +8,8 @@ jobs:
     name: 'Type Check'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      PYRIGHT_PYTHON_FORCE_VERSION: "latest"
 
     defaults:
       run:

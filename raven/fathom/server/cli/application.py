@@ -77,7 +77,7 @@ def main(argv: list[str]) -> ExitStatus:
             return run_server(args)
         except Exception as ex:  # pylint: disable=broad-exception-caught
             log_stderr(f"Error: {ex}")
-            return ExitStatus.FAILURE
+            return ExitStatus.INTERNAL_ERROR
         finally:
             shutdown_loggers()
 

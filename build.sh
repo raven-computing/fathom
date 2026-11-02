@@ -100,6 +100,10 @@ if ! source "setup.sh"; then
   exit 1;
 fi
 
+if [[ "$GITHUB_ACTIONS" == "true" ]]; then
+  ARG_NO_VIRTUALENV=true;
+fi
+
 # Check clean flag
 if [[ $ARG_CLEAN == true ]]; then
   if [ -d "build" ]; then

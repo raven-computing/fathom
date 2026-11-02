@@ -29,7 +29,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: 'Build'
-        run: bash build.sh --no-virtualenv --skip-tests
+        run: bash build.sh --skip-tests
 
       - name: 'Upload Build Artifacts'
         uses: actions/upload-artifact@v6
@@ -62,7 +62,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: 'Build Documentation'
-        run: bash build.sh --no-virtualenv --docs
+        run: bash build.sh --docs
 
       - name: 'Upload Build Artifacts'
         uses: actions/upload-artifact@v6

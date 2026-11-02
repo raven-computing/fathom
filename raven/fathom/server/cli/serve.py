@@ -15,10 +15,9 @@
 """CLI command handling for the server serve command."""
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
-from raven.fathom.base import Configuration
-from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.net.http.server import assign
 from raven.fathom.server.net.http.server import ServerHTTP
@@ -44,18 +43,15 @@ class ServeCommand(ServerCommand):
     Starts and runs the HTTP server application until stopped.
     """
 
-    def __init__(self, args: AppArgs, config: Configuration):
-        super().__init__(args)
-        self.config = config
-        self.server = ServerHTTP(FathomServer(), config, self.args.ready_event)
-
     def execute(self) -> int:
-        port = self.config[ServerConfiguration.SERVER.PORT_LISTEN]
+        config = ConfigurationManager().get_server_config()
+        server = ServerHTTP(FathomServer(), config, self.args.ready_event)
+        port = config[ServerConfiguration.SERVER.PORT_LISTEN]
         LOG.i("Starting Fathom server on port %d", port)
-        server = assign(self.server)
+        server = assign(server)
         _start(server)
         app_mode = ApplicationContext.instance().get_application_mode()
-        debug_mode = self.config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
+        debug_mode = config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
         if app_mode == ApplicationMode.PRODUCTION and debug_mode:
             LOG.w(
                 "The debug mode of the server is enabled. "

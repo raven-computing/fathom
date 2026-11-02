@@ -27,7 +27,6 @@ from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.core.config import ConfigurationManager
 
 
 LOG = Logger.get()
@@ -49,7 +48,7 @@ def create_command(args: AppArgs) -> ServerCommand:
     """
     LOG.d("Creating Command object from CLI command arg '%s'", args.command)
     if args.command in (AppCommand.SERVE, AppCommand.UNSPECIFIED):
-        return ServeCommand(args, ConfigurationManager().get_server_config())
+        return ServeCommand(args)
 
     if args.command == AppCommand.SETUP:
         return SetupCommand(args)

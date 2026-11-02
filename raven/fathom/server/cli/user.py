@@ -16,8 +16,8 @@
 
 from raven.fathom.base import User, UserState
 from raven.fathom.base import TableFormatter
-from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
+from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import UserManager
@@ -29,16 +29,15 @@ LOG = Logger.get()
 class UserCreateCommand(ServerCommand):
     """Implementation of `user create`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = UserManager(UserAuthenticator())
         user = User(
             identifier=self.args.user_identifier,
             name=self.args.user_name,
             is_admin=self.args.user_is_admin,
             state=UserState.ONBOARDING,
         )
-        manager.create_user(user)
+        LOG.d("Creating user '%s'", user.identifier)
+        UserManager(UserAuthenticator()).create_user(user)
         role = "admin" if user.is_admin else "user"
         LOG.i(
             "Created user '%s' (%s, %s).",
@@ -46,37 +45,39 @@ class UserCreateCommand(ServerCommand):
             role,
             user.state,
         )
-        return 0
+        return ExitStatus.SUCCESS
 
 
 class UserListCommand(ServerCommand):
     """Implementation of `user list`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = UserManager(UserAuthenticator())
         formatter = TableFormatter().set_headers(
             "Identifier", "Name", "Role", "State"
         )
-        for user in manager.list_users():
-            role = manager.get_user_role(user.identifier).value
+        LOG.d("Fetching user list")
+        manager = UserManager(UserAuthenticator())
+        users = manager.list_users()
+        for user in users:
+            role = manager.get_user_role(user.identifier)
             formatter.add_row(
                 user.identifier,
                 user.name,
-                role,
+                role.value,
                 user.state,
             )
 
+        LOG.i("User list:")
         self._print_table(formatter)
-        return 0
+        return ExitStatus.SUCCESS
 
 
 class UserDeleteCommand(ServerCommand):
     """Implementation of `user delete`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = UserManager(UserAuthenticator())
-        manager.delete_user(User(identifier=self.args.user_identifier))
+        user = User(identifier=self.args.user_identifier)
+        LOG.d("Deleting user '%s'", user.identifier)
+        UserManager(UserAuthenticator()).delete_user(user)
         LOG.i("Deleted user '%s'.", self.args.user_identifier)
-        return 0
+        return ExitStatus.SUCCESS

@@ -38,6 +38,7 @@ def run_server(args: AppArgs) -> ExitStatus:
         ExitStatus: The exit status code of the server.
     """
     app_mode = ApplicationContext.instance().get_application_mode()
+    LOG.d("Running in application mode [%s]", app_mode)
     if app_mode == ApplicationMode.DEVELOPMENT:
         LOG.i("Running in a development environment")
 
@@ -51,6 +52,7 @@ def run_server(args: AppArgs) -> ExitStatus:
         if args.command != AppCommand.SETUP:
             require_server_setup()
 
+        LOG.d("Executing command %s", command)
         return ExitStatus(command.execute())
     except MissingServerSetupException:
         LOG.i("The server has not been set up yet.")
@@ -59,6 +61,7 @@ def run_server(args: AppArgs) -> ExitStatus:
     except KeyboardInterrupt:
         LOG.i("Cancelling...")
         if command is not None:
+            LOG.d("Invoking command cancellation for %s", command)
             command.cancel()
 
         return ExitStatus.CANCELLED

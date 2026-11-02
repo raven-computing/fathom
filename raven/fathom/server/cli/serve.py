@@ -31,6 +31,7 @@ LOG = Logger.get()
 
 def _start(server: ServerHTTP):
     try:
+        LOG.d("Starting server on port %d", server.port)
         server.start()
     except HTTPServerStartException:
         LOG.e("Failed to start Fathom server")
@@ -61,6 +62,7 @@ class ServeCommand(ServerCommand):
                 "This is not suitable for a production environment."
             )
 
+        LOG.d("Entering blocking server loop")
         server.run()
         LOG.i("Fathom server has been stopped")
         return server.status_code()

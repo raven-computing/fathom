@@ -97,7 +97,7 @@ class TestServerProjectManagementCLI(TestCase):
         )
 
         self.assertServerSuccess()
-        self.assertIn("Created project 'local-project'.", self.server.stdout)
+        self.assertIn("Created project local-project.", self.server.stdout)
 
         self.server.stdin = ["fathom", "fathom"]
         self.server.execute("project", "list")

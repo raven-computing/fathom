@@ -17,6 +17,7 @@
 from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.arguments import AppCommand
 from raven.fathom.server.cli.command import ServerCommand
+from raven.fathom.server.cli.command import ServerManagementCommand
 from raven.fathom.server.cli.project import ProjectCreateCommand
 from raven.fathom.server.cli.project import ProjectDeleteCommand
 from raven.fathom.server.cli.project import ProjectListCommand
@@ -25,7 +26,11 @@ from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
+from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ConfigurationManager
+
+
+LOG = Logger.get()
 
 
 def create_command(args: AppArgs) -> ServerCommand:
@@ -42,6 +47,7 @@ def create_command(args: AppArgs) -> ServerCommand:
     Raises:
         ValueError: If the command name is invalid.
     """
+    LOG.d("Creating Command object from CLI command arg '%s'", args.command)
     if args.command in (AppCommand.SERVE, AppCommand.UNSPECIFIED):
         return ServeCommand(args, ConfigurationManager().get_server_config())
 
@@ -50,21 +56,21 @@ def create_command(args: AppArgs) -> ServerCommand:
 
     if args.command == AppCommand.USER:
         if args.user_command == AppCommand.CREATE:
-            return UserCreateCommand(args)
+            return ServerManagementCommand(UserCreateCommand(args))
         if args.user_command == AppCommand.LIST:
-            return UserListCommand(args)
+            return ServerManagementCommand(UserListCommand(args))
         if args.user_command == AppCommand.DELETE:
-            return UserDeleteCommand(args)
+            return ServerManagementCommand(UserDeleteCommand(args))
 
         raise ValueError(f"Invalid user command '{args.user_command}'")
 
     if args.command == AppCommand.PROJECT:
         if args.project_command == AppCommand.CREATE:
-            return ProjectCreateCommand(args)
+            return ServerManagementCommand(ProjectCreateCommand(args))
         if args.project_command == AppCommand.LIST:
-            return ProjectListCommand(args)
+            return ServerManagementCommand(ProjectListCommand(args))
         if args.project_command == AppCommand.DELETE:
-            return ProjectDeleteCommand(args)
+            return ServerManagementCommand(ProjectDeleteCommand(args))
 
         raise ValueError(f"Invalid project command '{args.project_command}'")
 

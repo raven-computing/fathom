@@ -16,8 +16,8 @@
 
 from raven.fathom.base import Project
 from raven.fathom.base import TableFormatter
-from raven.fathom.server.cli.command import require_privileges
 from raven.fathom.server.cli.command import ServerCommand
+from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.domain.project import ProjectManager
 
@@ -28,47 +28,45 @@ LOG = Logger.get()
 class ProjectCreateCommand(ServerCommand):
     """Implementation of `project create`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = ProjectManager()
         project = Project(
             identifier=self.args.project_identifier,
             name=self.args.project_name,
             description=self.args.project_description,
         )
-        manager.create_project(project)
-        LOG.i("Created project '%s'.", project.identifier)
-        return 0
+        LOG.d("Creating project '%s'", project.identifier)
+        ProjectManager().create_project(project)
+        LOG.i("Created project %s.", project.identifier)
+        return ExitStatus.SUCCESS
 
 
 class ProjectListCommand(ServerCommand):
     """Implementation of `project list`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = ProjectManager()
         formatter = TableFormatter().set_headers(
             "Identifier", "Name", "Description"
         )
-        for project in manager.list_projects():
+        LOG.d("Fetching project list")
+        projects = ProjectManager().list_projects()
+        for project in projects:
             formatter.add_row(
                 project.identifier,
                 project.name,
                 project.description,
             )
 
+        LOG.i("Project list:")
         self._print_table(formatter)
-        return 0
+        return ExitStatus.SUCCESS
 
 
 class ProjectDeleteCommand(ServerCommand):
     """Implementation of `project delete`."""
 
-    @require_privileges
     def execute(self) -> int:
-        manager = ProjectManager()
-        manager.delete_project(
-            Project(identifier=self.args.project_identifier)
-        )
+        project = Project(identifier=self.args.project_identifier)
+        LOG.d("Deleting project '%s'", project.identifier)
+        ProjectManager().delete_project(project)
         LOG.i("Deleted project '%s'.", self.args.project_identifier)
-        return 0
+        return ExitStatus.SUCCESS

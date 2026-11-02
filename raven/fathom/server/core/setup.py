@@ -43,6 +43,7 @@ class MissingServerSetupException(FathomServerException):
 
 
 def _setup_database():
+    LOG.d("Executing database setup procedures")
     db_manager = DatabaseManager()
     if not db_manager.locate_application_database():
         raise ValueError("Cannot locate DB")
@@ -60,6 +61,7 @@ def _setup_database():
 
 
 def _setup_filesystem(config: Configuration):
+    LOG.d("Setting up filesystem directories")
     staging_area = StagingArea(config)
     staging_area.create()
 
@@ -70,9 +72,14 @@ def _setup_filesystem(config: Configuration):
 def _setup_post_update():
     db = DatabaseManager().get_database()
     update_manager = UpdateManager(db)
+    LOG.d("Checking if application was previously updated")
     if update_manager.application_update_detected():
         previous_version = update_manager.determine_previous_version()
         current_version = update_manager.determine_current_version()
+        LOG.d(
+            "Application was updated from version %s to %s",
+            previous_version, current_version
+        )
         try:
             assert previous_version is not None
             update_manager.apply_post_update_procedures(
@@ -85,6 +92,7 @@ def _setup_post_update():
             raise
 
     elif update_manager.application_first_start_detected():
+        LOG.d("Application is started for the first time")
         try:
             update_manager.apply_post_installation_procedures()
         except FailedApplicationUpdateException as ex:
@@ -95,11 +103,13 @@ def _setup_post_update():
 
 def _apply_args_to_config(args: "AppArgs", config: Configuration):
     if args.port is not None:
+        LOG.d("Applying server port from command-line args: %d", args.port)
         config[ServerConfiguration.SERVER.PORT_LISTEN] = args.port
 
 
 def setup_application(args: "AppArgs", config: Configuration):
     """Runs startup setup steps required before command execution."""
+    LOG.d("Executing application setup procedures")
     try:
         _setup_database()
         _setup_filesystem(config)
@@ -108,6 +118,8 @@ def setup_application(args: "AppArgs", config: Configuration):
     except Exception:
         LOG.e("An error occurred during application startup")
         raise
+
+    LOG.d("Application setup done")
 
 
 def confirm_system_privileges():
@@ -131,7 +143,9 @@ def require_server_setup():
     """Raises `MissingServerSetupException` if server setup
     has not been completed yet.
     """
+    LOG.d("Checking for required server setup")
     ensure_connected_to_database()
 
     if not UserManager(UserAuthenticator()).is_setup_complete():
+        LOG.d("Server setup incomplete")
         raise MissingServerSetupException()

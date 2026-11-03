@@ -36,5 +36,6 @@ from .version import Version
 from ._provider import ClientProvider as _ProviderImpl
 
 _Dependencies.register(_ProviderImpl())
+
 del _ProviderImpl
 del _Dependencies

@@ -20,6 +20,7 @@ from raven.fathom.base import URL
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
 from raven.fathom.base import ClientAuthenticationHeader
+from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.client.version import Version
 
 
@@ -31,7 +32,10 @@ class RequestHTTP(BaseRequestHTTP):
 
     def __init__(self, method: MethodHTTP, url: URL):
         super().__init__(method, url)
-        self.set_header("User-Agent", f"Fathom-client/{Version.current()}")
+        self.set_header(
+            "User-Agent",
+            f"{APPLICATION_NAME}-client/{Version.current()}"
+        )
 
     def set_authentication(self, authentication: ClientAuthentication):
         """Applies the specified Fathom-specific authentication credentials.

@@ -14,10 +14,11 @@
 #
 """General Data Access Object (DAO) API."""
 
+from typing import Optional, TypeVar, Generic
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic
 
 from raven.fathom.server.datastore.orm.model import Model
+from raven.fathom.server.datastore.orm.field import RecordId
 
 
 M = TypeVar("M", bound=Model)
@@ -38,11 +39,29 @@ class DataAccessObject(ABC, Generic[M]):
         """
 
     @abstractmethod
-    def read_all(self) -> list[M]:
-        """Gets all persisted records of model `M`.
+    def read(self, record_id: RecordId) -> Optional[M]:
+        """Reads the record that has the specified ID in the datastore.
+
+        Args:
+            record_id (RecordId): The ID of the record to read.
 
         Returns:
-            list[M]: A list of all persisted records of model `M`.
+            M: A single persisted record of model `M`. May be `None` if no
+                record with the specified ID can be found in the datastore.
+
+        Raises:
+            FailedReadQueryException: If the record could not be read.
+        """
+
+    @abstractmethod
+    def read_all(self) -> list[M]:
+        """Reads all records of model `M` in the datastore.
+
+        Returns:
+            list[M]: A list of all records of model `M`.
+
+        Raises:
+            FailedReadQueryException: If the records could not be read.
         """
 
     @abstractmethod

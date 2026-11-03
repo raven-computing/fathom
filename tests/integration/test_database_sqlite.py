@@ -14,17 +14,20 @@
 #
 """Integration tests for the data access implementation using SQLite."""
 
+from typing import cast
+
 from datetime import datetime
 
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.dao import IllegalQueryException
 from raven.fathom.server.dao import IncoherentDatastoreStateException
-from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.models import User, Project, ProjectVersion
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import UserProjectRel, StagingAllocation
+from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.datastore.orm import RecordId
+from raven.fathom.server.datastore.orm.field import OrmRecordId
 from raven.fathom.server.datastore._data_access import DataAccessRDBMS
 from raven.fathom.server.datastore._sqlite import DatabaseSQLite
 
@@ -56,8 +59,9 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         )
         self.assertIsNotNone(user.datastore_id)
         self.assertIsInstance(user.datastore_id, RecordId)
-        self.assertFalse(user.datastore_id.is_set())
-        self.assertIsNone(user.datastore_id.value)
+        ds_id = cast(OrmRecordId, user.datastore_id)
+        self.assertFalse(ds_id.is_set())
+        self.assertIsNone(ds_id.value)
 
     def test_can_create_new_regular_user(self):
         user = User.create(
@@ -71,8 +75,9 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertIsNotNone(created_user)
         assert created_user is not None
         self.assertIsInstance(created_user.datastore_id, RecordId)
-        self.assertTrue(created_user.datastore_id.is_set())
-        self.assertIsNotNone(created_user.datastore_id.value)
+        created_ds_id = cast(OrmRecordId, created_user.datastore_id)
+        self.assertTrue(created_ds_id.is_set())
+        self.assertIsNotNone(created_ds_id.value)
 
     def test_can_create_new_admin_user(self):
         user = User.create(
@@ -200,12 +205,14 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         project = self.db.projects().find_by_identifier("test-project-1")
         self.assertIsNotNone(project)
         assert project is not None
+        project_id = project.datastore_id
 
         version = ProjectVersion.create(
             project=project,
             version_sequence=2,
             version_identifier="2.0.0",
         )
+        version_id = version.datastore_id
         StagingAllocation.create(
             project_version=version,
             path="/tmp/test-project-1-staging",
@@ -218,26 +225,26 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         )
         self.assertEqual(
             AuthDeployment.select().where(
-                AuthDeployment.project == project.datastore_id.value
+                AuthDeployment.project == project_id
             ).count(),
             0,
         )
         self.assertEqual(
             UserProjectRel.select().where(
-                UserProjectRel.project == project.datastore_id.value
+                UserProjectRel.project == project_id
             ).count(),
             0,
         )
         self.assertEqual(
             ProjectVersion.select().where(
-                ProjectVersion.project == project.datastore_id.value
+                ProjectVersion.project == project_id
             ).count(),
             0,
         )
         # pylint: disable=no-member
         self.assertEqual(
             StagingAllocation.select().where(
-                StagingAllocation.project_version == version.datastore_id.value
+                StagingAllocation.project_version == version_id
             ).count(),
             0,
         )
@@ -262,7 +269,9 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.db.projects().assign_user_to_project(user, project_2)
         assigned_projects = self.db.projects().find_all_assigned_to_user(user)
         self.assertEqual(len(assigned_projects), 2)
-        assigned_projects.sort(key=lambda rec: rec.datastore_id.value)
+        assigned_projects.sort(
+            key=lambda rec: cast(OrmRecordId, rec.datastore_id).value
+        )
         self.assertEqual(assigned_projects[0].identifier, project_1.identifier)
         self.assertEqual(assigned_projects[1].identifier, project_2.identifier)
 
@@ -302,7 +311,9 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
             project
         )
         self.assertEqual(len(assigned_users), 2)
-        assigned_users.sort(key=lambda record: record.datastore_id.value)
+        assigned_users.sort(
+            key=lambda record: cast(OrmRecordId, record.datastore_id).value
+        )
         self.assertEqual(assigned_users[0].identifier, user_1.identifier)
         self.assertEqual(assigned_users[1].identifier, user_2.identifier)
 

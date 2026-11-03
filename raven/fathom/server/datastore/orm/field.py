@@ -16,28 +16,37 @@
 
 import threading
 
-from typing import Any, Final, TypeAlias
+from typing import Final, TypeAlias, cast
 
 import peewee as orm_impl
 
 
+OrmRecordIdType: TypeAlias = int
+
 _INIT_LOCK = threading.Lock()
 
 
-class _RecordIdType:
+class RecordId:
+    """Opaque type representing the record identity in the datastore.
+
+    Only supports equality checking, hashing, and repr.
+    """
+
+    FIELD_NAME: Final[str] = "id"
+
+
+class OrmRecordId(RecordId):
     """Opaque type representing a record ID in the datastore.
 
     Encapsulates the raw value of a record ID and provides utility
     methods to check its state.
     """
 
-    DATASTORE_NAME: Final[str] = "id"
-
-    def __init__(self, raw_value):
+    def __init__(self, raw_value: OrmRecordIdType):
         self._val = raw_value
 
     @property
-    def value(self) -> Any:
+    def value(self) -> OrmRecordIdType:
         """The raw value of this record ID."""
         return self._val
 
@@ -51,8 +60,23 @@ class _RecordIdType:
         """
         return self._val is not None
 
+    def __eq__(self, other):
+        if not isinstance(other, OrmRecordId):
+            raise TypeError(
+                "Cannot compare record IDs. "
+                f"Expected object of type OrmRecordId but found {type(other)}"
+            )
 
-RecordId: TypeAlias = _RecordIdType
+        return cast(OrmRecordId, self).value == other.value
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash(cast(OrmRecordId, self).value)
+
+    def __repr__(self) -> str:
+        return f"RecordId(<orm_impl:{self.value}>)"
 
 
 class FieldChecker:
@@ -185,7 +209,7 @@ class FieldChecker:
             attribute for attribute in attributes
             if isinstance(attribute[1], orm_impl.Field)
             and not isinstance(attribute[1], orm_impl.MetaField)
-            and attribute[0] != _RecordIdType.DATASTORE_NAME
+            and attribute[0] != RecordId.FIELD_NAME
             and not attribute[0].endswith("_id")
             and not attribute[0].startswith("__")
         ]
@@ -193,7 +217,7 @@ class FieldChecker:
     def _compute_all(self, fields):
         return set(
             map(lambda field: field[0], fields)
-        ) | {_RecordIdType.DATASTORE_NAME}
+        ) | {RecordId.FIELD_NAME}
 
     def _compute_required(self, fields):
         return set(

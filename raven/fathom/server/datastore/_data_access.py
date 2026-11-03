@@ -30,7 +30,8 @@ from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import Settings
-from raven.fathom.server.datastore.orm.model import Model
+from raven.fathom.server.datastore.orm.model import Model, RecordId
+from raven.fathom.server.datastore.orm.field import OrmRecordId
 from raven.fathom.server.datastore.orm.query import CreateQuery, ReadQuery
 from raven.fathom.server.datastore.orm.query import UpdateQuery, DeleteQuery
 
@@ -49,6 +50,14 @@ class DataAccessObjectRDBMS(DataAccessObject[M]):
 
     def create(self, record: M):
         CreateQuery(record).execute()
+
+    def read(self, record_id: RecordId) -> Optional[M]:
+        record_id = cast(OrmRecordId, record_id)
+        return ReadQuery[M](
+            self._model.select().where(
+                self._model.id == record_id.value # type: ignore
+            )
+        ).find_one()
 
     def read_all(self) -> list[M]:
         return ReadQuery[M](
@@ -162,7 +171,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
         ).find_one()
 
     def find_all_assigned_to_user(self, user: User) -> list[Project]:
-        user_id = user.datastore_id.value
+        user_id = cast(OrmRecordId, user.datastore_id).value
         return [
             cast(Project, user_project_rel.project)
             for user_project_rel in ReadQuery[UserProjectRel](
@@ -174,7 +183,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
         self,
         project: Project
     ) -> list[User]:
-        project_id = project.datastore_id.value
+        project_id = cast(OrmRecordId, project.datastore_id).value
         return [
             cast(User, user_project_rel.user)
             for user_project_rel in ReadQuery[UserProjectRel](
@@ -246,7 +255,7 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
                     StagingAllocation.project_version == version
                 )
             ).execute()
-            version_id = version.datastore_id.value
+            version_id = cast(OrmRecordId, version.datastore_id).value
             DeleteQuery[ProjectVersion](
                 ProjectVersion.delete().where(
                     ProjectVersion.id == version_id # type: ignore

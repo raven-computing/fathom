@@ -14,10 +14,13 @@
 #
 """Integration tests for server-side user management."""
 
+from typing import cast
+
 from raven.fathom.base.user import User, UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import UserProjectRel, AuthDeployment
+from raven.fathom.server.datastore.orm.field import OrmRecordId
 from raven.fathom.server.models.user import UserRole
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.security._hash import StoredPasswordHash
@@ -142,7 +145,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
     def test_delete_user_removes_associated_records(self):
         user_record = self.db.users().find_by_identifier("test-user-1")
         assert user_record is not None
-        user_record_id = user_record.datastore_id
+        user_record_id = cast(OrmRecordId, user_record.datastore_id).value
         self.mananger.delete_user(User(identifier=user_record.identifier))
 
         deleted_user_record = self.db.users().find_by_identifier("test-user-1")

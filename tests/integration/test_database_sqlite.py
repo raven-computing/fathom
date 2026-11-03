@@ -205,14 +205,14 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         project = self.db.projects().find_by_identifier("test-project-1")
         self.assertIsNotNone(project)
         assert project is not None
-        project_id = project.datastore_id
+        project_id = cast(OrmRecordId, project.datastore_id).value
 
         version = ProjectVersion.create(
             project=project,
             version_sequence=2,
             version_identifier="2.0.0",
         )
-        version_id = version.datastore_id
+        version_id = cast(OrmRecordId, version.datastore_id).value
         StagingAllocation.create(
             project_version=version,
             path="/tmp/test-project-1-staging",

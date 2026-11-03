@@ -25,7 +25,7 @@ from raven.fathom.base.context import determine_working_directory
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 
 
-_ENV_VAR_FATHOM_HOME: Final[str] = "A_FATHOM_HOME"
+_ENV_VAR_FATHOM_HOME: Final[str] = f"A_{APPLICATION_PROJECT_ID.upper()}_HOME"
 
 _DOT_FATHOM_HOME: Final[File] = File(f".{APPLICATION_PROJECT_ID}_home")
 

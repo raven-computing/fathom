@@ -17,6 +17,7 @@ info queries.
 """
 
 from raven.fathom.base import ClientRequest, ServerResponse
+from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.core.version import Version
 
@@ -24,7 +25,7 @@ from raven.fathom.server.core.version import Version
 class ServerInfoHandler(ActionHandler):
     """Implementation of `ActionHandler` for server info queries."""
 
-    _SERVER_AGENT = "raven-fathom-server"
+    _SERVER_AGENT = f"raven-{APPLICATION_PROJECT_ID}-server"
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         version = Version.current()

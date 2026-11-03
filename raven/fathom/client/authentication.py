@@ -19,6 +19,7 @@ from typing import Final, Optional
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import SystemEnvironment, InputPrompt
 from raven.fathom.base import Configuration
+from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.cli.arguments import AppArgs
@@ -26,9 +27,13 @@ from raven.fathom.client.cli.arguments import AppArgs
 
 LOG = Logger.get()
 
-ENVIRONMENT_VARIABLE_USER_NAME: Final = "FATHOM_CLIENT_USERNAME"
+ENVIRONMENT_VARIABLE_USER_NAME: Final[str] = (
+    f"{APPLICATION_PROJECT_ID.upper()}_CLIENT_USERNAME"
+)
 
-ENVIRONMENT_VARIABLE_USER_PASSWORD: Final = "FATHOM_CLIENT_PASSWORD"
+ENVIRONMENT_VARIABLE_USER_PASSWORD: Final[str] = (
+    f"{APPLICATION_PROJECT_ID.upper()}_CLIENT_PASSWORD"
+)
 
 
 def _set_client_authentication(auth, username, password):

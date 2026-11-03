@@ -33,6 +33,8 @@ from raven.fathom.server.security._hash import StoredPasswordHash
 from raven.fathom.server.security._hash import PasswordValidation
 
 
+# pyright: reportUnusedCallResult=warning
+
 LOG = Logger.get()
 
 PASSWORD_ENCODING: Final = "UTF-8"

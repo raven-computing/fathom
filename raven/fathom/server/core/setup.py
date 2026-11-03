@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from raven.fathom.base import Configuration
 from raven.fathom.base import InputPrompt
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.datastore import DatabaseManager
+from raven.fathom.server.datastore import DatabaseManager, DatabaseException
 from raven.fathom.server.domain.deployment import DeploymentSite
 from raven.fathom.server.core.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
@@ -42,11 +42,15 @@ class MissingServerSetupException(FathomServerException):
     """
 
 
+class ApplicationSetupException(FathomServerException):
+    """The application cannot start because a setup prerequisite is not met."""
+
+
 def _setup_database():
     LOG.d("Executing database setup procedures")
     db_manager = DatabaseManager()
     if not db_manager.locate_application_database():
-        raise ValueError("Cannot locate DB")
+        raise ApplicationSetupException("Cannot locate database")
 
     db_exists = db_manager.check_database_exists()
     db = db_manager.get_database()
@@ -115,28 +119,40 @@ def setup_application(args: "AppArgs", config: Configuration):
         _setup_filesystem(config)
         _setup_post_update()
         _apply_args_to_config(args, config)
-    except Exception:
+    except Exception as ex:
         LOG.e("An error occurred during application startup")
-        raise
+        raise ApplicationSetupException("Application setup error") from ex
 
     LOG.d("Application setup done")
 
 
-def confirm_system_privileges():
-    """Asks for user credentials and validates system user privileges."""
+def confirm_system_privileges() -> bool:
+    """Asks for user credentials and validates system user privileges.
+
+    Returns:
+        bool: `True` for successful authentication,
+            `False` if authentication is not successful.
+    """
     prompt = InputPrompt.instance()
     LOG.i("Authentication is required to perform this action")
     password=prompt.read("Password: ", secret=True)
     auth_result = UserAuthenticator().authenticate_system_user(password)
     if not auth_result.is_authenticated():
-        raise ValueError("Incorrect username or password.")
+        LOG.e("Incorrect username or password.")
+        return False
 
+    return True
 
 def ensure_connected_to_database():
     """Ensures an active database connection for command operations."""
     db = DatabaseManager().get_database()
     if not db.is_connected():
-        db.connect()
+        try:
+            db.connect()
+        except DatabaseException as ex:
+            raise ApplicationSetupException(
+                "Failed connect to database"
+            ) from ex
 
 
 def require_server_setup():

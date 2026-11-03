@@ -26,6 +26,8 @@ class ExitStatus(enum.IntEnum):
 
     MISSING_SETUP = 2
 
+    UNAUTHENTICATED = 4
+
     INTERNAL_ERROR = 3
 
     CANCELLED = 7

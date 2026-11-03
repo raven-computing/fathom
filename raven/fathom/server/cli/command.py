@@ -84,7 +84,9 @@ def require_privileges(method: ExecuteMethod[S]) -> ExecuteMethod[S]:
 
     @functools.wraps(method)
     def wrapped(instance: S) -> int:
-        confirm_system_privileges()
+        if not confirm_system_privileges():
+            return ExitStatus.UNAUTHENTICATED
+
         return method(instance)
 
     return wrapped

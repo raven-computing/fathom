@@ -17,20 +17,17 @@
 Provides Query classes for datastore CRUD operations.
 """
 
-from typing import Optional, Union, Generic, TypeVar
+from typing import Optional, Union, Generic
 
 import peewee as orm_impl
 
-from raven.fathom.server.datastore.orm import Model
+from raven.fathom.server.datastore.orm import Model, M
 from raven.fathom.server.dao import (
     FailedCreateQueryException,
     FailedReadQueryException,
     FailedUpdateQueryException,
     FailedDeleteQueryException,
 )
-
-
-M = TypeVar("M", bound=Model)
 
 
 class CreateQuery(Generic[M]):

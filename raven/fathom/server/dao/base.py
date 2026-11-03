@@ -14,14 +14,11 @@
 #
 """General Data Access Object (DAO) API."""
 
-from typing import Optional, TypeVar, Generic
+from typing import Optional, Generic
 from abc import ABC, abstractmethod
 
-from raven.fathom.server.datastore.orm.model import Model
+from raven.fathom.server.datastore.orm.model import M
 from raven.fathom.server.datastore.orm.field import RecordId
-
-
-M = TypeVar("M", bound=Model)
 
 
 class DataAccessObject(ABC, Generic[M]):

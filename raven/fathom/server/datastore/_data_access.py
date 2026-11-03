@@ -16,7 +16,7 @@
 using query builders from the peewee ORM.
 """
 
-from typing import cast, Type, TypeVar, Optional, Union
+from typing import cast, Type, Optional, Union
 
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
@@ -30,15 +30,13 @@ from raven.fathom.server.models import UserPermission
 from raven.fathom.server.models import StagingAllocation
 from raven.fathom.server.models import AuthDeployment
 from raven.fathom.server.models import Settings
-from raven.fathom.server.datastore.orm.model import Model, RecordId
+from raven.fathom.server.datastore.orm.model import RecordId, M
 from raven.fathom.server.datastore.orm.field import OrmRecordId
 from raven.fathom.server.datastore.orm.query import CreateQuery, ReadQuery
 from raven.fathom.server.datastore.orm.query import UpdateQuery, DeleteQuery
 
 
 # pylint: disable=no-value-for-parameter
-
-M = TypeVar("M", bound=Model)
 
 
 class DataAccessObjectRDBMS(DataAccessObject[M]):

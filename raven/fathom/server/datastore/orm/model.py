@@ -14,6 +14,8 @@
 #
 """ORM model declarations."""
 
+from typing import TypeVar
+
 import peewee as orm_impl
 
 from raven.fathom.server.datastore._proxy import get_orm_proxy
@@ -65,3 +67,5 @@ class Model(_DataModelORM):
     Concrete data models should inherit from this class and define their
     fields as class attributes.
     """
+
+M = TypeVar("M", bound=Model)

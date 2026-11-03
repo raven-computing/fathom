@@ -19,7 +19,7 @@ objects to interact with the application's data source.
 """
 
 from abc import abstractmethod
-from typing import Type, TypeVar
+from typing import Type
 
 from raven.fathom.base import Interface
 from raven.fathom.base.decorators import inject
@@ -27,7 +27,7 @@ from raven.fathom.server.dao.base import DataAccessObject
 from raven.fathom.server.dao.user import UserDAO
 from raven.fathom.server.dao.project import ProjectDAO
 from raven.fathom.server.dao.settings import SettingsDAO
-from raven.fathom.server.datastore.orm.model import Model
+from raven.fathom.server.datastore.orm.model import M
 from raven.fathom.server.core.exceptions import FathomServerException
 
 
@@ -68,9 +68,6 @@ class IncoherentDatastoreStateException(DatastoreException):
     incoherent state in the underlying datastore, e.g. a missing record
     that must exist given the existence of another record.
     """
-
-
-M = TypeVar("M", bound=Model)
 
 
 @inject

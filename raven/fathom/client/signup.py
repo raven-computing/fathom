@@ -59,6 +59,7 @@ class UserSignupRequest:
             ConnectionException: If there is an error connecting to the server.
             HTTPEncodeException: If there is an error encoding the
                 HTTP request.
+            JSONDecodeException: If the response cannot be decoded.
         """
         server_url = server_locator_to_url(self._location)
         server_url.path += "/user/signup"
@@ -72,4 +73,4 @@ class UserSignupRequest:
         })
         http_response = http_request.send()
         response_body = http_response.get_body_json()
-        return response_body.get("status", "FAILURE")
+        return response_body.get("status", "Error")

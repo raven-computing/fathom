@@ -25,6 +25,7 @@ from raven.fathom.base._net_http import ConnectionHTTPImpl
 from raven.fathom.base.http import (
     ConnectionHTTP,
     ConnectionException,
+    JSONDecodeException,
     MethodHTTP,
     RequestHTTP,
     ResponseHTTP,
@@ -325,7 +326,7 @@ class TestConnectionHTTPImpl(TestCase):
         request = RequestHTTP.get(self.url("/"))
         response = self.connection.send(request)
         self.assertEqual(response.status, 200)
-        with self.assertRaises(ValueError) as raised:
+        with self.assertRaises(JSONDecodeException) as raised:
             response.get_body_json()
 
         self.assertIn(

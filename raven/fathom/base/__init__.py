@@ -96,6 +96,7 @@ from .http import HttpException
 from .http import ConnectionException
 from .http import HTTPEncodeException
 from .http import HTTPDecodeException
+from .http import JSONDecodeException
 from .http import ClientAuthenticationHeader
 from .http import HTTP_HEADER_CLIENT_AUTHENTICATION
 from .interaction import ServerInteraction

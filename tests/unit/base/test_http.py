@@ -21,6 +21,7 @@ from raven.fathom.base.http import ClientAuthenticationHeader
 from raven.fathom.base.http import MethodHTTP, RequestHTTP, ResponseHTTP
 from raven.fathom.base.http import StatusHTTP, ResponseStatusHTTP
 from raven.fathom.base.http import HTTPEncodeException, HTTPDecodeException
+from raven.fathom.base.http import JSONDecodeException
 from raven.fathom.base.http import ConnectionException
 from raven.fathom.base.authentication import ClientAuthentication
 from raven.fathom.base.url import URL
@@ -393,13 +394,13 @@ class TestResponseHTTP(TestCase):
 
     def test_get_body_json_raises_when_no_content_type_header(self):
         response = ResponseHTTP(StatusHTTP.OK, {}, b'{"key": "value"}')
-        with self.assertRaises(ValueError):
+        with self.assertRaises(JSONDecodeException):
             response.get_body_json()
 
     def test_get_body_json_raises_when_wrong_content_type(self):
         headers = {"Content-Type": "text/plain"}
         response = ResponseHTTP(StatusHTTP.OK, headers, b'{"key": "value"}')
-        with self.assertRaises(ValueError):
+        with self.assertRaises(JSONDecodeException):
             response.get_body_json()
 
 

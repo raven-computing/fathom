@@ -52,6 +52,8 @@ HttpException
       |-- HTTPEncodeException
       |
       |-- HTTPDecodeException
+                |
+                |-- JSONDecodeException
 
 ```
 
@@ -92,6 +94,10 @@ class HTTPEncodeException(HttpException):
 
 class HTTPDecodeException(HttpException):
     """A decoding error has occurred for some HTTP-related part."""
+
+
+class JSONDecodeException(HTTPDecodeException):
+    """An error has occurred while trying to decode a JSON payload."""
 
 
 StatusCodeHTTP = Annotated[int, "must be in range [100, 599]"]
@@ -392,22 +398,26 @@ class ResponseHTTP:
                 JSON and deserialised.
 
         Raises:
-            ValueError: If the response body cannot be deserialised as JSON.
-            JSONDecodeError: If the deserialized text body cannot
-                be decoded as valid JSON.
+            JSONDecodeException: If the response body is not valid JSON
+                or cannot be decoded as such.
         """
         content_type = self._headers.get("Content-Type")
         if content_type is None:
-            raise ValueError("Unknown content type")
+            raise JSONDecodeException("Unknown content type")
 
         media_type = content_type.split(";")[0].strip().lower()
         if media_type != "application/json":
-            raise ValueError(
+            raise JSONDecodeException(
                 "Cannot deserialise JSON of HTTP response "
                 f"with content type '{content_type}'"
             )
 
-        return json.loads(self.get_body_text())
+        try:
+            return json.loads(self.get_body_text())
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise JSONDecodeException(
+                "Failed to decode response body into JSON object"
+            ) from error
 
     def __repr__(self):
         preview_size = 512

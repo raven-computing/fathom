@@ -49,7 +49,7 @@ class ServerInteractionImpl(ServerInteraction):
 
         user = self._authenticator.authenticate_client(request)
         if not user.is_authenticated():
-            return self._unauthenticated(response)
+            return self._unauthenticated(request, response, user)
 
         handler = self._factory.create_action_handler_for(request)
         if handler is None:
@@ -60,7 +60,19 @@ class ServerInteractionImpl(ServerInteraction):
         self._log_interaction(request, response)
         return response
 
-    def _unauthenticated(self, response):
+    def _unauthenticated(self, request, response, auth):
+        user_id = (
+            request.authentication.username
+            if request.authentication is not None
+            else "<unknown>"
+        )
+        reason = auth.reason or "<unspecified>"
+        LOG.i(
+            "Unauthenticated client request %s by user %s. Reason: %s",
+            response.action,
+            user_id,
+            reason,
+        )
         if response.action == Interaction.REQUEST_DEPLOYMENT:
             response.deployment_authorization = DeploymentAuthorization.deny(
                 DeploymentAuthorization.Status.INVALID_USER

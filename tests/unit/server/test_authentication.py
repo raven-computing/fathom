@@ -238,31 +238,46 @@ class TestUserAuthentication(TestCase):
         self.assertTrue(auth.is_authenticated())
         self.assertIs(auth.user, self.user_system)
 
-    def test_authenticate_client_without_auth_raises_processing_ex(self):
+    def test_authenticate_client_without_auth_is_rejected(self):
         self.client_request.authentication = None
-        with self.assertRaises(ProcessingException) as raised:
-            self.authenticator.authenticate_client(self.client_request)
 
+        auth = self.authenticator.authenticate_client(self.client_request)
+
+        self.assertIsInstance(auth, UserAuthentication)
+        self.assertFalse(auth.is_authenticated())
+        self.assertIsNone(auth.user)
         self.assertEqual(
-            "Client has no authentication set",
-            str(raised.exception)
+            "Client authentication is required but none was provided.",
+            auth.reason
         )
 
-    def test_authenticate_client_empty_username_raises_processing_ex(self):
+    def test_authenticate_client_empty_username_is_rejected(self):
         assert self.client_request.authentication is not None
         self.client_request.authentication.username = ""
-        with self.assertRaises(ProcessingException) as raised:
-            self.authenticator.authenticate_client(self.client_request)
 
-        self.assertIn("username must not be empty", str(raised.exception))
+        auth = self.authenticator.authenticate_client(self.client_request)
 
-    def test_authenticate_client_with_empty_password_raises_ex(self):
+        self.assertIsInstance(auth, UserAuthentication)
+        self.assertFalse(auth.is_authenticated())
+        self.assertIsNone(auth.user)
+        self.assertEqual(
+            "Client authentication username must not be empty.",
+            auth.reason
+        )
+
+    def test_authenticate_client_with_empty_password_is_rejected(self):
         assert self.client_request.authentication is not None
         self.client_request.authentication.password = ""
-        with self.assertRaises(ProcessingException) as raised:
-            self.authenticator.authenticate_client(self.client_request)
 
-        self.assertIn("password must not be empty", str(raised.exception))
+        auth = self.authenticator.authenticate_client(self.client_request)
+
+        self.assertIsInstance(auth, UserAuthentication)
+        self.assertFalse(auth.is_authenticated())
+        self.assertIsNone(auth.user)
+        self.assertEqual(
+            "Client authentication password must not be empty.",
+            auth.reason
+        )
 
     def test_constitute_password_with_empty_identifier_raises_ex(self):
         user = User(identifier="", name="User", password="password")

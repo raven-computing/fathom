@@ -24,6 +24,7 @@ import cherrypy
 from raven.fathom.base import File, SystemEnvironment
 from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base.context import ENV_VAR_FATHOM_DEBUG, _ENV_VAR_ENABLED
+from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.base.logging import LogManager, LogLevel
 from raven.fathom.base.logging import LogFormatterCLI
 from raven.fathom.base.logging import LogHandlerCLI, LogHandlerFile
@@ -31,11 +32,11 @@ from raven.fathom.base.logging import Logger as BaseLogger
 from raven.fathom.server.cli.arguments import AppCommand
 
 
-FATHOM_SERVER_LOGGER_NAME: Final[str] = "raven.fathom.server"
+FATHOM_SERVER_LOGGER_NAME: Final[str] = f"raven.{APPLICATION_PROJECT_ID}.server"
 
 FATHOM_SERVER_LOGS_DIRECTORY_NAME: Final[str] = "logs"
 
-FATHOM_SERVER_LOG_FILE_NAME: Final[str] = "fathom.log"
+FATHOM_SERVER_LOG_FILE_NAME: Final[str] = f"{APPLICATION_PROJECT_ID}.log"
 
 FATHOM_LOG_FORMAT_TIMESTAMP: Final[str] = "%Y-%m-%dT%H:%M:%S"
 

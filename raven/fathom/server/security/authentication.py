@@ -69,30 +69,93 @@ def _build_dummy_password_hash(hasher: PasswordHasher) -> StoredPasswordHash:
     )
 
 
-def _check_auth_types(auth: ClientAuthentication):
+class UserAuthentication:
+    """The result object of a requested user authentication."""
+
+    def __init__(
+        self,
+        user: Optional[User],
+        is_authenticated: bool,
+        reason: Optional[str] = None,
+    ):
+        self._internal_user = user
+        self._internal_auth = is_authenticated
+        self._reason = reason
+
+    @property
+    def user(self) -> Optional[User]:
+        """The identified user of an authentication request, as a `User`.
+
+        May be `None` if no user could be identified from a submitted request.
+        """
+        return self._internal_user
+
+    @property
+    def reason(self) -> str:
+        """A string indicating the reason why the authenticated was rejected.
+
+        The message is suitable for human users. May be an empty `str`.
+        """
+        return self._reason or ""
+
+    def is_authenticated(self) -> bool:
+        """Indicates whether a user could be successfully authenticated.
+
+        Returns:
+            bool: `True` if the user could be authenticated, `False` otherwise.
+        """
+        return self._internal_auth
+
+    @staticmethod
+    def unauthenticated(reason: Optional[str] = None) -> "UserAuthentication":
+        """Creates a new unauthenticated auth response.
+
+        Args:
+            reason (str): The reason why the user is unauthenticated.
+                May be `None`.
+
+        Returns:
+            UserAuthentication: An unauthenticated response.
+        """
+        return UserAuthentication(
+            user=None,
+            is_authenticated=False,
+            reason=reason
+        )
+
+
+def _check_auth_types(
+    auth: ClientAuthentication
+) -> Optional[UserAuthentication]:
     """Safety check for username-password-combination in a made request."""
     TypeCheck.require(auth, ClientAuthentication)
     TypeCheck.require(auth.username, str)
     TypeCheck.require(auth.password, str)
     if not auth.username:
-        raise ProcessingException(
-            "Client authentication username must not be empty"
+        return UserAuthentication.unauthenticated(
+            "Client authentication username must not be empty."
         )
 
     if not auth.password:
-        raise ProcessingException(
-            "Client authentication password must not be empty"
+        return UserAuthentication.unauthenticated(
+            "Client authentication password must not be empty."
         )
 
+    return None
 
-def _check_client_auth_types(request: ClientRequest):
+
+def _check_client_auth_types(
+    request: ClientRequest
+) -> Optional[UserAuthentication]:
     """Safety check for a made client request."""
     TypeCheck.require_arg(request, ClientRequest)
     auth = request.authentication
     if auth is None:
-        raise ProcessingException("Client has no authentication set")
+        return UserAuthentication.unauthenticated(
+            "Client authentication is required but none was provided."
+        )
 
-    _check_auth_types(auth)
+    return _check_auth_types(auth)
 
 
 def _check_user_record_types(user: User):
@@ -105,30 +168,6 @@ def _check_user_record_types(user: User):
     TypeCheck.require(user.password, str)
     if not user.password:
         raise ProcessingException("User password must not be empty")
-
-
-class UserAuthentication:
-    """The result object of a requested user authentication."""
-
-    def __init__(self, user: Optional[User], is_authenticated: bool):
-        self._internal_user = user
-        self._internal_auth = is_authenticated
-
-    @property
-    def user(self) -> Optional[User]:
-        """The identified user of an authentication request, as a `User`.
-
-        May be `None` if no user could be identified from a submitted request.
-        """
-        return self._internal_user
-
-    def is_authenticated(self) -> bool:
-        """Indicates whether a user could be successfully authenticated.
-
-        Returns:
-            bool: `True` if the user could be authenticated, `False` otherwise.
-        """
-        return self._internal_auth
 
 
 class UserAuthenticator:
@@ -181,11 +220,11 @@ class UserAuthenticator:
 
         Returns:
             UserAuthentication: The authentication result. Never `None`.
-
-        Raises:
-            ProcessingException: If the given authentication is invalid.
         """
-        _check_auth_types(authentication)
+        rejection = _check_auth_types(authentication)
+        if rejection is not None:
+            return rejection
+
         user = self._ds.users().find_by_identifier(authentication.username)
         is_authenticated = False
         if self._onboarding_user_record_has_password_set(user):
@@ -215,31 +254,36 @@ class UserAuthenticator:
 
         Returns:
             UserAuthentication: The authentication result. Never `None`.
-
-        Raises:
-            ProcessingException: If the given client authentication is invalid.
         """
-        _check_client_auth_types(request)
+        rejection = _check_client_auth_types(request)
+        if rejection is not None:
+            return rejection
+
         assert request.authentication is not None
         user = self._ds.users().find_by_identifier(
             request.authentication.username
         )
         is_authenticated = False
+        rejection_reason = None
         if self._active_non_system_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
                 request.authentication.password
             )
-            is_authenticated = user is not None
+            if user is not None:
+                is_authenticated = True
+            else:
+                rejection_reason = "Wrong password."
         else:
             self._spin_authentication_process(request.authentication.password)
+            rejection_reason = "Invalid or unknown user."
 
         if is_authenticated:
             assert user is not None
             self._set_authenticated_client(request, user)
 
-        return UserAuthentication(user, is_authenticated)
+        return UserAuthentication(user, is_authenticated, rejection_reason)
 
     def authenticate_system_user(
         self,
@@ -274,20 +318,28 @@ class UserAuthenticator:
         Returns:
             UserAuthentication: The authentication result. Never `None`.
         """
-        _check_auth_types(ClientAuthentication(username, password))
+        rejection = _check_auth_types(ClientAuthentication(username, password))
+        if rejection is not None:
+            return rejection
+
         user = self._ds.users().find_by_identifier(username)
         is_authenticated = False
+        rejection_reason = None
         if self._active_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
                 password
             )
-            is_authenticated = user is not None
+            if user is not None:
+                is_authenticated = True
+            else:
+                rejection_reason = "Wrong password."
         else:
             self._spin_authentication_process(password)
+            rejection_reason = "Invalid or unknown user."
 
-        return UserAuthentication(user, is_authenticated)
+        return UserAuthentication(user, is_authenticated, rejection_reason)
 
     def _validate_user_authentication_by(
         self,
@@ -398,4 +450,4 @@ class UserAuthenticator:
                     dummy_hash = _build_dummy_password_hash(self.hasher)
                     _DUMMY_HASH_STATE.value = dummy_hash
 
-        PasswordValidation.validate_equality(password, dummy_hash)
+        _ = PasswordValidation.validate_equality(password, dummy_hash)

@@ -176,10 +176,10 @@ class ClientRequest:
     @property
     def authenticated_user_id(self) -> str:
         """The identifier of the authenticated user, if applicable,
-        or 'n/a' if this request context has no bound authenticated user.
+        or '<unknown>' if this request context has no bound authenticated user.
         """
         return (
-            "n/a"
+            "<unknown>"
             if self.authenticated_user is None
             else self.authenticated_user.identifier
         )

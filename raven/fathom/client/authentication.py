@@ -123,14 +123,37 @@ def _gather_from_cli_arguments(auth: ClientAuthentication, args: AppArgs):
     _set_client_authentication(auth, args.user, args.password)
 
 
+def _validate_username(entered_input: str) -> bool:
+    if entered_input:
+        return True
+
+    LOG.i("Please specify the username")
+    return False
+
+
+def _validate_password(entered_input: str) -> bool:
+    if entered_input:
+        return True
+
+    LOG.i("Please specify the password")
+    return False
+
+
 def _gather_from_user_prompt(auth: ClientAuthentication, sys_in: InputPrompt):
     if not auth.username or not auth.password:
         LOG.i("Authentication is required to perform this action")
         if not auth.username:
-            auth.username = sys_in.read("User: ")
+            auth.username = sys_in.read(
+                "User: ",
+                validator=_validate_username
+            )
 
         if not auth.password:
-            auth.password = sys_in.read("Password: ", secret=True)
+            auth.password = sys_in.read(
+                f"Password for user {auth.username}: ",
+                secret=True,
+                validator=_validate_password
+            )
 
 
 def load_client_authentication(

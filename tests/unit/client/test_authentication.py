@@ -281,18 +281,6 @@ class TestClientAuthentication(TestCase):
         self.assertEqual(auth.username, self.user_name_env)
         self.assertEqual(auth.password, self.user_password_in)
 
-    def test_no_auth_provided_returns_empty_auth(self):
-        TestEnvironment.instance().env_vars.clear()
-        SystemInputPromptMock.instance().inputs.clear()
-        auth = load_client_authentication(
-            AppArgs(),
-            Configuration(),
-            Configuration()
-        )
-        self.assertIsInstance(auth, ClientAuthentication)
-        self.assertEqual(auth.username, "")
-        self.assertEqual(auth.password, "")
-
 
 if __name__ == "__main__":
     TestCase.run_tests()

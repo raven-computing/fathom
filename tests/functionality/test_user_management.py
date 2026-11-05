@@ -37,7 +37,8 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
         )
 
         self.assertClientSuccess()
-        self.assertClientStdoutContains("Created user 'managed-user'")
+        self.assertClientStdoutContains("Created client user managed-user")
+        self.assertClientStdoutContains("The user can now sign up")
 
         self.client.execute("manage", "user", "list")
 
@@ -106,7 +107,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "Users assigned to project 'test-project-2':"
+            "All users assigned to project test-project-2"
         )
         self.assertClientStdoutContains("test-user-1")
         self.assertClientStdoutContains("Test User 1")
@@ -127,7 +128,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "Users assigned to project 'test-project-2':"
+            "All users assigned to project test-project-2"
         )
         self.assertNotIn("test-user-1", self.client.stdout)
         self.assertNotIn("Test User 1", self.client.stdout)

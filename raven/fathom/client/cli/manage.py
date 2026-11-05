@@ -14,15 +14,13 @@
 #
 """CLI command handling for server-side management operations."""
 
-from raven.fathom.base import User
+from raven.fathom.base import User, UserState
 from raven.fathom.base import Project
 from raven.fathom.base import TableFormatter
 from raven.fathom.base import log_stdout
 from raven.fathom.client.config import ConfigurationManager
-from raven.fathom.client.connection import Server
-from raven.fathom.client.connection import (
-    ServerConnectionException, ServerOperationException,
-)
+from raven.fathom.client.connection import Server, Result
+from raven.fathom.client.connection import ServerConnectionException
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.locator import load_server_locator
 from raven.fathom.client.authentication import load_client_authentication
@@ -44,10 +42,6 @@ class ManageCommand(ClientCommand):
             LOG.e(str(ex))
             LOG.d(ex)
             return ExitStatus.SERVER_UNREACHABLE
-        except ServerOperationException as ex:
-            LOG.e(str(ex))
-            LOG.d(ex)
-            return ExitStatus.FAILURE
 
     def _manage(self):
         config = ConfigurationManager()
@@ -75,37 +69,48 @@ class ManageCommand(ClientCommand):
 
     def _manage_user(self, server: Server) -> ExitStatus:
         if self.args.manage_command == AppCommand.CREATE:
-            self._create_user(server)
-        elif self.args.manage_command == AppCommand.LIST:
-            self._list_users(server)
-        elif self.args.manage_command == AppCommand.DELETE:
-            self._delete_user(server)
-        elif self.args.manage_command == AppCommand.ASSIGN:
-            self._assign_user(server)
-        elif self.args.manage_command == AppCommand.UNASSIGN:
-            self._unassign_user(server)
-        else:
-            raise ValueError(
-                f"Invalid manage command '{self.args.manage_command}'"
-            )
+            return self._create_user(server)
+        if self.args.manage_command == AppCommand.LIST:
+            return self._list_users(server)
+        if self.args.manage_command == AppCommand.DELETE:
+            return self._delete_user(server)
+        if self.args.manage_command == AppCommand.ASSIGN:
+            return self._assign_user(server)
+        if self.args.manage_command == AppCommand.UNASSIGN:
+            return self._unassign_user(server)
 
-        return ExitStatus.SUCCESS
+        raise ValueError(
+            f"Invalid manage command '{self.args.manage_command}'"
+        )
 
     def _manage_project(self, server: Server) -> ExitStatus:
         if self.args.manage_command == AppCommand.CREATE:
-            self._create_project(server)
-        elif self.args.manage_command == AppCommand.LIST:
-            self._list_projects(server)
-        elif self.args.manage_command == AppCommand.LIST_USERS:
-            self._list_project_users(server)
-        elif self.args.manage_command == AppCommand.DELETE:
-            self._delete_project(server)
-        else:
-            raise ValueError(
-                f"Invalid manage command '{self.args.manage_command}'"
-            )
+            return self._create_project(server)
+        if self.args.manage_command == AppCommand.LIST:
+            return self._list_projects(server)
+        if self.args.manage_command == AppCommand.LIST_USERS:
+            return self._list_project_users(server)
+        if self.args.manage_command == AppCommand.DELETE:
+            return self._delete_project(server)
 
-        return ExitStatus.SUCCESS
+        raise ValueError(
+            f"Invalid manage command '{self.args.manage_command}'"
+        )
+
+    def _handle_messages_of(self, response: Result):
+        if response.messages:
+            LOG.v("Server responded with the following informational message:")
+            for message in response.messages:
+                LOG.v("%s", message)
+
+        if response.warnings:
+            LOG.w("Server responded with the following warnings:")
+            for warning in response.warnings:
+                LOG.w("%s", warning)
+
+    def _handle_error_of(self, response: Result):
+        for error in response.errors:
+            LOG.e("%s", error)
 
     def _print_data(self, formatter: TableFormatter):
         log_stdout("")
@@ -120,14 +125,30 @@ class ManageCommand(ClientCommand):
                 or self.args.user_identifier
             ),
         )
-        created = server.create_user(user)
-        LOG.i("Created user '%s'", created.identifier)
+        response = server.create_user(user)
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
+
+        created_user = response.data
+        LOG.i("Created client user %s", created_user.identifier)
+        if created_user.state == UserState.ONBOARDING:
+            LOG.i("The user can now sign up to activate his account")
+
+        return ExitStatus.SUCCESS
 
     def _list_users(self, server: Server):
-        users = server.list_users()
+        response = server.list_users()
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         formatter = TableFormatter()
         formatter.set_headers("Identifier", "Name", "Role", "State")
-        for user in users:
+        for user in response.data:
             role = "admin" if user.is_admin else "user"
             formatter.add_row(
                 user.identifier, user.name, role, user.state
@@ -135,38 +156,57 @@ class ManageCommand(ClientCommand):
 
         LOG.i("User list of %s", server.name or "Server")
         self._print_data(formatter)
+        return ExitStatus.SUCCESS
 
     def _delete_user(self, server: Server):
-        server.delete_user(self.args.user_identifier)
+        response = server.delete_user(self.args.user_identifier)
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         LOG.i(
             "Deleted user %s from %s",
             self.args.user_identifier,
             server.name or "Server",
         )
+        return ExitStatus.SUCCESS
 
     def _assign_user(self, server: Server):
-        server.assign_user_to_project(
+        response = server.assign_user_to_project(
             self.args.user_identifier,
             self.args.project_identifier,
         )
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         LOG.i(
             "Assigned user %s to project %s at %s",
             self.args.user_identifier,
             self.args.project_identifier,
             server.name or "Server",
         )
+        return ExitStatus.SUCCESS
 
     def _unassign_user(self, server: Server):
-        server.unassign_user_from_project(
+        response = server.unassign_user_from_project(
             self.args.user_identifier,
             self.args.project_identifier,
         )
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         LOG.i(
             "Unassigned user %s from project %s at %s",
             self.args.user_identifier,
             self.args.project_identifier,
             server.name or "Server",
         )
+        return ExitStatus.SUCCESS
 
     def _create_project(self, server: Server):
         project = Project(
@@ -177,18 +217,30 @@ class ManageCommand(ClientCommand):
             ),
             description=self.args.project_description,
         )
-        created = server.create_project(project)
+        response = server.create_project(project)
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
+        created_project = response.data
         LOG.i(
             "Created project %s at %s",
-            created.identifier,
+            created_project.identifier,
             server.name or "Server",
         )
+        return ExitStatus.SUCCESS
 
     def _list_projects(self, server: Server):
-        projects = server.list_projects()
+        response = server.list_projects()
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         formatter = TableFormatter()
         formatter.set_headers("Identifier", "Name", "Description")
-        for project in projects:
+        for project in response.data:
             formatter.add_row(
                 project.identifier,
                 project.name,
@@ -197,16 +249,20 @@ class ManageCommand(ClientCommand):
 
         LOG.i("Project list of %s", server.name or "Server")
         self._print_data(formatter)
+        return ExitStatus.SUCCESS
 
     def _list_project_users(self, server: Server):
-        users = server.list_project_users(
+        response = server.list_project_users(
             self.args.project_identifier
         )
-        formatter = TableFormatter(
-            title="Users assigned to "
-                    f"project '{self.args.project_identifier}':"
-        ).set_headers("Identifier", "Name")
-        for user in users:
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
+        formatter = TableFormatter()
+        formatter.set_headers("Identifier", "Name")
+        for user in response.data:
             formatter.add_row(user.identifier, user.name)
 
         LOG.i(
@@ -215,11 +271,18 @@ class ManageCommand(ClientCommand):
             server.name or "Server",
         )
         self._print_data(formatter)
+        return ExitStatus.SUCCESS
 
     def _delete_project(self, server: Server):
-        server.delete_project(self.args.project_identifier)
+        response = server.delete_project(self.args.project_identifier)
+        if not response.ok:
+            self._handle_error_of(response)
+            return ExitStatus.FAILURE
+
+        self._handle_messages_of(response)
         LOG.i(
             "Deleted project %s from %s",
             self.args.project_identifier,
             server.name or "Server",
         )
+        return ExitStatus.SUCCESS

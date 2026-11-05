@@ -19,9 +19,7 @@ from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import ConfigurationWriteException
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.connection import Server
-from raven.fathom.client.connection import (
-    ServerConnectionException, ServerOperationException,
-)
+from raven.fathom.client.connection import ServerConnectionException
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.locator import load_server_locator
 from raven.fathom.client.cli.arguments import AppCommand
@@ -44,9 +42,6 @@ class SetupCommand(ClientCommand):
         except ServerConnectionException as ex:
             LOG.e(str(ex))
             return ExitStatus.SERVER_UNREACHABLE
-        except ServerOperationException as ex:
-            LOG.e(str(ex))
-            return ExitStatus.FAILURE
 
     def _setup(self):
         if self.args.setup_subject == AppCommand.CONFIG:

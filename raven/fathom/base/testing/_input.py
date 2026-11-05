@@ -17,9 +17,13 @@ inputs and prompts.
 """
 
 from collections import deque
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Final
 
 from raven.fathom.base.system import InputPrompt, InputPromptValidator
+from raven.fathom.base.system import InputReadException
+
+
+_MAX_READ_ATTEMPTS: Final[int] = 1024
 
 
 class SystemInputPromptMock(InputPrompt):
@@ -38,7 +42,8 @@ class SystemInputPromptMock(InputPrompt):
         secret: bool = False,
         validator: Optional[InputPromptValidator] = None
     ) -> str:
-        while True:
+        attempts = 0
+        while attempts <= _MAX_READ_ATTEMPTS:
             if prompt is not None:
                 self.prompts.append(prompt)
 
@@ -50,11 +55,14 @@ class SystemInputPromptMock(InputPrompt):
             else:
                 result = self.inputs.popleft() or default_value
 
+            attempts += 1
             if validator is not None:
                 if validator(result):
                     return result
             else:
                 return result
+
+        raise InputReadException("Maximum read attempts exceeded")
 
     def select(
         self,
@@ -65,7 +73,8 @@ class SystemInputPromptMock(InputPrompt):
         if len(options) == 0:
             raise ValueError("The options sequence must not be empty")
 
-        while True:
+        attempts = 0
+        while attempts <= _MAX_READ_ATTEMPTS:
             if prompt is not None:
                 self.prompts.append(prompt)
 
@@ -73,13 +82,15 @@ class SystemInputPromptMock(InputPrompt):
                 return default_value
 
             result = self.inputs.popleft()
+            attempts += 1
             try:
                 item_index = int(result)
                 if 1 <= item_index <= len(options):
                     return options[item_index - 1]
-
             except ValueError:
                 pass
 
             if result in options:
                 return result
+
+        raise InputReadException("Maximum read attempts exceeded")

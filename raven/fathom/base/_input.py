@@ -20,11 +20,14 @@ Implements the `InputPrompt` interface.
 import sys
 import getpass
 
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Final
 
 from raven.fathom.base.system import InputPrompt, InputPromptValidator
 from raven.fathom.base.system import InputReadException
 from raven.fathom.base.logging import LogFormatterCLI
+
+
+_MAX_READ_ATTEMPTS: Final[int] = 1024
 
 
 class SystemInputPromptStdIn(InputPrompt):
@@ -42,7 +45,8 @@ class SystemInputPromptStdIn(InputPrompt):
         secret: bool = False,
         validator: Optional[InputPromptValidator] = None
     ) -> str:
-        while True:
+        attempts = 0
+        while attempts <= _MAX_READ_ATTEMPTS:
             if prompt is not None:
                 print(
                     LogFormatterCLI.format_message_info(prompt),
@@ -56,10 +60,10 @@ class SystemInputPromptStdIn(InputPrompt):
                     user_input = getpass.getpass("", stream=self.stream_out)
                 else:
                     user_input = self.stream_in.readline()
+                attempts += 1
             except KeyboardInterrupt:
                 if prompt is not None:
                     print("", file=self.stream_out, flush=True)
-
                 raise
             except EOFError as error:
                 raise InputReadException(f"Failed to read input: {error}")
@@ -72,9 +76,10 @@ class SystemInputPromptStdIn(InputPrompt):
             if validator is not None:
                 if validator(result):
                     return result
-
             else:
                 return result
+
+        raise InputReadException("Maximum read attempts exceeded")
 
     def select(
         self,
@@ -91,8 +96,12 @@ class SystemInputPromptStdIn(InputPrompt):
 
         print("", file=self.stream_out)
 
+        attempts = 0
         user_input = ""
         while not user_input:
+            if attempts > _MAX_READ_ATTEMPTS:
+                raise InputReadException("Maximum read attempts exceeded")
+
             print(
                 LogFormatterCLI.format_message_info(prompt or ""),
                 file=self.stream_out,
@@ -110,6 +119,7 @@ class SystemInputPromptStdIn(InputPrompt):
                     f"Failed to read selection input: {error}"
                 )
 
+            attempts += 1
             user_input = user_input.rstrip("\n")
 
             if not user_input and default_value is not None:

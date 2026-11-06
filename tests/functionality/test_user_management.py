@@ -128,7 +128,7 @@ class TestClientUserManagement(TestCase, ConfigurationFixture):
 
         self.assertClientSuccess()
         self.assertClientStdoutContains(
-            "All users assigned to project test-project-2"
+            "There are currently no users assigned to project test-project-2"
         )
         self.assertNotIn("test-user-1", self.client.stdout)
         self.assertNotIn("Test User 1", self.client.stdout)

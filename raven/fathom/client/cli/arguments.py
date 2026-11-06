@@ -22,7 +22,7 @@ from raven.fathom.base.decorators import noexcept
 from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals,too-many-statements
 
 
 class AppCommand(StrEnum):

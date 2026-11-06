@@ -173,7 +173,7 @@ class Server:
         result = self._prepare_result(response)
         if result.ok:
             server_info = self._create_server_info_obj(
-                self._get_data_object_from(response.server_info)
+                self._get_data_list_from(response.server_info)
             )
             return self._combine(result, server_info)
 
@@ -563,7 +563,7 @@ class Server:
 
         return data_result
 
-    def _get_data_list_from(self, response_data: Optional[S]) -> S:
+    def _get_data_object_from(self, response_data: Optional[S]) -> S:
         if response_data is None or len(response_data) != 1:
             raise ServerConnectionException(
                 "Server response does not contain expected payload data. "
@@ -572,7 +572,7 @@ class Server:
 
         return response_data
 
-    def _get_data_object_from(self, response_data: Optional[T]) -> T:
+    def _get_data_list_from(self, response_data: Optional[T]) -> T:
         if response_data is None:
             raise ServerConnectionException(
                 "Server response does not contain expected payload data. "

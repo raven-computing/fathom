@@ -43,7 +43,7 @@ class ManageCommand(ClientCommand):
             LOG.d(ex)
             return ExitStatus.SERVER_UNREACHABLE
 
-    def _manage(self):
+    def _manage(self) -> ExitStatus:
         config = ConfigurationManager()
         user_config = config.get_user_config()
         project_config = config.get_project_config()
@@ -125,7 +125,7 @@ class ManageCommand(ClientCommand):
         log_stdout(formatter.get_formatted_text())
         log_stdout("")
 
-    def _create_user(self, server: Server):
+    def _create_user(self, server: Server) -> ExitStatus:
         user = User(
             identifier=self.args.user_identifier,
             name=(
@@ -144,14 +144,19 @@ class ManageCommand(ClientCommand):
 
         return ExitStatus.SUCCESS
 
-    def _list_users(self, server: Server):
+    def _list_users(self, server: Server) -> ExitStatus:
         response = server.list_users()
         if (error := self._handle(response)):
             return error
 
+        users = response.data
+        if len(users) == 0:
+            LOG.i("No users found")
+            return ExitStatus.SUCCESS
+
         formatter = TableFormatter()
         formatter.set_headers("Identifier", "Name", "Role", "State")
-        for user in response.data:
+        for user in users:
             role = "admin" if user.is_admin else "user"
             formatter.add_row(
                 user.identifier, user.name, role, user.state
@@ -161,7 +166,7 @@ class ManageCommand(ClientCommand):
         self._print_data(formatter)
         return ExitStatus.SUCCESS
 
-    def _delete_user(self, server: Server):
+    def _delete_user(self, server: Server) -> ExitStatus:
         response = server.delete_user(self.args.user_identifier)
         if (error := self._handle(response)):
             return error
@@ -173,7 +178,7 @@ class ManageCommand(ClientCommand):
         )
         return ExitStatus.SUCCESS
 
-    def _assign_user(self, server: Server):
+    def _assign_user(self, server: Server) -> ExitStatus:
         response = server.assign_user_to_project(
             self.args.user_identifier,
             self.args.project_identifier,
@@ -189,7 +194,7 @@ class ManageCommand(ClientCommand):
         )
         return ExitStatus.SUCCESS
 
-    def _unassign_user(self, server: Server):
+    def _unassign_user(self, server: Server) -> ExitStatus:
         response = server.unassign_user_from_project(
             self.args.user_identifier,
             self.args.project_identifier,
@@ -205,7 +210,7 @@ class ManageCommand(ClientCommand):
         )
         return ExitStatus.SUCCESS
 
-    def _create_project(self, server: Server):
+    def _create_project(self, server: Server) -> ExitStatus:
         project = Project(
             identifier=self.args.project_identifier,
             name=(
@@ -226,14 +231,19 @@ class ManageCommand(ClientCommand):
         )
         return ExitStatus.SUCCESS
 
-    def _list_projects(self, server: Server):
+    def _list_projects(self, server: Server) -> ExitStatus:
         response = server.list_projects()
         if (error := self._handle(response)):
             return error
 
+        projects = response.data
+        if len(projects) == 0:
+            LOG.i("No projects available")
+            return ExitStatus.SUCCESS
+
         formatter = TableFormatter()
         formatter.set_headers("Identifier", "Name", "Description")
-        for project in response.data:
+        for project in projects:
             formatter.add_row(
                 project.identifier,
                 project.name,
@@ -244,16 +254,24 @@ class ManageCommand(ClientCommand):
         self._print_data(formatter)
         return ExitStatus.SUCCESS
 
-    def _list_project_users(self, server: Server):
+    def _list_project_users(self, server: Server) -> ExitStatus:
         response = server.list_project_users(
             self.args.project_identifier
         )
         if (error := self._handle(response)):
             return error
 
+        users = response.data
+        if len(users) == 0:
+            LOG.i(
+                "There are currently no users assigned to project %s",
+                self.args.project_identifier
+            )
+            return ExitStatus.SUCCESS
+
         formatter = TableFormatter()
         formatter.set_headers("Identifier", "Name")
-        for user in response.data:
+        for user in users:
             formatter.add_row(user.identifier, user.name)
 
         LOG.i(
@@ -264,7 +282,7 @@ class ManageCommand(ClientCommand):
         self._print_data(formatter)
         return ExitStatus.SUCCESS
 
-    def _delete_project(self, server: Server):
+    def _delete_project(self, server: Server) -> ExitStatus:
         response = server.delete_project(self.args.project_identifier)
         if (error := self._handle(response)):
             return error

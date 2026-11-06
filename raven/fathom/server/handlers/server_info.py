@@ -19,6 +19,7 @@ info queries.
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.server.handlers import ActionHandler
+from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.core.version import Version
 
 
@@ -30,7 +31,9 @@ class ServerInfoHandler(ActionHandler):
     def handle(self, request: ClientRequest, response: ServerResponse):
         version = Version.current()
         app_version = str(version) if version is not None else ""
+        settings = DataAccess.instance().settings().find_server_settings()
         response.server_info = {
             "server_agent": self._SERVER_AGENT,
             "app_version": app_version,
+            "organisation_name": settings.organisation_name,
         }

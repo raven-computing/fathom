@@ -114,6 +114,8 @@ class ServerInfo:
 
     app_version: str = field(default="")
 
+    organisation_name: str = field(default="")
+
 
 class Server:
     """Higher-level API to interact with a Fathom server.
@@ -502,6 +504,9 @@ class Server:
         server_info = ServerInfo()
         server_info.server_agent = server_info_map.get("server_agent")
         server_info.app_version = server_info_map.get("app_version", "")
+        server_info.organisation_name = server_info_map.get(
+            "organisation_name", ""
+        )
         return server_info
 
     def _prepare_result(self, response: ServerResponse) -> Result:

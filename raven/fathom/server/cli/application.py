@@ -83,4 +83,4 @@ def main(argv: list[str]) -> ExitStatus:
 
 
 if __name__ == "__main__":
-    sys.exit(int(main(sys.argv)))
+    sys.exit(main(sys.argv))

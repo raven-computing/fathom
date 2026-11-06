@@ -27,7 +27,7 @@ import io
 import multiprocessing
 
 from contextlib import ExitStack, nullcontext, redirect_stdout, redirect_stderr
-from typing import Optional, Final, Type
+from typing import Optional, Final, Type, NoReturn
 from unittest.mock import patch
 
 from raven.fathom.base import ApplicationContext, ApplicationMode
@@ -74,6 +74,13 @@ def _convert_sys_exit(sys_exit: SystemExit) -> int:
         return 0
 
     return 1
+
+
+def _invoke_server_main(argv: list[str]) -> NoReturn:
+    """Invokes the `main()` function of the server but sets the
+    exit status code via `sys.exit()` instead of returning it.
+    """
+    sys.exit(server_main(argv))
 
 
 class ServerStartupException(Exception):
@@ -502,7 +509,7 @@ class ServerDriver:
             stack.enter_context(redirect_stdout(stdout_buffer))
             stack.enter_context(redirect_stderr(stderr_buffer))
             try:
-                self._command_exit_status = int(server_main(exec_args))
+                self._command_exit_status = server_main(exec_args)
             except SystemExit as sys_exit:
                 self._command_exit_status = _convert_sys_exit(sys_exit)
 
@@ -533,7 +540,7 @@ class ServerDriver:
         event_server_ready = multiprocessing.Event() # Must be the last arg
         exec_args = ["fathom-server"] + args + [event_server_ready]
         self._proc = multiprocessing.Process(
-            target=server_main,
+            target=_invoke_server_main,
             name="Fathom-Server-1",
             args=(exec_args,),
             daemon=True,
@@ -555,6 +562,7 @@ class ServerDriver:
             )
 
         if not self._proc.is_alive():
+            self._exit_status = self._proc.exitcode
             raise ServerStartupException(
                 "Server process terminated immediately after signalling "
                 f"ready (exit code: {self._exit_status})"

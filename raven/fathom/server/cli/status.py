@@ -28,6 +28,8 @@ class ExitStatus(enum.IntEnum):
 
     UNAUTHENTICATED = 4
 
+    CANNOT_BIND_TO_PORT = 5
+
     INTERNAL_ERROR = 3
 
     CANCELLED = 7

@@ -24,6 +24,7 @@ from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.setup import require_server_setup
 from raven.fathom.server.core.setup import setup_application
 from raven.fathom.server.core.setup import MissingServerSetupException
+from raven.fathom.server.net.http.server import CannotBindToPortException
 
 
 LOG = Logger.get()
@@ -62,6 +63,10 @@ def run_server_command(args: AppArgs) -> ExitStatus:
         LOG.i("The server has not been set up yet.")
         LOG.i("Run 'fathom-server setup' first.")
         return ExitStatus.MISSING_SETUP
+    except CannotBindToPortException as ex:
+        LOG.e(str(ex))
+        LOG.d(ex)
+        return ExitStatus.CANNOT_BIND_TO_PORT
     except KeyboardInterrupt:
         LOG.i("Cancelling...")
         LOG.d("Invoking command cancellation for %s", command)

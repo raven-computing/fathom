@@ -47,6 +47,14 @@ class HTTPServerStartException(FathomServerException):
     """Exception raised when the HTTP server fails to start."""
 
 
+class CannotBindToPortException(HTTPServerStartException):
+    """The server failed to start because the operating system refused the
+    server bind to the given port, likely due to insufficient OS-level
+    permissions or because the given port is already in use
+    by another process.
+    """
+
+
 class ServerHTTP:
     """The Fathom HTTP server using CherryPy."""
 
@@ -212,14 +220,17 @@ class ServerHTTP:
                 LOG.log(error.strerror)
 
             msg = str(error)
+            exception = HTTPServerStartException
             if error.errno == errno.EACCES:
                 msg = f"Insufficient permissions to bind to port {self._port}"
                 LOG.log(msg)
+                exception = CannotBindToPortException
             elif error.errno == errno.EADDRINUSE:
                 msg = f"Port {self._port} is already in use by another process"
                 LOG.log(msg)
+                exception = CannotBindToPortException
 
-            raise HTTPServerStartException(
+            raise exception(
                 f"Failed to start HTTP engine: {msg}"
             ) from error
 

@@ -35,8 +35,10 @@ from raven.fathom.base import File
 from raven.fathom.base import Configuration, ConfigurationLoader
 from raven.fathom.base import ConfigurationDefinition
 from raven.fathom.client.config import UserConfiguration
-from raven.fathom.client.cli.application import main as client_main
+from raven.fathom.client.cli import main as client_main
+from raven.fathom.client.cli import ExitStatus as ClientExitStatus
 from raven.fathom.server.cli import main as server_main
+from raven.fathom.server.cli import ExitStatus as ServerExitStatus
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.dao.api import DataAccess
@@ -66,14 +68,41 @@ def _create_stdin_context(lines):
     return patch.object(sys, "stdin", stdin_buffer)
 
 
-def _convert_sys_exit(sys_exit: SystemExit) -> int:
+def _convert_client_sys_exit(sys_exit: SystemExit) -> ClientExitStatus:
     if isinstance(sys_exit.code, int):
-        return int(sys_exit.code)
+        try:
+            return ClientExitStatus(sys_exit.code)
+        except ValueError:
+            raise ValueError(
+                f"Numeric client exit status code {sys_exit.code} "
+                "is not a valid ExitStatus type"
+            ) from None
 
     if sys_exit.code is None:
-        return 0
+        return ClientExitStatus.SUCCESS
 
-    return 1
+    return ClientExitStatus.UNKNOWN_ERROR
+
+
+def _convert_server_sys_exit(
+    sys_exit: SystemExit | int | None
+) -> ServerExitStatus | None:
+    if isinstance(sys_exit, SystemExit):
+        if isinstance(sys_exit.code, int):
+            sys_exit = sys_exit.code
+        elif sys_exit.code is None:
+            return ServerExitStatus.SUCCESS
+
+    if isinstance(sys_exit, int):
+        try:
+            return ServerExitStatus(sys_exit)
+        except ValueError:
+            raise ValueError(
+                f"Numeric server exit status code {sys_exit} "
+                "is not a valid ExitStatus type"
+            ) from None
+
+    return None
 
 
 def _invoke_server_main(argv: list[str]) -> NoReturn:
@@ -103,7 +132,7 @@ class ClientDriver:
 
     def __init__(self, env: ClientEnvironment):
         self._env = env
-        self._exit_status: Optional[int] = None
+        self._exit_status: Optional[ClientExitStatus] = None
         self._stdin: Optional[list[str]] = None
         self._stdout: str = ""
         self._stderr: str = ""
@@ -117,7 +146,7 @@ class ClientDriver:
         return self._env
 
     @property
-    def exit_status(self) -> Optional[int]:
+    def exit_status(self) -> Optional[ClientExitStatus]:
         """The exit status of the last client execution.
 
         Is `None` if `execute()` has not been called yet.
@@ -176,9 +205,9 @@ class ClientDriver:
             stack.enter_context(redirect_stdout(stdout_buffer))
             stack.enter_context(redirect_stderr(stderr_buffer))
             try:
-                self._exit_status = int(client_main(exec_args))
+                self._exit_status = client_main(exec_args)
             except SystemExit as sys_exit:
-                self._exit_status = _convert_sys_exit(sys_exit)
+                self._exit_status = _convert_client_sys_exit(sys_exit)
 
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()
@@ -330,8 +359,8 @@ class ServerDriver:
         self._stdin: Optional[list[str]] = None
         self._stdout: str = ""
         self._stderr: str = ""
-        self._exit_status: Optional[int] = None
-        self._command_exit_status: Optional[int] = None
+        self._exit_status: Optional[ServerExitStatus] = None
+        self._command_exit_status: Optional[ServerExitStatus] = None
         self._proc: Optional[multiprocessing.Process] = None
 
     @property
@@ -342,7 +371,7 @@ class ServerDriver:
         return self._env
 
     @property
-    def exit_status(self) -> Optional[int]:
+    def exit_status(self) -> Optional[ServerExitStatus]:
         """The exit status of the Fathom server process.
 
         This is the exit status of the server process itself, not of any
@@ -354,7 +383,7 @@ class ServerDriver:
         return self._exit_status
 
     @property
-    def command_exit_status(self) -> Optional[int]:
+    def command_exit_status(self) -> Optional[ServerExitStatus]:
         """The exit status of the last run Fathom server CLI command.
 
         Is `None` if no server CLI command has been executed yet.
@@ -511,7 +540,7 @@ class ServerDriver:
             try:
                 self._command_exit_status = server_main(exec_args)
             except SystemExit as sys_exit:
-                self._command_exit_status = _convert_sys_exit(sys_exit)
+                self._command_exit_status = _convert_server_sys_exit(sys_exit)
 
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()
@@ -551,9 +580,15 @@ class ServerDriver:
             alive = self._proc.is_alive()
             self._force_shutdown()
             if not alive:
+                hint = ""
+                if self._exit_status == ServerExitStatus.CANNOT_BIND_TO_PORT:
+                    hint = (
+                        ". Another server instance bound to the same port "
+                        "might be already running"
+                    )
                 raise ServerStartupException(
                     "Server process terminated prematurely during startup "
-                    f"(exit code: {self._exit_status})"
+                    f"({self._exit_status!r}){hint}"
                 )
 
             raise ServerStartupException(
@@ -562,10 +597,10 @@ class ServerDriver:
             )
 
         if not self._proc.is_alive():
-            self._exit_status = self._proc.exitcode
+            self._exit_status = _convert_server_sys_exit(self._proc.exitcode)
             raise ServerStartupException(
                 "Server process terminated immediately after signalling "
-                f"ready (exit code: {self._exit_status})"
+                f"ready ({self._exit_status!r})"
             )
 
     def shutdown(self):
@@ -587,7 +622,7 @@ class ServerDriver:
                 self._force_shutdown()
 
         if self._proc is not None:
-            self._exit_status = self._proc.exitcode
+            self._exit_status = _convert_server_sys_exit(self._proc.exitcode)
             self._proc = None
 
     def restart(self, args: Optional[list[str]] = None):
@@ -660,5 +695,5 @@ class ServerDriver:
             except OSError:
                 pass
             self._proc.join(timeout=2.0)
-            self._exit_status = self._proc.exitcode
+            self._exit_status = _convert_server_sys_exit(self._proc.exitcode)
             self._proc = None

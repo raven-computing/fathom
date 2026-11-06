@@ -40,6 +40,8 @@ class AppCommand(StrEnum):
 
     PROJECT = "project"
 
+    SERVER = "server"
+
     CONFIG = "config"
 
     CREATE = "create"
@@ -53,6 +55,8 @@ class AppCommand(StrEnum):
     ASSIGN = "assign"
 
     UNASSIGN = "unassign"
+
+    SHOW = "show"
 
 
 @dataclass(frozen=True)
@@ -331,6 +335,20 @@ def parse_args(argv: list[str]) -> AppArgs:
         "project_identifier",
         metavar="<IDENTIFIER>",
         help="The unique identifier of the project to delete."
+    )
+
+    manage_server = manage_subparsers.add_parser(
+        str(AppCommand.SERVER),
+        help=f"Manage {APPLICATION_NAME} server instances."
+    )
+    manage_server_subparsers = manage_server.add_subparsers(
+        dest="manage_command",
+        required=True,
+        metavar="<ACTION>",
+    )
+    manage_server_subparsers.add_parser(
+        str(AppCommand.SHOW),
+        help="Show general server information."
     )
 
     setup = subparsers.add_parser(

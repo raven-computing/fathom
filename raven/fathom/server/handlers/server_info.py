@@ -17,10 +17,15 @@ info queries.
 """
 
 from raven.fathom.base import ClientRequest, ServerResponse
+from raven.fathom.base import ResponseCode, ResponseMessage
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.core.version import Version
+from raven.fathom.server.core.logging import Logger
+
+
+LOG = Logger.get()
 
 
 class ServerInfoHandler(ActionHandler):
@@ -37,3 +42,13 @@ class ServerInfoHandler(ActionHandler):
             "app_version": app_version,
             "organisation_name": settings.organisation_name,
         }
+        LOG.i(
+            "User %s requested to view server information",
+            request.authenticated_user_id,
+        )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text="OK",
+            )
+        )

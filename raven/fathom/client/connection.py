@@ -563,7 +563,7 @@ class Server:
 
         return data_result
 
-    def _get_data_object_from(self, response_data: Optional[S]) -> S:
+    def _get_data_list_from(self, response_data: Optional[S]) -> S:
         if response_data is None or len(response_data) != 1:
             raise ServerConnectionException(
                 "Server response does not contain expected payload data. "
@@ -572,7 +572,7 @@ class Server:
 
         return response_data
 
-    def _get_data_list_from(self, response_data: Optional[T]) -> T:
+    def _get_data_object_from(self, response_data: Optional[T]) -> T:
         if response_data is None:
             raise ServerConnectionException(
                 "Server response does not contain expected payload data. "

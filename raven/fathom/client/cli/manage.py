@@ -62,6 +62,8 @@ class ManageCommand(ClientCommand):
             return self._manage_user(server)
         if self.args.manage_subject == AppCommand.PROJECT:
             return self._manage_project(server)
+        if self.args.manage_subject == AppCommand.SERVER:
+            return self._manage_server(server)
 
         raise ValueError(
             f"Invalid manage subject '{self.args.manage_subject}'"
@@ -97,6 +99,14 @@ class ManageCommand(ClientCommand):
             f"Invalid manage command '{self.args.manage_command}'"
         )
 
+    def _manage_server(self, server: Server) -> ExitStatus:
+        if self.args.manage_command == AppCommand.SHOW:
+            return self._show_server_info(server)
+
+        raise ValueError(
+            f"Invalid manage command '{self.args.manage_command}'"
+        )
+
     def _handle_messages_of(self, response: Result):
         if response.messages:
             LOG.v("Server responded with the following informational message:")
@@ -124,6 +134,27 @@ class ManageCommand(ClientCommand):
         log_stdout("")
         log_stdout(formatter.get_formatted_text())
         log_stdout("")
+
+    def _show_server_info(self, server: Server) -> ExitStatus:
+        response = server.request_server_info()
+        if (error := self._handle(response)):
+            return error
+
+        server_info = response.data
+        formatter = TableFormatter()
+        formatter.set_headers("Key", "Value")
+        formatter.add_row(
+            "Organisation", server_info.organisation_name,
+        )
+        formatter.add_row(
+            "Server Agent", server_info.server_agent,
+        )
+        formatter.add_row(
+            "Server Version", server_info.app_version,
+        )
+        LOG.i("General information of %s", server.name or "Server")
+        self._print_data(formatter)
+        return ExitStatus.SUCCESS
 
     def _create_user(self, server: Server) -> ExitStatus:
         user = User(

@@ -62,5 +62,8 @@ class CommandSignalHandler:
     def _handle_pyrt_sig(self, signum, _frame) -> None:
         LOG.d("Received signal %s", signum)
         LOG.i("Cancelling...")
-        LOG.d("Invoking command cancellation for %s", self._command)
+        LOG.d(
+            "Invoking command cancellation for %s due to trapped signal",
+            self._command,
+        )
         self._command.cancel()

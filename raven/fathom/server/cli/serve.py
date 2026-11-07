@@ -19,6 +19,7 @@ from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.core.config import ServerConfiguration
+from raven.fathom.server.core.signal import CommandSignalHandler
 from raven.fathom.server.net.http.server import assign
 from raven.fathom.server.net.http.server import ServerHTTP
 from raven.fathom.server.net.http.server import HTTPServerStartException
@@ -48,29 +49,30 @@ class ServeCommand(ServerCommand):
         self.server = None
 
     def execute(self) -> int:
-        config = ConfigurationManager().get_server_config()
-        server = ServerHTTP(FathomServer(), config, self.args.ready_event)
-        port = config[ServerConfiguration.SERVER.PORT_LISTEN]
-        LOG.i("Starting Fathom server on port %d", port)
-        server = assign(server)
-        self.server = server
-        _start(server)
-        app_mode = ApplicationContext.instance().get_application_mode()
-        debug_mode = config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
-        if app_mode == ApplicationMode.PRODUCTION and debug_mode:
-            LOG.w(
-                "The debug mode of the server is enabled. "
-                "This is not suitable for a production environment."
-            )
+        with CommandSignalHandler(self):
+            config = ConfigurationManager().get_server_config()
+            server = ServerHTTP(FathomServer(), config, self.args.ready_event)
+            port = config[ServerConfiguration.SERVER.PORT_LISTEN]
+            LOG.i("Starting Fathom server on port %d", port)
+            server = assign(server)
+            self.server = server
+            _start(server)
+            app_mode = ApplicationContext.instance().get_application_mode()
+            debug_mode = config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
+            if app_mode == ApplicationMode.PRODUCTION and debug_mode:
+                LOG.w(
+                    "The debug mode of the server is enabled. "
+                    "This is not suitable for a production environment."
+                )
 
-        LOG.d("Entering blocking server loop")
-        server.run()
-        LOG.d("Left blocking server loop")
+            LOG.d("Entering blocking server loop")
+            server.run()
+            LOG.d("Left blocking server loop")
 
-        LOG.i("Fathom server has been stopped")
-        status_code = server.status_code()
-        LOG.d("HTTP server completed with status code %d", status_code)
-        return status_code
+            LOG.i("Fathom server has been stopped")
+            status_code = server.status_code()
+            LOG.d("HTTP server completed with status code %d", status_code)
+            return status_code
 
     def cancel(self):
         if self.server is not None:

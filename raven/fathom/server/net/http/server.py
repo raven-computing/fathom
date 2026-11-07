@@ -22,6 +22,7 @@ endpoints provided by the server app component.
 
 import platform
 import errno
+import threading
 import socket
 
 from typing import Optional
@@ -55,6 +56,13 @@ class CannotBindToPortException(HTTPServerStartException):
     """
 
 
+def _monitor_shutdown_event(server: "ServerHTTP", shutdown_event: Event):
+    LOG.log("Listening for shutdown event")
+    shutdown_event.wait()
+    LOG.log("Shutdown event received")
+    server.stop()
+
+
 class ServerHTTP:
     """The Fathom HTTP server using CherryPy."""
 
@@ -62,7 +70,8 @@ class ServerHTTP:
         self,
         app: ServerApplication,
         config: Optional[Configuration] = None,
-        event: Optional[Event] = None
+        rdy_event: Optional[Event] = None,
+        sdn_event: Optional[Event] = None,
     ):
         """Initializes a new `ServerHTTP` instance.
 
@@ -70,9 +79,11 @@ class ServerHTTP:
             app (ServerApplication): The server application instance to serve.
             config (Configuration): The server configuration to use. An empty
                 configuration will be used if none is provided.
-            event (Event): An optional `multiprocessing.synchronize.Event` that
-                the server will use to signal when it is ready to
-                accept requests.
+            rdy_event (Event): An optional `multiprocessing.synchronize.Event`
+                that the server will use to signal when it is ready to accept
+                requests.
+            sdn_event (Event): An optional `multiprocessing.synchronize.Event`
+                that the server will use to listen for shutdown signals.
         """
         config = config or Configuration()
         self._app = app
@@ -83,7 +94,8 @@ class ServerHTTP:
         self._port = config.get_required_value(
             ServerConfiguration.SERVER.PORT_LISTEN
         )
-        self._event_ready = event
+        self._event_ready = rdy_event
+        self._event_shutdown = sdn_event
 
     @property
     def address(self) -> str:
@@ -175,6 +187,9 @@ class ServerHTTP:
         if self._event_ready is not None:
             self._event_ready.set()
 
+        if self._event_shutdown is not None:
+            self._start_shutdown_monitor_thread()
+
         cherrypy.engine.block()
         LOG.log("Stopping")
 
@@ -214,6 +229,17 @@ class ServerHTTP:
             key,
             or_raise=HTTPServerStartException
         )
+
+    def _start_shutdown_monitor_thread(self):
+        thread_name = "ShutdownMonitor"
+        shutdown_thread = threading.Thread(
+            target=_monitor_shutdown_event,
+            name=thread_name,
+            args=(self, self._event_shutdown),
+            daemon=True,
+        )
+        shutdown_thread.start()
+        LOG.log(f"Started monitor thread '{thread_name}'")
 
     def _is_stop_triggered(self):
         engine = cherrypy.engine

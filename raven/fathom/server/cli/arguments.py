@@ -93,6 +93,8 @@ class AppArgs:
 
     ready_event: Optional[Event] = None
 
+    shutdown_event: Optional[Event] = None
+
 
 def parse_args(argv: list[str]) -> AppArgs:
     """Parses the arguments passed to the Fathom server.
@@ -104,9 +106,15 @@ def parse_args(argv: list[str]) -> AppArgs:
         AppArgs: The processed command line arguments.
     """
     last_arg = argv[len(argv)-1] if len(argv) > 0 else None
-    event = None
+    ready_event = None
     if isinstance(last_arg, Event):
-        event = last_arg
+        ready_event = last_arg
+        argv = argv[:-1]
+
+    last_arg = argv[len(argv)-1] if len(argv) > 0 else None
+    shutdown_event = None
+    if isinstance(last_arg, Event):
+        shutdown_event = last_arg
         argv = argv[:-1]
 
     parser = ArgumentParser(
@@ -299,5 +307,6 @@ def parse_args(argv: list[str]) -> AppArgs:
         project_identifier=getattr(args, "identifier", ""),
         project_name=getattr(args, "name", ""),
         project_description=getattr(args, "description", ""),
-        ready_event=event,
+        ready_event=ready_event,
+        shutdown_event=shutdown_event,
     )

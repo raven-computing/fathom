@@ -51,7 +51,12 @@ class ServeCommand(ServerCommand):
     def execute(self) -> int:
         with CommandSignalHandler(self):
             config = ConfigurationManager().get_server_config()
-            server = ServerHTTP(FathomServer(), config, self.args.ready_event)
+            server = ServerHTTP(
+                FathomServer(),
+                config,
+                self.args.ready_event,
+                self.args.shutdown_event
+            )
             port = config[ServerConfiguration.SERVER.PORT_LISTEN]
             LOG.i("Starting Fathom server on port %d", port)
             server = assign(server)

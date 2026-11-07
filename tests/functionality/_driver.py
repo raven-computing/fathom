@@ -26,6 +26,7 @@ import sys
 import io
 import multiprocessing
 
+from multiprocessing.synchronize import Event
 from contextlib import ExitStack, nullcontext, redirect_stdout, redirect_stderr
 from typing import Optional, Final, Type, NoReturn
 from unittest.mock import patch
@@ -34,6 +35,7 @@ from raven.fathom.base import ApplicationContext, ApplicationMode
 from raven.fathom.base import File
 from raven.fathom.base import Configuration, ConfigurationLoader
 from raven.fathom.base import ConfigurationDefinition
+from raven.fathom.base import OperatingSystem
 from raven.fathom.client.config import UserConfiguration
 from raven.fathom.client.cli import main as client_main
 from raven.fathom.client.cli import ExitStatus as ClientExitStatus
@@ -362,6 +364,7 @@ class ServerDriver:
         self._exit_status: Optional[ServerExitStatus] = None
         self._command_exit_status: Optional[ServerExitStatus] = None
         self._proc: Optional[multiprocessing.Process] = None
+        self._event_server_shutdown: Optional[Event] = None
 
     @property
     def env(self) -> ServerEnvironment:
@@ -566,8 +569,13 @@ class ServerDriver:
                 "Server is already running"
             )
 
-        event_server_ready = multiprocessing.Event() # Must be the last arg
-        exec_args = ["fathom-server"] + args + [event_server_ready]
+        event_server_ready = multiprocessing.Event()
+        events = [event_server_ready] # Must be the last arg
+        if self._env.get_operating_system() == OperatingSystem.MS_WINDOWS:
+            self._event_server_shutdown = multiprocessing.Event()
+            events.insert(0, self._event_server_shutdown)
+
+        exec_args = ["fathom-server"] + args + events
         self._proc = multiprocessing.Process(
             target=_invoke_server_main,
             name="Fathom-Server-1",
@@ -616,7 +624,7 @@ class ServerDriver:
             return
 
         if self._proc.is_alive():
-            self._proc.terminate()
+            self._send_terminate_signal()
             self._proc.join(timeout=_SERVER_SHUTDOWN_TIMEOUT)
             if self._proc.is_alive():
                 self._force_shutdown()
@@ -686,6 +694,14 @@ class ServerDriver:
         return ConfigurationLoader().load(
             File(self.env.get_current_working_directory()) / config_file
         )
+
+    def _send_terminate_signal(self):
+        if self._env.get_operating_system() == OperatingSystem.MS_WINDOWS:
+            assert self._event_server_shutdown is not None
+            self._event_server_shutdown.set()
+        else:
+            assert self._proc is not None
+            self._proc.terminate()
 
     def _force_shutdown(self):
         """Forcefully terminates the server process without waiting."""

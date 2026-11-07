@@ -43,12 +43,17 @@ class ServeCommand(ServerCommand):
     Starts and runs the HTTP server application until stopped.
     """
 
+    def __init__(self, args):
+        super().__init__(args)
+        self.server = None
+
     def execute(self) -> int:
         config = ConfigurationManager().get_server_config()
         server = ServerHTTP(FathomServer(), config, self.args.ready_event)
         port = config[ServerConfiguration.SERVER.PORT_LISTEN]
         LOG.i("Starting Fathom server on port %d", port)
         server = assign(server)
+        self.server = server
         _start(server)
         app_mode = ApplicationContext.instance().get_application_mode()
         debug_mode = config[ServerConfiguration.SERVER.DEBUG_MODE_ENABLED]
@@ -60,5 +65,14 @@ class ServeCommand(ServerCommand):
 
         LOG.d("Entering blocking server loop")
         server.run()
+        LOG.d("Left blocking server loop")
+
         LOG.i("Fathom server has been stopped")
-        return server.status_code()
+        status_code = server.status_code()
+        LOG.d("HTTP server completed with status code %d", status_code)
+        return status_code
+
+    def cancel(self):
+        if self.server is not None:
+            LOG.d("Signaling stop command to server")
+            self.server.stop()

@@ -161,7 +161,6 @@ class ServerHTTP:
         cherrypy.tree.mount(self._app, app_root_path, config)
         cherrypy.engine.subscribe("before_request", self._app.on_request_start)
         cherrypy.engine.subscribe("after_request", self._app.on_request_end)
-        cherrypy.engine.signals.subscribe() # type: ignore
         LOG.log("Starting HTTP engine")
         self._start_engine()
         LOG.log("HTTP engine started")
@@ -178,6 +177,14 @@ class ServerHTTP:
 
         cherrypy.engine.block()
         LOG.log("Stopping")
+
+    def stop(self):
+        """Stops the HTTP engine gracefully if possible."""
+        if self._is_stop_triggered():
+            return
+
+        LOG.log("Stopping HTTP engine")
+        cherrypy.engine.exit()
 
     def status_code(self) -> int:
         """Returns the status code of the server.
@@ -207,6 +214,18 @@ class ServerHTTP:
             key,
             or_raise=HTTPServerStartException
         )
+
+    def _is_stop_triggered(self):
+        engine = cherrypy.engine
+        stopped_states = (
+            None, engine.states.STOPPED, # type: ignore
+            engine.states.STOPPING, engine.states.EXITING # type: ignore
+        )
+        state = getattr(engine, "state", None)
+        if state in stopped_states:
+            return True
+
+        return False
 
     def _start_engine(self):
         try:

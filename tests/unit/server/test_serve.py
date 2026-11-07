@@ -81,6 +81,14 @@ class TestServeCommand(TestCase):
         self.assertEqual(server.address, mock_addr)
         self.assertEqual(server.port, mock_port)
 
+    def test_cancel_stops_assigned_server(self):
+        command = ServeCommand(AppArgs())
+        command.server = Mock(spec_set=ServerHTTP)
+
+        command.cancel()
+
+        command.server.stop.assert_called_once()
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

@@ -82,6 +82,7 @@ class UpdateQuery(Generic[M]):
     def execute(self):
         """Executes the udpate query."""
         try:
+            self._record.touch()
             self._record.save()
         except orm_impl.PeeweeException as ex:
             raise FailedUpdateQueryException("Failed update query") from ex

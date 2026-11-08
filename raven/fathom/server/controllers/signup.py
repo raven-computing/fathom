@@ -51,7 +51,7 @@ def signup_user(
 
     UserManager(authenticator).sign_up_user(user)
 
-    LOG.i("User %s has been signed up", user.identifier)
+    LOG.i("User %s has signed up", user.identifier)
     return StatusHTTP.OK, {
         "status": "OK",
         "message": (

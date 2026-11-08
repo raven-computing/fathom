@@ -93,12 +93,16 @@ class TestRequiredFieldChecker(TestCase):
         )
 
     def test_get_all_fields(self):
+        implicit_fields = 3 # id, created_at, updated_at
+        concrete_declared_fields = 4
+        total_fields = implicit_fields + concrete_declared_fields
         obj = ModelWithNonNullFields(
             field_a="AAA", field_b="CCC", field_c=True, field_d=10,
         )
         checker = FieldChecker.get_checker(obj)
         fields = checker.get_all_fields()
-        self.assertEqual(len(fields), 5)
+        actual_fields = len(fields)
+        self.assertEqual(total_fields, actual_fields)
         self.assertIn("id", fields)
         self.assertIn("field_a", fields)
         self.assertIn("field_b", fields)

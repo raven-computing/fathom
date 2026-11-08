@@ -15,7 +15,7 @@
 """ORM model declarations."""
 
 from datetime import datetime
-from typing import TypeVar
+from typing import TypeVar, Optional
 
 import peewee as orm_impl
 
@@ -61,21 +61,23 @@ class _DataModelORM(_BaseModel):
 
     _created_at = orm_impl.DateTimeField(
         column_name="created_at",
+        null=True,
         default=_timestamp_field_current_time,
     )
 
     _updated_at = orm_impl.DateTimeField(
         column_name="updated_at",
+        null=True,
         default=_timestamp_field_current_time,
     )
 
     @property
-    def created_at(self) -> datetime:
+    def created_at(self) -> Optional[datetime]:
         """The time when this record was created, as a `datetime` object."""
         return self._created_at
 
     @property
-    def updated_at(self) -> datetime:
+    def updated_at(self) -> Optional[datetime]:
         """The time when this record was last updated,
         as a `datetime` object.
         """

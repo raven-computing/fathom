@@ -81,7 +81,7 @@ class ProjectManager:
         )
         if project_record is not None:
             raise ProjectAlreadyExistsException(
-                f"Cannot create project '{project.identifier}' "
+                f"Cannot create project {project.identifier} "
                 "because the project already exists"
             )
 
@@ -101,7 +101,7 @@ class ProjectManager:
             self._ds.projects().create(project_record)
         except FailedCreateQueryException as ex:
             raise ProjectInternalException(
-                f"Failed to create project '{project.identifier}'. "
+                f"Failed to create project {project.identifier}. "
                 "An internal error has occurred."
             ) from ex
 
@@ -152,7 +152,7 @@ class ProjectManager:
         )
         if project_record is None:
             raise ProjectNotFoundException(
-                f"Cannot list users for project '{project.identifier}'. "
+                f"Cannot list users for project {project.identifier}. "
                 "The project does not exist"
             )
 
@@ -170,7 +170,7 @@ class ProjectManager:
         except FailedReadQueryException as ex:
             raise ProjectInternalException(
                 "Failed to obtain list of users assigned "
-                f"to project '{project.identifier}'. "
+                f"to project {project.identifier}. "
                 "An internal error has occurred."
             ) from ex
 
@@ -202,7 +202,7 @@ class ProjectManager:
         if user_record is None:
             raise InvalidProjectRequestException(
                 "Cannot assign user to project. "
-                f"User '{user.identifier}' does not exist"
+                f"User {user.identifier} does not exist"
             )
 
         project_record = self._ds.projects().find_by_identifier(
@@ -211,7 +211,7 @@ class ProjectManager:
         if project_record is None:
             raise ProjectNotFoundException(
                 "Cannot assign user to project. "
-                f"Project '{project.identifier}' does not exist"
+                f"Project {project.identifier} does not exist"
             )
 
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
@@ -224,8 +224,8 @@ class ProjectManager:
         ):
             raise ProjectManagementException(
                 "Cannot assign user to project. "
-                f"User '{user.identifier}' is already assigned "
-                f"to project '{project.identifier}'"
+                f"User {user.identifier} is already assigned "
+                f"to project {project.identifier}"
             )
 
         try:
@@ -234,8 +234,8 @@ class ProjectManager:
             )
         except FailedUpdateQueryException as ex:
             raise ProjectInternalException(
-                f"Cannot assign user '{user.identifier}' "
-                f"to project '{project.identifier}'. "
+                f"Cannot assign user {user.identifier} "
+                f"to project {project.identifier}. "
                 "An internal error has occurred."
             ) from ex
 
@@ -267,7 +267,7 @@ class ProjectManager:
         if user_record is None:
             raise InvalidProjectRequestException(
                 "Cannot unassign user from project. "
-                f"User '{user.identifier}' does not exist"
+                f"User {user.identifier} does not exist"
             )
 
         project_record = self._ds.projects().find_by_identifier(
@@ -276,7 +276,7 @@ class ProjectManager:
         if project_record is None:
             raise ProjectNotFoundException(
                 "Cannot unassign user from project. "
-                f"Project '{project.identifier}' does not exist"
+                f"Project {project.identifier} does not exist"
             )
 
         assigned_projects = self._ds.projects().find_all_assigned_to_user(
@@ -289,8 +289,8 @@ class ProjectManager:
         ):
             raise ProjectManagementException(
                 "Cannot unassign user from project. "
-                f"User '{user.identifier}' is not assigned "
-                f"to project '{project.identifier}'"
+                f"User {user.identifier} is not assigned "
+                f"to project {project.identifier}"
             )
 
         try:
@@ -300,8 +300,8 @@ class ProjectManager:
             )
         except FailedUpdateQueryException as ex:
             raise ProjectInternalException(
-                f"Cannot unassign user '{user.identifier}' "
-                f"from project '{project.identifier}'. "
+                f"Cannot unassign user {user.identifier} "
+                f"from project {project.identifier}. "
                 "An internal error has occurred."
             ) from ex
 
@@ -327,13 +327,13 @@ class ProjectManager:
             )
             if project_record is None:
                 raise ProjectNotFoundException(
-                    f"Cannot delete project '{project.identifier}'. "
+                    f"Cannot delete project {project.identifier}. "
                     "The project does not exist"
                 )
 
             self._ds.projects().delete_by_identifier(project.identifier)
         except FailedQueryException as ex:
             raise ProjectInternalException(
-                f"Failed to delete project '{project.identifier}'. "
+                f"Failed to delete project {project.identifier}. "
                 "A data access error has occurred."
             ) from ex

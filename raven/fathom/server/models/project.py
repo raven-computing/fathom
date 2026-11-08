@@ -14,14 +14,12 @@
 #
 """Data model to represent a project."""
 
-from datetime import datetime
 
 from raven.fathom.server.datastore.orm import Model
 from raven.fathom.server.datastore.orm import (
     IntegerField,
     CharField,
     TextField,
-    DateTimeField,
     BooleanField,
     ForeignKeyField,
 )
@@ -40,8 +38,6 @@ class Project(Model):
 
     latest_version = CharField()
 
-    time_created = DateTimeField(default=datetime.now)
-
     is_published = BooleanField(default=True)
 
 
@@ -55,7 +51,5 @@ class ProjectVersion(Model):
     version_sequence = IntegerField()
 
     version_identifier = CharField()
-
-    time_created = DateTimeField(default=datetime.now)
 
     is_published = BooleanField(default=True)

@@ -14,12 +14,9 @@
 #
 """Data model to represent an allocation of a staging spot."""
 
-from datetime import datetime
-
 from raven.fathom.server.datastore.orm import Model
 from raven.fathom.server.datastore.orm import (
     CharField,
-    DateTimeField,
     ForeignKeyField,
 )
 from raven.fathom.server.models.project import ProjectVersion
@@ -32,8 +29,6 @@ class StagingAllocation(Model):
         model=ProjectVersion,
         unique=True,
     )
-
-    time_allocated = DateTimeField(default=datetime.now)
 
     path = CharField(
         unique=True,

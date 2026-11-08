@@ -16,6 +16,7 @@
 
 import signal as _signal
 
+from raven.fathom.base import log_stdout
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.core.logging import Logger
 
@@ -61,6 +62,7 @@ class CommandSignalHandler:
 
     def _handle_pyrt_sig(self, signum, _frame) -> None:
         LOG.d("Received signal %s", signum)
+        log_stdout("")
         LOG.i("Cancelling...")
         LOG.d(
             "Invoking command cancellation for %s due to trapped signal",

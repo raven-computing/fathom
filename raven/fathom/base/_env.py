@@ -91,3 +91,13 @@ class HostSystemEnvironment(SystemEnvironment):
         default: Optional[str] = None
     ) -> Optional[str]:
         return os.environ.get(name, default)
+
+    def is_interactive(self) -> bool:
+        for stream in (sys.stdin, sys.stdout, sys.stderr):
+            try:
+                if stream is not None and stream.isatty():
+                    return True
+            except (AttributeError, OSError, ValueError):
+                continue
+
+        return False

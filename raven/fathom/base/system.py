@@ -173,6 +173,19 @@ class SystemEnvironment(Interface):
                 the `default` value if it is not set.
         """
 
+    @abstractmethod
+    def is_interactive(self) -> bool:
+        """Indicates whether the system process is interactive.
+
+        An interactive process is one that can interact with a user, most
+        commonly via an interactive terminal. If this method returns `False`,
+        then this indicates that e.g. there is no interactive TTY attached
+        to the running process.
+
+        Returns:
+            bool: `True` if interactive, `False` otherwise.
+        """
+
 
 # Type alias for input validation functions
 InputPromptValidator: TypeAlias = Callable[[str], bool]

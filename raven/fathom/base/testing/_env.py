@@ -39,6 +39,7 @@ class TestEnvironment(SystemEnvironment):
         self.line_separator: Optional[str] = None
         self.text_encoding: str = "UTF-8"
         self.file_system_encoding: str = "UTF-8"
+        self.interactive: Optional[bool] = None
 
     def get_user_id(self) -> Optional[int]:
         return 1000
@@ -77,6 +78,12 @@ class TestEnvironment(SystemEnvironment):
     ) -> Optional[str]:
         return self.env_vars.get(name, default)
 
+    def is_interactive(self) -> bool:
+        if self.interactive is not None:
+            return self.interactive
+
+        return HostSystemEnvironment().is_interactive()
+
 
 _UNSET = object()
 
@@ -96,6 +103,7 @@ class FunctionalityTestEnvironment(HostSystemEnvironment):
         self.home: PurePath = _UNSET # type: ignore
         self.cwd: PurePath = _UNSET # type: ignore
         self.env_vars: dict[str, str] = dict()
+        self.interactive: Optional[bool] = None
 
     def get_home_path(self) -> Optional[PurePath]:
         if self.home is _UNSET:
@@ -125,3 +133,9 @@ class FunctionalityTestEnvironment(HostSystemEnvironment):
             return value
 
         return super().get_variable(name, default)
+
+    def is_interactive(self) -> bool:
+        if self.interactive is not None:
+            return self.interactive
+
+        return super().is_interactive()

@@ -323,6 +323,8 @@ if [[ $ARG_LINT == true ]]; then
   fi
 fi
 
+export FATHOM_TEST="1";
+
 unit_test_filter="";
 unit_test_filter_msg="";
 if [[ $run_all == false ]]; then

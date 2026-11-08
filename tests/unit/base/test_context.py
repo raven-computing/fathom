@@ -27,7 +27,7 @@ from raven.fathom.base.context import (
     determine_working_directory,
     _ENV_VAR_ENABLED,
     _ENV_VAR_DISABLED,
-    _ENV_VAR_FATHOM_TEST_MODE,
+    ENV_VAR_FATHOM_TEST,
 )
 
 from tests.unit import TestCase
@@ -38,7 +38,7 @@ class TestApplicationModeDetection(TestCase):
 
     def test_returns_testing_mode_when_test_env_var_is_enabled(self):
         env = TestEnvironment()
-        env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
+        env.env_vars[ENV_VAR_FATHOM_TEST] = _ENV_VAR_ENABLED
 
         with patch(
             "raven.fathom.base.context.get_project_source_root",
@@ -50,7 +50,7 @@ class TestApplicationModeDetection(TestCase):
 
     def test_returns_development_mode_when_source_root_exists(self):
         env = TestEnvironment()
-        env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_DISABLED
+        env.env_vars[ENV_VAR_FATHOM_TEST] = _ENV_VAR_DISABLED
 
         with patch(
             "raven.fathom.base.context.get_project_source_root",
@@ -62,7 +62,7 @@ class TestApplicationModeDetection(TestCase):
 
     def test_returns_production_mode_when_not_testing_and_no_source_root(self):
         env = TestEnvironment()
-        env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_DISABLED
+        env.env_vars[ENV_VAR_FATHOM_TEST] = _ENV_VAR_DISABLED
 
         with patch(
             "raven.fathom.base.context.get_project_source_root",

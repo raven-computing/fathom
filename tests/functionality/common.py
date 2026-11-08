@@ -41,7 +41,7 @@ from typing import Optional, Final
 
 from raven.fathom.base import Dependencies
 from raven.fathom.base import File, URL, MethodHTTP, RequestHTTP
-from raven.fathom.base.context import _ENV_VAR_FATHOM_TEST_MODE
+from raven.fathom.base.context import ENV_VAR_FATHOM_TEST
 from raven.fathom.base.context import _BUILD_DIRECTORY
 from raven.fathom.base.context import _TESTING_DIRECTORY
 from raven.fathom.base.context import _ENV_VAR_ENABLED
@@ -249,11 +249,11 @@ class TestCase(FathomTestCase):
 
         cwd.create_directory_tree()
 
-        env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
+        env.env_vars[ENV_VAR_FATHOM_TEST] = _ENV_VAR_ENABLED
         # Windows uses spawn start method instead of fork, so the test mode
         # must actually be defined in the OS environment otherwise the
         # test server will not see it
-        os.environ[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
+        os.environ[ENV_VAR_FATHOM_TEST] = _ENV_VAR_ENABLED
 
         server = ServerDriver(env)
         if self.AUTO_START_SERVER:
@@ -285,7 +285,7 @@ class TestCase(FathomTestCase):
 
         home.create_directory_tree()
 
-        env.env_vars[_ENV_VAR_FATHOM_TEST_MODE] = _ENV_VAR_ENABLED
+        env.env_vars[ENV_VAR_FATHOM_TEST] = _ENV_VAR_ENABLED
         env.env_vars["XDG_STATE_HOME"] = ""
         env.env_vars["XDG_CONFIG_HOME"] = ""
         self._client = ClientDriver(env)

@@ -37,15 +37,15 @@ APPLICATION_NAME: Final = "Fathom"
 
 APPLICATION_PROJECT_ID: Final = APPLICATION_NAME.lower()
 
-ENV_VAR_FATHOM_DEBUG: Final = "FATHOM_DEBUG"
+ENV_VAR_FATHOM_DEBUG: Final = f"{APPLICATION_NAME.upper()}_DEBUG"
+
+ENV_VAR_FATHOM_TEST: Final = f"{APPLICATION_NAME.upper()}_TEST"
 
 _BUILD_DIRECTORY: Final = "build"
 
 _DEVELOPMENT_DIRECTORY: Final = "devel"
 
 _TESTING_DIRECTORY: Final = "testing"
-
-_ENV_VAR_FATHOM_TEST_MODE: Final = "A_FATHOM_TEST_MODE"
 
 _ENV_VAR_ENABLED: Final = "1"
 
@@ -117,7 +117,7 @@ def determine_application_mode(env: SystemEnvironment) -> ApplicationMode:
         ApplicationMode: The determined application mode.
     """
     test_mode_env_var = env.get_variable(
-        _ENV_VAR_FATHOM_TEST_MODE, default=_ENV_VAR_DISABLED
+        ENV_VAR_FATHOM_TEST, default=_ENV_VAR_DISABLED
     )
     test_mode_enabled = test_mode_env_var == _ENV_VAR_ENABLED
     if test_mode_enabled:

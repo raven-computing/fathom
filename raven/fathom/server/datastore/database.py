@@ -73,6 +73,29 @@ class DatabaseSchema(ABC):
         """
 
 
+class DatabaseSchemaVerification(ABC):
+    """Result type of a database schema verificaton."""
+
+    @abstractmethod
+    def ok(self) -> bool:
+        """Indicates whether the schema is valid.
+
+        Returns:
+            bool: `True` if it is valid,
+                `False` if an inconsistency was detected.
+        """
+
+    @abstractmethod
+    def to_string(self) -> str:
+        """Returns a verification string indicating success
+        or detected inconsistencies.
+
+        Returns:
+            str: Either 'OK' if the underlying schema is valid, or a
+                descriptive string indicating the detected problem.
+        """
+
+
 class Database(ABC):
     """An application database."""
 
@@ -115,6 +138,15 @@ class Database(ABC):
 
         Returns:
             DatabaseSchema: The schema of this database.
+        """
+
+    @abstractmethod
+    def verify_schema(self) -> DatabaseSchemaVerification:
+        """Verifies that the schema of this database matches the schema
+        as defined by the data model definitions.
+
+        Returns:
+            DatabaseSchemaVerification: The schema verification result.
         """
 
     @abstractmethod

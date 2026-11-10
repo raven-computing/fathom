@@ -19,10 +19,13 @@ from typing import Any
 import peewee
 
 from raven.fathom.base import TypeCheck
-from raven.fathom.server.datastore.database import Database, DatabaseSchema
+from raven.fathom.server.datastore.database import Database
+from raven.fathom.server.datastore.database import DatabaseSchema
+from raven.fathom.server.datastore.database import DatabaseSchemaVerification
 from raven.fathom.server.datastore.database import DatabaseConnectionException
 from raven.fathom.server.datastore.database import DatabaseCommandException
 from raven.fathom.server.datastore._schema import DatabaseSchemaImpl
+from raven.fathom.server.datastore._schema_verification import verify_schema
 
 
 class DatabaseImpl(Database):
@@ -53,6 +56,9 @@ class DatabaseImpl(Database):
 
     def get_schema(self) -> DatabaseSchema:
         return DatabaseSchemaImpl()
+
+    def verify_schema(self) -> DatabaseSchemaVerification:
+        return verify_schema(self.get_schema().get_models(), self)
 
     def run_command(self, command: str, *args, **kwargs) -> Any:
         try:

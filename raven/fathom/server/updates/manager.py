@@ -49,6 +49,10 @@ class FailedDatabaseSchemaUpdateException(FailedApplicationUpdateException):
     """
 
 
+class DatabaseSchemaInconsistencyException(FailedApplicationUpdateException):
+    """A database schema verification has failed."""
+
+
 class UpdateManager:
     """Server application update manager.
 
@@ -175,6 +179,7 @@ class UpdateManager:
         if self._database is not None:
             LOG.i("Updating database schema")
             self._try_update_database_schema(previous_version, current_version)
+            self._verify_schema_consistency()
 
         self._update_version_file()
         LOG.i("Post-update procedures completed successfully")
@@ -190,6 +195,18 @@ class UpdateManager:
             raise FailedApplicationUpdateException(
                 "Failed to update version file"
             ) from ex
+
+    def _verify_schema_consistency(self):
+        assert self._database is not None
+        with self._database:
+            verification = self._database.verify_schema()
+            if not verification.ok():
+                LOG.e("Database schema verification failed:")
+                message = verification.to_string()
+                LOG.e("%s", message)
+                raise DatabaseSchemaInconsistencyException(
+                    "Schema verification has failed"
+                )
 
     def _try_update_database_schema(
         self,

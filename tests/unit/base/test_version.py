@@ -53,7 +53,7 @@ class TestVersionStruct(TestCase):
             VersionStruct(1, 2, 4, "alpha") == VersionStruct(1, 2, 4, "alpha")
         )
         self.assertTrue(
-            VersionStruct(1, 0, 0, "beta") == VersionStruct(1, 0, 0, "alpha")
+            VersionStruct(1, 0, 0, "beta") != VersionStruct(1, 0, 0, "alpha")
         )
         self.assertFalse(VersionStruct(1, 0, 0) == VersionStruct(1, 0, 1))
         self.assertFalse(VersionStruct(0, 0, 2) == VersionStruct(0, 0, 1))
@@ -137,6 +137,19 @@ class TestVersionStruct(TestCase):
         self.assertFalse(VersionStruct(0, 0, 2) >= VersionStruct(0, 0, 3))
         self.assertFalse(
             VersionStruct(0, 0, 2, "dev") >= VersionStruct(0, 0, 2)
+        )
+
+    def test_order_of_version_types(self):
+        dev = VersionStruct(1, 0, 0, "dev")
+        alpha = VersionStruct(1, 0, 0, "alpha")
+        alpha0 = VersionStruct(1, 0, 0, "alpha0")
+        alpha1 = VersionStruct(1, 0, 0, "alpha1")
+        beta = VersionStruct(1, 0, 0, "beta")
+        beta0 = VersionStruct(1, 0, 0, "beta0")
+        beta1 = VersionStruct(1, 0, 0, "beta1")
+        release = VersionStruct(1, 0, 0)
+        self.assertTrue(
+            dev < alpha < alpha0 < alpha1 < beta < beta0 < beta1 < release
         )
 
     def test_is_development_version(self):

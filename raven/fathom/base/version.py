@@ -124,14 +124,11 @@ def determine_current_version(package_name: str) -> Optional["VersionStruct"]:
 class VersionStruct:
     """Version identification.
 
-    Version extensions are only considered by their presence, but not further
-    evaluated when comparing version objects. For example, the
-    version '1.2.3' and '1.2.3-alpha' are not considered equal, the
-    second version is considered less than the first one since it has
-    an '-alpha' extension and the first one does not have any extension.
-    As a second example, the two version
-    objects '1.2.3-alpha' and '1.2.3-beta' are considered equal, even though
-    the two extensions are different.
+    Version extensions are ordered by their release stage so that earlier
+    releases compare lower than later ones. Numeric suffixes are also
+    compared within the same extension family, which gives ordering such as
+    'dev' < 'alpha' < 'alpha0' < 'alpha1' < 'beta' < 'beta0' < 'beta1' <
+    '1.2.3'.
     """
 
     def __init__(
@@ -211,6 +208,27 @@ class VersionStruct:
 
         return f"{self.major}.{self.minor}.{self.patch}{ext}"
 
+    def _extension_rank(self, extension: str) -> int:
+        """Returns the ordering rank for a version extension.
+
+        Lower values are earlier releases. A missing extension is treated as a
+        final release and therefore compares after all pre-release tags.
+        """
+        ext = (extension or "").lstrip("-").lower()
+        if not ext:
+            return 40_000
+
+        for prefix, rank in (("dev", 0), ("alpha", 10_000), ("beta", 20_000)):
+            if ext == prefix:
+                return rank
+            if ext.startswith(prefix):
+                suffix = ext[len(prefix):]
+                if suffix and suffix.isdigit():
+                    return rank + 1 + int(suffix)
+                return rank + 1
+
+        return 30_000
+
     def _compare_to(self, other):
         for diff in self._diff(other):
             if diff != 0:
@@ -223,7 +241,8 @@ class VersionStruct:
             self.major - other.major,
             self.minor - other.minor,
             self.patch - other.patch,
-            (0 if self.extension else 1) - (0 if other.extension else 1)
+            self._extension_rank(self.extension)
+            - self._extension_rank(other.extension)
         )
 
 

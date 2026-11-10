@@ -94,7 +94,6 @@ def _setup_post_update():
             LOG.e("Failed to update application:")
             LOG.e(str(ex))
             raise
-
     elif update_manager.application_first_start_detected():
         LOG.d("Application is started for the first time")
         try:
@@ -103,6 +102,11 @@ def _setup_post_update():
             LOG.e("Failed to apply post-installation procedures:")
             LOG.e(str(ex), exc_info=ex)
             raise
+    else:
+        LOG.d(
+            "No application update "
+            "or pending post-installation procedures detected"
+        )
 
 
 def _apply_args_to_config(args: "AppArgs", config: Configuration):

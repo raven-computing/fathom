@@ -21,7 +21,8 @@ resources in form of a `Package` to the Fathom server.
 from dataclasses import dataclass
 
 from raven.fathom.base import Configuration, ApplicationContext
-from raven.fathom.base import File, FileIOException
+from raven.fathom.base import File, FilePermission, FileAccess, FileType
+from raven.fathom.base import FileIOException
 from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
@@ -238,6 +239,7 @@ class DeploymentExecutor:
         target_directory = self._deployment_site.get_target_directory(project)
         self._ensure_target_directory_ready(target_directory)
         self._deploy_target(resource, target_directory)
+        self._set_target_state(target_directory)
         self._clean_up_staging(project)
 
     def _deploy_target(self, resource_directory: File, target_directory: File):
@@ -247,6 +249,53 @@ class DeploymentExecutor:
             raise DeploymentExecutionException(
                 "Failed to move data from staging area to target directory"
             ) from ex
+
+    def _set_target_state(self, target_directory: File):
+        directory_perm = self._get_target_directory_permission()
+        reg_file_perm = self._get_target_file_permission()
+        try:
+            target_directory.set_permission(directory_perm)
+            for target_item in target_directory.list_all_files():
+                target_item.follow_symlinks = False
+                target_type = target_item.get_type()
+                if target_type == FileType.REGULAR_FILE:
+                    target_item.set_permission(reg_file_perm)
+                elif target_type == FileType.DIRECTORY:
+                    target_item.set_permission(directory_perm)
+                else:
+                    raise DeploymentExecutionException(
+                        "Target directory contains unexpected file type. "
+                        f"File has unexpected type {target_type}: "
+                        f"'{target_item}'"
+                    )
+        except FileIOException as ex:
+            raise DeploymentExecutionException(
+                "Failed to set state in target directory"
+            ) from ex
+
+    def _get_target_directory_permission(self) -> FilePermission:
+        return FilePermission.of(
+            owner=FileAccess.all_access(),
+            group=FileAccess.of(
+                readable=True, writable=False, executable=True
+            ),
+            other=FileAccess.of(
+                readable=True, writable=False, executable=True
+            ),
+        )
+
+    def _get_target_file_permission(self) -> FilePermission:
+        return FilePermission.of(
+            owner=FileAccess.of(
+                readable=True, writable=True, executable=False
+            ),
+            group=FileAccess.of(
+                readable=True, writable=False, executable=False
+            ),
+            other=FileAccess.of(
+                readable=True, writable=False, executable=False
+            ),
+        )
 
     def _clean_up_staging(self, project: Project):
         try:

@@ -903,17 +903,34 @@ class VirtualFileSystem(FileSystem):
 
     def remove(self, path: PurePath, follow_symlinks = True):
         fs_path = _to_posix(path)
-        vf = self._get_node(fs_path, follow_symlinks)
-        if vf is None:
+        vf_symlink = self._get_node(fs_path, follow_symlinks=False)
+        if vf_symlink is None:
             raise FileNotFoundException(
                 str(path),
                 f"Failed to remove file '{path}': "
                 "File does not exist"
             )
 
-        vf_symlink = self._get_node(fs_path, follow_symlinks=False)
-        assert vf_symlink is not None
         remove_vf_symlink = vf_symlink.file_type == FileType.SYMBOLIC_LINK
+        try:
+            vf = self._get_node(fs_path, follow_symlinks)
+        except SymbolicLinkResolutionException:
+            if follow_symlinks and remove_vf_symlink:
+                self._delete_node(vf_symlink)
+                return
+            raise
+
+        if vf is None:
+            if follow_symlinks and remove_vf_symlink:
+                self._delete_node(vf_symlink)
+                return
+
+            raise FileNotFoundException(
+                str(path),
+                f"Failed to remove file '{path}': "
+                "File does not exist"
+            )
+
         for child_vf in list(self._get_child_nodes(vf.path)):
             self._delete_node(child_vf)
 

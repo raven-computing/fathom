@@ -977,8 +977,17 @@ class HostFileSystem(FileSystem):
                 path.rmdir()
             else:
                 if is_symlink and follow_symlinks:
-                    target = self.resolve_symbolic_links(path)
-                    self.remove(target, follow_symlinks=False)
+                    try:
+                        target = self.resolve_symbolic_links(path)
+                    except SymbolicLinkResolutionException:
+                        # Symlink target may have already been removed.
+                        path.unlink()
+                        return
+
+                    try:
+                        self.remove(target, follow_symlinks=False)
+                    except FileNotFoundException:
+                        pass # Target was already removed
 
                 path.unlink()
         except DirectoryListingException:

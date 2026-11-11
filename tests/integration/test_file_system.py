@@ -1097,6 +1097,20 @@ class TestFileSystem(FileSystemIntegrationTestCase):
         self.assertFalse(test_dir.exists())
         self.assertFileDoesNotExist(test_dir.path)
 
+    def test_can_remove_directory_containing_symlink_to_sibling_file(self):
+        self.create_directory("test_dir")
+        file = File(self.create_file("test_dir/test_file", "data"))
+        symlink = File(self.create_path("test_dir/test_symlink"))
+        symlink.create_symbolic_link(File("test_file"))
+
+        target_dir = File(self.create_path("test_dir"))
+        target_dir.remove()
+
+        self.assertFalse(target_dir.exists())
+        self.assertFileDoesNotExist(target_dir.path)
+        self.assertFileDoesNotExist(symlink.path)
+        self.assertFileDoesNotExist(file.path)
+
     def test_can_remove_symbolic_link(self):
         test_data = "TEST_DATA_FILE_CONTENT"
         file = File(self.create_file("test-file", test_data))
@@ -1125,6 +1139,18 @@ class TestFileSystem(FileSystemIntegrationTestCase):
         link.follow_symlinks = False
         self.assertFalse(link.exists())
         self.assertFileDoesNotExist(link.path)
+
+    def test_can_remove_broken_symbolic_link(self):
+        self.create_directory("test_dir")
+        file = File(self.create_file("test_dir/target", "data"))
+        symlink = File(self.create_path("test_dir/test-link"))
+        symlink.create_symbolic_link(File("target"))
+        file.remove()
+
+        symlink.remove()
+
+        self.assertFalse(symlink.exists())
+        self.assertFileDoesNotExist(symlink.path)
 
     def test_attempting_to_remove_nonexistent_file_raises_exception(self):
         file = File(self.create_path("test-file-that-does-not-exist"))

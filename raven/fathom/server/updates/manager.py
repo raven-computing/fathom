@@ -16,6 +16,7 @@
 
 from typing import TYPE_CHECKING, Optional
 from collections.abc import Generator
+from contextlib import nullcontext
 
 from raven.fathom.base import ApplicationContext, FileIOException
 from raven.fathom.base import write_version_file
@@ -179,6 +180,7 @@ class UpdateManager:
         if self._database is not None:
             LOG.i("Updating database schema")
             self._try_update_database_schema(previous_version, current_version)
+            LOG.i("Verifying database schema consistency")
             self._verify_schema_consistency()
 
         self._update_version_file()
@@ -193,7 +195,9 @@ class UpdateManager:
             self._previous_version = None # Invalidate
         except FileIOException as ex:
             raise FailedApplicationUpdateException(
-                "Failed to update version file"
+                "Failed to update version file "
+                "after applying post-update procedures. "
+                "The application might be left in an incoherent state"
             ) from ex
 
     def _verify_schema_consistency(self):
@@ -240,7 +244,19 @@ class UpdateManager:
     ):
         assert self._database is not None
         try:
-            with self._database:
+            db_context = self._database
+            if self._database.type_name() == "SQLite":
+                # For certain updates in SQLite, the migration script
+                # temporarily disables the foreign-keys pragma, so that table
+                # rebuilds do not destroy rows via cascading deletes. The table
+                # rebuilds are used due to the limitations of the ALTER DDL
+                # in SQLite. As a consequence, every update procedure must
+                # wrap its own migration code in a
+                # SqliteMigrator(db).sqlite.migration_context(atomic=True)
+                # context.
+                db_context = nullcontext()
+
+            with db_context:
                 for schema_update in update_procedures:
                     schema_update.use_database(self._database)
                     schema_update.apply()

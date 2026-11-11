@@ -474,7 +474,11 @@ class ServerDriver:
         """
         return DEFAULT_SERVER_PORT
 
-    def initialize_datastore(self, sql_file: Optional[str] = None):
+    def initialize_datastore(
+        self,
+        sql_file: Optional[str] = None,
+        create_schema: bool = True
+    ):
         """Initializes the server datastore before the server process starts.
 
         Creates the database schema and, optionally, pre-populates it with
@@ -486,6 +490,10 @@ class ServerDriver:
             sql_file (str): Path to a ``.sql`` file containing arbitrary SQL
                 statements to load into the database. If ``None``, the schema
                 is created but left empty.
+            create_schema (bool): A boolean flag indicating whether to inspect
+                the available backend data models in their current state and
+                automatically create the schema inside the datastore before
+                the SQL of the specified file is run against the datastore.
         """
         if self.is_running():
             raise RuntimeError(
@@ -500,7 +508,9 @@ class ServerDriver:
             db_manager.locate_application_database()
             db = db_manager.get_database()
             db.connect()
-            db_manager.initialize_empty_database()
+            if create_schema:
+                db_manager.initialize_empty_database()
+
             if sql_file is not None:
                 file = File(sql_file)
                 if not file.path.is_absolute():
@@ -548,7 +558,7 @@ class ServerDriver:
         self._stdout = stdout_buffer.getvalue()
         self._stderr = stderr_buffer.getvalue()
 
-    def start(self, args: list[str]):
+    def start(self, args: Optional[list[str]] = None):
         """Starts the Fathom server in a child process.
 
         Blocks until the server signals that it is ready to accept
@@ -557,7 +567,7 @@ class ServerDriver:
         Args:
             args: The CLI arguments to pass to the server.
                 The program name (``"fathom-server"``) is prepended
-                automatically.
+                automatically. Defaults to an empty argument list.
 
         Raises:
             ServerStartupException: If the server does not become ready
@@ -574,6 +584,9 @@ class ServerDriver:
         if self._env.get_operating_system() == OperatingSystem.MS_WINDOWS:
             self._event_server_shutdown = multiprocessing.Event()
             events.insert(0, self._event_server_shutdown)
+
+        if args is None:
+            args = []
 
         exec_args = ["fathom-server"] + args + events
         self._proc = multiprocessing.Process(

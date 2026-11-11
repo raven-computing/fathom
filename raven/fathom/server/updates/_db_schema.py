@@ -42,15 +42,19 @@ Procedure: TypeAlias = Callable[[Any], None]
 # def _update_database_schema_to_version_1_2_3(db: Database):
 #     LOG.i("Updating database schema to version 1.2.3")
 #     sqlite = SqliteMigrator(db)
-#     migrate(
-#         sqlite.add_column("user", "something", User.something),
-#         sqlite.drop_column("user", "something"),
-#     )
-#     LOG.i("Update of database schema to version 1.2.3 was successful")
+#     with sqlite.migration_context(atomic=True):
+#         migrate(
+#             sqlite.add_column("user", "something", User.something),
+#             sqlite.drop_column("user", "something"),
+#         )
+#         LOG.i("Update of database schema to version 1.2.3 was successful")
 
 
 def load_schema_update_list() -> list[tuple[Version, Procedure]]:
     """Loads all available database schema update procedure functions.
+
+    The order of the update procedures in the returned list is the order by
+    which those applicable procedures are executed.
 
     Returns:
         list: A `list` of 2-tuple items, each with a target `Version`

@@ -260,7 +260,7 @@ class TestCase(FathomTestCase):
             if self.DATASTORE_SQL_FILE is not None:
                 server.initialize_datastore(self.DATASTORE_SQL_FILE)
 
-            server.start([])
+            server.start()
             if not server.is_running():
                 raise ServerStartupException(
                     "Server process is not running after start()"

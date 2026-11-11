@@ -1201,12 +1201,12 @@ class TestVirtualFileSystem(VFSTestCase):
         self.assertFileDoesNotExist(test_dir.path)
 
     def test_can_remove_directory_containing_symlink_to_sibling_file(self):
-        self.create_directory("test_dir")
+        test_dir = self.create_directory("test_dir")
         file = File(self.create_file("test_dir/test_file", "data"))
         symlink = File(self.create_path("test_dir/test_symlink"))
         symlink.create_symbolic_link(File("test_file"))
 
-        target_dir = File(self.create_path("test_dir"))
+        target_dir = File(test_dir)
         target_dir.remove()
 
         self.assertFalse(target_dir.exists())

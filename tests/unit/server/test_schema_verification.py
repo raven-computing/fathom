@@ -32,11 +32,11 @@ class TestSchemaVerification(TestCase):
 
         string = result.to_string()
 
-        self.assertIn("missing tables", string.lower())
+        self.assertIn("Missing tables", string)
         self.assertIn("users", string)
-        self.assertIn("missing columns", string.lower())
+        self.assertIn("Missing table columns", string)
         self.assertIn("email", string)
-        self.assertIn("extra columns", string.lower())
+        self.assertIn("Extra table columns", string)
         self.assertIn("old_field", string)
 
 

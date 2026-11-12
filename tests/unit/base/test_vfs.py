@@ -726,7 +726,7 @@ class TestVirtualFileSystem(VFSTestCase):
             str(raised.exception)
         )
         self.assertEqual(raised.exception.file_path, str(dir_d))
-        File.get_file_system().remove(dir_a_c, follow_symlinks=False)
+        File.get_file_system().remove(dir_a_c)
         with self.assertRaises(SymbolicLinkResolutionException) as raised:
             File(dir_d).resolve_symbolic_links()
 
@@ -1230,16 +1230,15 @@ class TestVirtualFileSystem(VFSTestCase):
         self.assertTrue(file.exists())
         self.assertFileExists(file.path)
 
-    def test_can_remove_target_of_symbolic_link(self):
+    def test_removing_symbolic_link_never_removes_link_target(self):
         test_data = "TEST_DATA_FILE_CONTENT"
         file = File(self.create_file("test-file", test_data))
         link = File(self.create_path("test-link"))
         link.create_symbolic_link(file)
         link.follow_symlinks = True
         link.remove()
-        self.assertFalse(file.exists())
-        self.assertFileDoesNotExist(file.path)
-        link.follow_symlinks = False
+        self.assertTrue(file.exists())
+        self.assertFileExists(file.path)
         self.assertFalse(link.exists())
         self.assertFileDoesNotExist(link.path)
 

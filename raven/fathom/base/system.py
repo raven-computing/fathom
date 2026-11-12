@@ -1075,28 +1075,22 @@ class FileSystem(Interface):
         """
 
     @abstractmethod
-    def remove(self, path: PurePath, follow_symlinks=True):
-        """Removes the specified file.
+    def remove(self, path: PurePath):
+        """Removes the specified file or directory.
 
-        This method follows symbolic links depending on the value of
-        the `follow_symlinks` argument. If the file at the specified path is a
-        symbolic link and `follow_symlinks` is `True`, then the file the link
-        refers to and the symbolic link itself are both removed. If the file is
-        a symbolic link and `follow_symlinks` is `False`, then only the link
-        is removed, but not the target file it points to. Removing a directory
-        will also remove all of its content.
+        This method removes the object at the given path. Symbolic links are
+        never followed. Removing a symbolic link removes only the link itself,
+        not the file or directory it points to.
+
+        Removing a directory also removes all of its contents recursively.
 
         Args:
-            path (PurePath): The file to remove.
-            follow_symlinks (bool): Indicates whether to follow symbolic
-                links to their respective targets.
+            path (PurePath): The file or directory to remove.
 
         Raises:
             FileNotFoundException: If the file at the specified path
                 does not exist.
-            FilePermissionException: If the file remove operation is denied.
-            SymbolicLinkResolutionException: If the specified path cannot be
-                resolved or is a broken symbolic link.
+            FilePermissionException: If the file removal operation is denied.
             FileRemovalException: If the file at the specified path cannot
                 be removed.
         """

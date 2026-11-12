@@ -880,7 +880,7 @@ class HostFileSystem(FileSystem):
 
         try:
             if _host_os() == OperatingSystem.MS_WINDOWS:
-                self._try_move_file_win32(source, target, follow_symlinks)
+                self._try_move_file_win32(source, target)
             else:
                 self._try_move_file_linux(source, target)
         except OSError as error:
@@ -964,7 +964,7 @@ class HostFileSystem(FileSystem):
                 f"{msg}{_oserr_msg(error)}"
             ) from None
 
-    def remove(self, path: PurePath, follow_symlinks = True):
+    def remove(self, path: PurePath):
         path = Path(path)
         is_directory = is_symlink = False
         try:
@@ -972,23 +972,10 @@ class HostFileSystem(FileSystem):
             is_symlink = path.is_symlink()
             if is_directory and not is_symlink:
                 for child in self.list_files_of_directory(path):
-                    self.remove(child, follow_symlinks)
+                    self.remove(child)
 
                 path.rmdir()
             else:
-                if is_symlink and follow_symlinks:
-                    try:
-                        target = self.resolve_symbolic_links(path)
-                    except SymbolicLinkResolutionException:
-                        # Symlink target may have already been removed.
-                        path.unlink()
-                        return
-
-                    try:
-                        self.remove(target, follow_symlinks=False)
-                    except FileNotFoundException:
-                        pass # Target was already removed
-
                 path.unlink()
         except DirectoryListingException:
             raise FileRemovalException(
@@ -1266,12 +1253,12 @@ class HostFileSystem(FileSystem):
     def _try_move_file_linux(self, source, target):
         source.rename(target)
 
-    def _try_move_file_win32(self, source, target, follow_symlinks):
+    def _try_move_file_win32(self, source, target):
         try:
             source.rename(target)
         except FileExistsError as fe_error:
             try:
-                self.remove(target, follow_symlinks)
+                self.remove(target)
                 source.rename(target)
             except FileIOException:
                 raise fe_error

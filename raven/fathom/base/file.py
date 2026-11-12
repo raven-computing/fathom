@@ -2225,25 +2225,21 @@ class File(PathLike):
         directory is also removed automatically.
         This method must not be called on an open file.
 
-        If the `follow_symlinks` property is `True` (the default) and this file
-        is a symbolic link, then the file the link refers to and the symbolic
-        link itself are both removed. If the file is a symbolic link and
-        the `follow_symlinks` property is `False`, then only the link itself
-        is removed, but not the target file it points to.
+        Symbolic links are never followed, regardless of the `follow_symlinks`
+        property. Removing a symbolic link removes the link entry itself and
+        does not delete the file or directory it points to.
 
         Raises:
             InvalidFileStateException: If the file is open.
             FileNotFoundException: If the file does not exist.
             FilePermissionException: If the file remove operation is denied.
-            SymbolicLinkResolutionException: If a symbolic link in the path of
-                this file cannot be resolved or is a broken symbolic link.
             FileRemovalException: If the file cannot be removed.
         """
         self._ensure_is_not_open(
             f"Cannot remove file '{self._path}': File is open and must "
             "first be closed before it can be removed"
         )
-        File._FS.remove(self._path, self._follow_symlinks)
+        File._FS.remove(self._path)
 
     def is_hidden(self) -> bool:
         """Indicates whether this file is hidden in the filesystem.

@@ -801,8 +801,8 @@ class VirtualFileSystem(FileSystem):
     def move(self, source: PurePath, target: PurePath, follow_symlinks = True):
         fs_source = _to_posix(source)
         fs_target = _to_posix(target)
-        vf = self._get_node(fs_source, follow_symlinks)
-        if vf is None:
+        source_vf = self._get_node(fs_source, follow_symlinks=False)
+        if source_vf is None:
             raise FileNotFoundException(
                 str(source),
                 f"Failed to move file '{source}' "
@@ -810,18 +810,54 @@ class VirtualFileSystem(FileSystem):
                 "File does not exist"
             )
 
-        vf_children = list(self._get_child_nodes(fs_source))
-        try:
-            self.remove(fs_source, follow_symlinks)
-        except FileRemovalException:
-            raise FileRelocationException(
-                str(source),
-                f"Failed to move file '{source}' to "
-                f"destination at '{target}'"
-            )
+        resolved_fs_source = ""
+        if follow_symlinks and self._is_virtual_symlink(source_vf):
+            resolved_fs_source = self._resolve_symlinks_in_path(fs_source)
+            vf = self._get_node(resolved_fs_source, follow_symlinks=False)
+            if vf is None:
+                raise FileNotFoundException(
+                    str(source),
+                    f"Failed to move file '{source}' "
+                    f"to destination at '{target}': "
+                    "File does not exist"
+                )
+
+            vf_children = list(self._get_child_nodes(resolved_fs_source))
+            try:
+                self.remove(resolved_fs_source)
+                self._delete_node(source_vf)
+            except FileRemovalException:
+                raise FileRelocationException(
+                    str(source),
+                    f"Failed to move file '{source}' to "
+                    f"destination at '{target}'"
+                )
+        else:
+            vf = self._get_node(fs_source, follow_symlinks)
+            if vf is None:
+                raise FileNotFoundException(
+                    str(source),
+                    f"Failed to move file '{source}' "
+                    f"to destination at '{target}': "
+                    "File does not exist"
+                )
+
+            vf_children = list(self._get_child_nodes(fs_source))
+            try:
+                self.remove(fs_source)
+            except FileRemovalException:
+                raise FileRelocationException(
+                    str(source),
+                    f"Failed to move file '{source}' to "
+                    f"destination at '{target}'"
+                )
 
         vf.path = fs_target
-        len_src = len(str(fs_source))
+        len_src = (
+            len(str(fs_source))
+            if not (follow_symlinks and self._is_virtual_symlink(source_vf))
+            else len(str(resolved_fs_source))
+        )
         target_base = str(fs_target)
         self._link_vf(vf)
         for vf_child in vf_children:
@@ -901,42 +937,21 @@ class VirtualFileSystem(FileSystem):
                 assert isinstance(vf_source.data, bytearray)
                 vf_target.data = vf_source.data.copy()
 
-    def remove(self, path: PurePath, follow_symlinks = True):
+    def remove(self, path: PurePath):
         fs_path = _to_posix(path)
-        vf_symlink = self._get_node(fs_path, follow_symlinks=False)
-        if vf_symlink is None:
-            raise FileNotFoundException(
-                str(path),
-                f"Failed to remove file '{path}': "
-                "File does not exist"
-            )
-
-        remove_vf_symlink = vf_symlink.file_type == FileType.SYMBOLIC_LINK
-        try:
-            vf = self._get_node(fs_path, follow_symlinks)
-        except SymbolicLinkResolutionException:
-            if follow_symlinks and remove_vf_symlink:
-                self._delete_node(vf_symlink)
-                return
-            raise
-
+        vf = self._get_node(fs_path, follow_symlinks=False)
         if vf is None:
-            if follow_symlinks and remove_vf_symlink:
-                self._delete_node(vf_symlink)
-                return
-
             raise FileNotFoundException(
                 str(path),
                 f"Failed to remove file '{path}': "
                 "File does not exist"
             )
 
-        for child_vf in list(self._get_child_nodes(vf.path)):
-            self._delete_node(child_vf)
+        if vf.file_type == FileType.DIRECTORY:
+            for child_vf in list(self._get_child_nodes(vf.path)):
+                self._delete_node(child_vf)
 
         self._delete_node(vf)
-        if follow_symlinks and remove_vf_symlink:
-            self._delete_node(vf_symlink)
 
     def list_files_of_directory(
         self,

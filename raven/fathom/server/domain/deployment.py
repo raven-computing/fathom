@@ -19,6 +19,7 @@ resources in form of a `Package` to the Fathom server.
 """
 
 from dataclasses import dataclass
+from typing import Final
 
 from raven.fathom.base import Configuration, ApplicationContext
 from raven.fathom.base import File, FilePermission, FileAccess, FileType
@@ -26,6 +27,8 @@ from raven.fathom.base import FileIOException
 from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
+from raven.fathom.server.dao import DataAccess
+from raven.fathom.server.models import ProjectVersion
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import DomainException
@@ -33,6 +36,8 @@ from raven.fathom.server.domain.staging import StagingArea, StagingAreaException
 
 
 LOG = Logger.get()
+
+LATEST_LINKAGE_SYMLINK_FILENAME: Final[str] = "latest"
 
 
 class ServerDeploymentException(DomainException):
@@ -240,6 +245,7 @@ class DeploymentExecutor:
         self._ensure_target_directory_ready(target_directory)
         self._deploy_target(resource, target_directory)
         self._set_target_state(target_directory)
+        self._handle_linkage(target_directory)
         self._clean_up_staging(project)
 
     def _deploy_target(self, resource_directory: File, target_directory: File):
@@ -296,6 +302,25 @@ class DeploymentExecutor:
                 readable=True, writable=False, executable=False
             ),
         )
+
+    def _handle_linkage(self, target_directory: File):
+        try:
+            parent = target_directory.get_parent_directory()
+            link_file = parent / LATEST_LINKAGE_SYMLINK_FILENAME
+            link_file.follow_symlinks = False
+            if link_file.exists():
+                if not link_file.is_symbolic_link():
+                    raise DeploymentExecutionException(
+                        "Unexpected file found. "
+                        f"Expected file to be a symbolic link: '{link_file}'"
+                    )
+                link_file.remove()
+
+            link_file.create_symbolic_link(target_directory.name)
+        except FileIOException as ex:
+            raise DeploymentExecutionException(
+                "Failed to create linkage to deployed target directory"
+            ) from ex
 
     def _clean_up_staging(self, project: Project):
         try:
@@ -370,6 +395,16 @@ class DeploymentManager:
                     "was disabled or not authorized."
                 )
             )
+
+        assert project.version is not None
+        ds = DataAccess.instance()
+        ds.data(ProjectVersion).create(
+            ProjectVersion(
+                project=ds.projects().find_by_identifier(project.identifier),
+                version_sequence=1,
+                version_identifier=project.version.identifier,
+            )
+        )
 
         staging_area = StagingArea(self._config)
         staging_area.put(project, package)

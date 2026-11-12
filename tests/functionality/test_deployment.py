@@ -19,6 +19,9 @@ from raven.fathom.base import Project
 from raven.fathom.client.cli import ExitStatus
 from raven.fathom.client.config import ProjectConfiguration
 from raven.fathom.server.core.config import ServerConfiguration
+from raven.fathom.server.domain.deployment import (
+    LATEST_LINKAGE_SYMLINK_FILENAME
+)
 
 from tests.functionality import TestCase
 from tests.fixtures import ProjectFixture, ConfigurationFixture
@@ -81,6 +84,37 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         self.assertClientStdoutContains("Deployment SUCCESSFUL")
         self.assertServerIsRunning()
         self.assertProjectIsDeployedOnServer(self.project)
+
+    def test_when_deploying_resources_linkage_symlinks_are_updated(self):
+        project_v1 = self.project_v1
+        self.client.execute("deploy")
+
+        project_v2 = self.project_v2
+        project_config = self.configuration_project
+        assert project_v2.version is not None
+        project_config[ProjectConfiguration.PROJECT.VERSION] = (
+            project_v2.version.identifier
+        )
+        self.client.save_project_configuration(project_config)
+        server_config = self.server.get_configuration()
+
+        self.client.execute("deploy")
+
+        self.assertClientSuccess()
+        self.assertProjectIsDeployedOnServer(project_v1)
+        self.assertProjectIsDeployedOnServer(project_v2)
+        linkage_file = (
+            File(self.server.env.cwd)
+            / server_config.get_required_value(
+                ServerConfiguration.SERVER.DEPLOYMENT_SITE_DIRECTORY
+            )
+            / project_v2.identifier
+            / LATEST_LINKAGE_SYMLINK_FILENAME
+        )
+        self.assertFileExists(linkage_file)
+        linkage_target = linkage_file.resolve_symbolic_links()
+        self.assertEqual(project_v2.version.identifier, linkage_target.name)
+        self.assertDirectoryExists(linkage_target)
 
     def test_client_with_invalid_username_is_rejected(self):
         config = self.configuration_user

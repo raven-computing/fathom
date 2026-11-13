@@ -195,6 +195,33 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         self.assertEqual(project.latest_version, "1.0.0")
         self.assertTrue(project.is_published)
 
+    def test_can_create_new_project_version_and_update_latest_version(self):
+        project = self.db.projects().find_by_identifier("test-project-1")
+        self.assertIsNotNone(project)
+        assert project is not None
+
+        first_version = self.db.projects().create_version(
+            "test-project-1", "1.0.0"
+        )
+        self.assertEqual(first_version.version_sequence, 1)
+
+        second_version = self.db.projects().create_version(
+            "test-project-1", "2.0.0"
+        )
+
+        persisted = self.db.projects().find_version_by_identifier(
+            "test-project-1", "2.0.0")
+        self.assertIsNotNone(persisted)
+        assert persisted is not None
+        self.assertEqual(persisted.version_sequence, 2)
+        self.assertEqual(second_version.version_sequence, 2)
+        self.assertEqual(second_version.version_identifier, "2.0.0")
+
+        reloaded = self.db.projects().find_by_identifier("test-project-1")
+        self.assertIsNotNone(reloaded)
+        assert reloaded is not None
+        self.assertEqual(reloaded.latest_version, "2.0.0")
+
     def test_query_to_find_project_with_unknown_identifier_returns_none(self):
         project = self.db.projects().find_by_identifier(
             "this-project-does-not-exist"

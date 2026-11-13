@@ -27,8 +27,7 @@ from raven.fathom.base import FileIOException
 from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
-from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.models import ProjectVersion
+from raven.fathom.server.dao import DataAccess, FailedQueryException
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import DomainException
@@ -352,6 +351,7 @@ class DeploymentManager:
             config (Configuration): The configuration of the Fathom server.
         """
         self._config = config
+        self._ds = DataAccess.instance()
 
     def deploy(
         self,
@@ -385,6 +385,12 @@ class DeploymentManager:
                 user_message="Cannot deploy package without project"
             )
 
+        if project.version is None:
+            return DeploymentResult(
+                successful=False,
+                user_message="Cannot deploy package without project version"
+            )
+
         deployment_site = DeploymentSite(self._config)
         if deployment_site.contains(project) and not intent.overwrite_existing:
             return DeploymentResult(
@@ -396,15 +402,7 @@ class DeploymentManager:
                 )
             )
 
-        assert project.version is not None
-        ds = DataAccess.instance()
-        ds.data(ProjectVersion).create(
-            ProjectVersion(
-                project=ds.projects().find_by_identifier(project.identifier),
-                version_sequence=1,
-                version_identifier=project.version.identifier,
-            )
-        )
+        self._create_project_version_record(project)
 
         staging_area = StagingArea(self._config)
         staging_area.put(project, package)
@@ -413,3 +411,15 @@ class DeploymentManager:
             successful=True,
             user_message=f"Successfully deployed package for {project}",
         )
+
+    def _create_project_version_record(self, project):
+        try:
+            self._ds.projects().create_version(
+                project.identifier,
+                project.version.identifier
+            )
+        except FailedQueryException as ex:
+            raise DeploymentExecutionException(
+                "Failed to create record for new project version. "
+                "An internal error has occurred"
+            ) from ex

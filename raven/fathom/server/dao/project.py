@@ -58,6 +58,26 @@ class ProjectDAO(DataAccessObject[Project]):
         """
 
     @abstractmethod
+    def create_version(
+        self,
+        project: Union[Project, str],
+        version_identifier: str
+    ) -> ProjectVersion:
+        """Creates a new published version for the given project.
+
+        The created version will be set as the latest published version
+        of the specified project.
+
+        Args:
+            project (Project | str): The `Project` record or its ID for which
+                to find the specific project version record for. May also be
+                specified as a `str` which will look up the project by its
+                unique string identifier.
+            version_identifier (str): The version identifier of the new project
+                version to create.
+        """
+
+    @abstractmethod
     def find_all_assigned_to_user(self, user: User) -> list[Project]:
         """Finds all projects which are assigned to the given user.
 

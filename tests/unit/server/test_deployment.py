@@ -189,6 +189,18 @@ class TestDeploymentManager(
         self.assertTrue(result.successful)
         self.assertIn("Successfully deployed package", result.user_message)
 
+    def test_deploy_is_rejected_when_project_version_missing(self):
+        assert self.intent.project is not None
+        self.intent.project.version = None
+        manager = DeploymentManager(self.config)
+        result = manager.deploy(self.intent, self.packed_package)
+        self.assertIsInstance(result, DeploymentResult)
+        self.assertFalse(result.successful)
+        self.assertIn(
+            "Cannot deploy package without project version",
+            result.user_message
+        )
+
     def test_deploy_is_rejected_when_target_exists_and_overwrite_false(self):
         self.intent.overwrite_existing = False
         assert self.intent.project is not None

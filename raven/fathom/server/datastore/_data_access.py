@@ -21,6 +21,7 @@ from typing import cast, Type, Optional, Union
 from raven.fathom.server.dao import DataAccess, DataAccessObject
 from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.dao import IllegalQueryException
+from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
 from raven.fathom.server.dao import UserDAO, ProjectDAO, SettingsDAO
 from raven.fathom.server.models import User, Project, ProjectVersion
@@ -167,6 +168,41 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
                 and ProjectVersion.version_identifier == identifier
             )
         ).find_one()
+
+    def create_version(
+        self,
+        project: Union[Project, str],
+        version_identifier: str
+    ) -> ProjectVersion:
+        if isinstance(project, str):
+            project_record = self.find_by_identifier(project)
+            if project_record is None:
+                raise FailedCreateQueryException(
+                    f"Cannot create project version '{version_identifier}': "
+                    f"No project found with given identifier '{project}'"
+                )
+
+            project = project_record
+
+        latest_version = self.find_version_by_identifier(
+            project,
+            project.latest_version
+        )
+
+        latest_sequence_number = 0
+        if latest_version is not None:
+            latest_sequence_number = latest_version.version_sequence
+
+        new_sequence_number = latest_sequence_number + 1
+        new_version = ProjectVersion(
+            project=project,
+            version_sequence=new_sequence_number,
+            version_identifier=version_identifier,
+        )
+        CreateQuery(new_version).execute()
+        project.latest_version = version_identifier
+        self.update(project)
+        return new_version
 
     def find_all_assigned_to_user(self, user: User) -> list[Project]:
         user_id = cast(OrmRecordId, user.datastore_id).value

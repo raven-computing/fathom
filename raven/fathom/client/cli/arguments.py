@@ -185,6 +185,7 @@ def parse_args(argv: list[str]) -> AppArgs:
     deploy.add_argument(
         "--project-directory",
         action="store",
+        metavar="<PATH>",
         default=AppArgs.project_directory,
         help="The path to the source root directory of the project to deploy. "
              "A relative path is interpreted relative to the "
@@ -375,10 +376,18 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="Create the default user configuration file in the user's "
              "configuration directory."
     )
-    setup_config_subparsers.add_parser(
+    setup_config_project_subparsers = setup_config_subparsers.add_parser(
         str(AppCommand.PROJECT),
         help="Create the default project configuration file in the current "
              "working directory."
+    )
+    setup_config_project_subparsers.add_argument(
+        "--project-directory",
+        action="store",
+        metavar="<PATH>",
+        default=AppArgs.project_directory,
+        help="The path to the source root directory of the project where "
+             "to create the project configuration file at."
     )
 
     setup_user = setup_subparsers.add_parser(

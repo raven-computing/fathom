@@ -187,7 +187,7 @@ class TestServerUserManagementCLI(TestCase):
 
         self.assertServerSuccess()
         self.assertIn(
-            "Created user 'local-admin' (admin, onboarding).",
+            "Created user local-admin with admin privileges",
             self.server.stdout
         )
 

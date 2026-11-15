@@ -68,7 +68,7 @@ class TestClientUserSignup(TestCase, ProjectFixture, ConfigurationFixture):
             "Deployment authorization not granted"
         )
         self.assertClientStdoutContains(
-            "Status.INVALID_USER User is invalid or unknown"
+            "User is invalid or unknown"
         )
 
         self.client.stdin = ["secret", "new-password", "new-password"]

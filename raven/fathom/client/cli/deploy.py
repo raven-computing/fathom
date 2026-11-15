@@ -100,7 +100,7 @@ class DeployCommand(ClientCommand):
         deployment.set_project(project)
         deployment.add_resource(docs)
 
-        LOG.i("Deploying project")
+        LOG.i("Deploying project %s", project)
         deployment = deployment.deploy()
 
         if deployment.is_successful():

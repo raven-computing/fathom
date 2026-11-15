@@ -391,7 +391,7 @@ def parse_args(argv: list[str]) -> AppArgs:
         "setup_user_identifier",
         nargs="?",
         default="",
-        metavar="<IDENTIFIER>",
+        metavar="identifier",
         help="The unique identifier of the user to sign up."
     )
 

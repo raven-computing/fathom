@@ -248,7 +248,6 @@ class FathomDeployment:
         result.set_successful(False)
         result.info_message = (
             "Deployment authorization not granted: "
-            f"{deployment_authorization.status} "
             f"{deployment_authorization.status.message()}"
         )
         return result

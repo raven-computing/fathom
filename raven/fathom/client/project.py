@@ -16,7 +16,6 @@
 
 from raven.fathom.base import Project, ProjectVersion
 from raven.fathom.base import Configuration
-from raven.fathom.base import SystemEnvironment, File
 from raven.fathom.client.config import ProjectConfiguration
 
 
@@ -32,12 +31,7 @@ def _gather_from_project_configuration(config: Configuration):
         project.version = ProjectVersion(version)
 
     project.domain = config[ProjectConfiguration.PROJECT.DOMAIN] or ""
-    assets = config[ProjectConfiguration.PROJECT.ASSETS] or ""
-    if assets and not File(assets).path.is_absolute():
-        cwd = SystemEnvironment.instance().get_current_working_directory()
-        assets = str(cwd / assets)
-
-    project.assets = assets
+    project.assets = config[ProjectConfiguration.PROJECT.ASSETS] or ""
     return project
 
 

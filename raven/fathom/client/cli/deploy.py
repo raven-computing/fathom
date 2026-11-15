@@ -14,6 +14,7 @@
 #
 """CLI command handling for the deploy command."""
 
+from raven.fathom.base import File, SystemEnvironment
 from raven.fathom.client.config import ConfigurationManager
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.documentation import DocumentationResource, DocsDir
@@ -62,8 +63,16 @@ class DeployCommand(ClientCommand):
             return ExitStatus.FAILURE
 
         docs = DocumentationResource()
+        assets_dir = File(project.assets)
+        if self.args.project_directory:
+            assets_dir = File(self.args.project_directory) / project.assets
+
+        if not assets_dir.path.is_absolute():
+            cwd = SystemEnvironment.instance().get_current_working_directory()
+            assets_dir = File(cwd / assets_dir)
+
         try:
-            docs += DocsDir(project.assets)
+            docs += DocsDir(assets_dir)
         except ValueError:
             LOG.e(
                 "Failed to load documentation resources "

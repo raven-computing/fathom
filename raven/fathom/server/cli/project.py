@@ -49,6 +49,10 @@ class ProjectListCommand(ServerCommand):
         )
         LOG.d("Fetching project list")
         projects = ProjectManager().list_projects()
+        if len(projects) == 0:
+            LOG.i("No projects found")
+            return ExitStatus.SUCCESS
+
         for project in projects:
             formatter.add_row(
                 project.identifier,

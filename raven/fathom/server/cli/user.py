@@ -38,13 +38,23 @@ class UserCreateCommand(ServerCommand):
         )
         LOG.d("Creating user '%s'", user.identifier)
         UserManager(UserAuthenticator()).create_user(user)
-        role = "admin" if user.is_admin else "user"
-        LOG.i(
-            "Created user '%s' (%s, %s).",
-            user.identifier,
-            role,
-            user.state,
+        role_msg = (
+            "with admin privileges"
+            if user.is_admin
+            else "with regular user privileges"
         )
+        LOG.i(
+            "Created user %s %s",
+            user.identifier,
+            role_msg,
+        )
+        if user.state == UserState.ONBOARDING:
+            LOG.i(
+                "User %s can now be onboarded "
+                "via the client application",
+                user.identifier,
+            )
+
         return ExitStatus.SUCCESS
 
 
@@ -58,6 +68,10 @@ class UserListCommand(ServerCommand):
         LOG.d("Fetching user list")
         manager = UserManager(UserAuthenticator())
         users = manager.list_users()
+        if len(users) == 0:
+            LOG.i("No users found")
+            return ExitStatus.SUCCESS
+
         for user in users:
             role = manager.get_user_role(user.identifier)
             formatter.add_row(

@@ -42,8 +42,6 @@ class DeployCommand(ClientCommand):
             return ExitStatus.SERVER_UNREACHABLE
 
     def _deploy(self):
-        LOG.i("Deploying project...")
-
         config = ConfigurationManager()
         user_config = config.get_user_config()
         project_config = config.get_project_config()
@@ -102,6 +100,7 @@ class DeployCommand(ClientCommand):
         deployment.set_project(project)
         deployment.add_resource(docs)
 
+        LOG.i("Deploying project")
         deployment = deployment.deploy()
 
         if deployment.is_successful():

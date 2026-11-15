@@ -55,6 +55,14 @@ class DeploymentTransactionHandler(ActionHandler):
             self._respond_missing_package(response)
             return
 
+        assert authorization is not None
+        intent = authorization.granted_parameters()
+        assert intent is not None
+        LOG.i(
+            "User %s requested the execution of deployment for project %s",
+            request.authenticated_user_id,
+            intent.project,
+        )
         self._handle_deployment(authorization, package, response)
 
     def _check_authorization(self, request, response):

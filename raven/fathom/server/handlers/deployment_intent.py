@@ -21,6 +21,10 @@ from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
+from raven.fathom.server.core.logging import Logger
+
+
+LOG = Logger.get()
 
 
 class DeploymentIntentHandler(ActionHandler):
@@ -54,6 +58,12 @@ class DeploymentIntentHandler(ActionHandler):
             return
 
         authorization = self._authorizer.authorize_intent(intent)
+        LOG.i(
+            "User %s requested a deployment of resources for project %s: %s",
+            request.authenticated_user_id,
+            request.project.identifier, # pyright: ignore
+            authorization,
+        )
         response.deployment_authorization = authorization
         if authorization.is_granted():
             response.add_informational(

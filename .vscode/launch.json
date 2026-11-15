@@ -7,7 +7,9 @@
       "request": "launch",
       "module": "raven.fathom.client",
       "args": [
-        "deploy"
+        "deploy",
+        "--project-directory",
+        "build/devel/projects/test-project-1",
       ],
       "justMyCode": true
     },

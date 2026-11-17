@@ -213,8 +213,9 @@ class TestDeploymentManager(
         self.assertFalse(result.successful)
         self.assertIn("Cannot deploy project", result.user_message)
         self.assertIn(
-            "as it is already deployed and the 'overwrite existing' "
-            "setting was disabled or not authorized",
+            "because that version is already deployed and "
+            "the 'overwrite-existing' setting was disabled "
+            "or not authorized",
             result.user_message
         )
 

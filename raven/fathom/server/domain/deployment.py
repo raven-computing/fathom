@@ -396,8 +396,8 @@ class DeploymentManager:
             return DeploymentResult(
                 successful=False,
                 user_message=(
-                    f"Cannot deploy project {project} as it is already "
-                    "deployed and the 'overwrite existing' setting "
+                    f"Cannot deploy project {project} because that version "
+                    "is already deployed and the 'overwrite-existing' setting "
                     "was disabled or not authorized."
                 )
             )

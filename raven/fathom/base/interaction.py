@@ -198,6 +198,8 @@ class ResponseCode(IntEnum):
 
     NOT_FOUND = 7
 
+    RESOURCE_ALREADY_EXISTS = 4
+
     CLIENT_VERSION_NOT_SUPPORTED = 8
 
     DEPRECATED_ACTION = 10
@@ -207,6 +209,8 @@ class ResponseCode(IntEnum):
     MISSING_AUTHORIZATION = 1
 
     AUTHORIZATION_DENIED = 2
+
+    UNKNOWN_ERROR = 11
 
 
 @dataclass

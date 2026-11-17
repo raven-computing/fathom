@@ -18,8 +18,9 @@ Provides the `DeploymentManager` class which implements the deployment of
 resources in form of a `Package` to the Fathom server.
 """
 
+from enum import Enum
 from dataclasses import dataclass
-from typing import Final
+from typing import Final, Optional
 
 from raven.fathom.base import Configuration, ApplicationContext
 from raven.fathom.base import File, FilePermission, FileAccess, FileType
@@ -198,20 +199,6 @@ class DeploymentSite:
         return ApplicationContext.instance().get_working_directory()
 
 
-@dataclass
-class DeploymentResult:
-    """The result of an executed deployment.
-
-    Attributes:
-        successful (bool): Whether the deployment was successful.
-        user_message (str): A message to be displayed to the user.
-    """
-
-    successful: bool
-
-    user_message: str
-
-
 class DeploymentExecutor:
     """An executor for a deployment.
     
@@ -341,6 +328,31 @@ class DeploymentExecutor:
             ) from ex
 
 
+class DeploymentError(Enum):
+    """Enumerates deployment errors."""
+
+    MISSING_INPUT = 1
+
+    PROJECT_VERSION_ALREADY_DEPLOYED = 2
+
+
+@dataclass
+class DeploymentResult:
+    """The result of an executed deployment.
+
+    Attributes:
+        successful (bool): Whether the deployment was successful.
+        user_message (str): A message to be displayed to the user.
+        error (DeploymentError): The error that was encountered. May be `None`.
+    """
+
+    successful: bool
+
+    user_message: str
+
+    error: Optional[DeploymentError] = None
+
+
 class DeploymentManager:
     """Manages Fathom server deployments."""
 
@@ -352,6 +364,47 @@ class DeploymentManager:
         """
         self._config = config
         self._ds = DataAccess.instance()
+
+    def can_deploy(self, intent: ClientDeploymentIntent) -> DeploymentResult:
+        """Checks if the deployment can be carried out.
+
+        Args:
+            intent (ClientDeploymentIntent): The deployment intent to check.
+
+        Returns:
+            DeploymentResult: Whether deployment is allowed.
+        """
+        project = intent.project
+        if project is None:
+            return DeploymentResult(
+                successful=False,
+                user_message="Cannot deploy package without project",
+                error=DeploymentError.MISSING_INPUT,
+            )
+
+        if project.version is None:
+            return DeploymentResult(
+                successful=False,
+                user_message="Cannot deploy package without project version",
+                error=DeploymentError.MISSING_INPUT,
+            )
+
+        deployment_site = DeploymentSite(self._config)
+        if deployment_site.contains(project) and not intent.overwrite_existing:
+            return DeploymentResult(
+                successful=False,
+                user_message=(
+                    f"Cannot deploy project {project} because that version "
+                    "is already deployed and the 'overwrite-existing' setting "
+                    "was disabled or not authorized."
+                ),
+                error=DeploymentError.PROJECT_VERSION_ALREADY_DEPLOYED,
+            )
+
+        return DeploymentResult(
+            successful=True,
+            user_message="Can be deployed",
+        )
 
     def deploy(
         self,
@@ -382,13 +435,15 @@ class DeploymentManager:
         if project is None:
             return DeploymentResult(
                 successful=False,
-                user_message="Cannot deploy package without project"
+                user_message="Cannot deploy package without project",
+                error=DeploymentError.MISSING_INPUT,
             )
 
         if project.version is None:
             return DeploymentResult(
                 successful=False,
-                user_message="Cannot deploy package without project version"
+                user_message="Cannot deploy package without project version",
+                error=DeploymentError.MISSING_INPUT,
             )
 
         deployment_site = DeploymentSite(self._config)
@@ -399,7 +454,8 @@ class DeploymentManager:
                     f"Cannot deploy project {project} because that version "
                     "is already deployed and the 'overwrite-existing' setting "
                     "was disabled or not authorized."
-                )
+                ),
+                error=DeploymentError.PROJECT_VERSION_ALREADY_DEPLOYED,
             )
 
         self._create_project_version_record(project)

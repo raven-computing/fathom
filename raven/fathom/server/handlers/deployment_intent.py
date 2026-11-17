@@ -21,6 +21,7 @@ from raven.fathom.base import ResponseMessage, ResponseCode
 from raven.fathom.base import ClientRequest, ServerResponse
 from raven.fathom.server.handlers import ActionHandler
 from raven.fathom.server.security import DeploymentAuthorizer
+from raven.fathom.server.domain.deployment import DeploymentManager
 from raven.fathom.server.core.logging import Logger
 
 
@@ -30,10 +31,15 @@ LOG = Logger.get()
 class DeploymentIntentHandler(ActionHandler):
     """Implementation of `ActionHandler` for deployment intents."""
 
-    def __init__(self, authorizer: DeploymentAuthorizer):
+    def __init__(
+        self,
+        authorizer: DeploymentAuthorizer,
+        manager: DeploymentManager
+    ):
         super().__init__(authorizer=None)
         TypeCheck.require_arg(authorizer, DeploymentAuthorizer)
         self._authorizer = authorizer
+        self._manager = manager
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         intent = request.deployment_intent
@@ -57,21 +63,29 @@ class DeploymentIntentHandler(ActionHandler):
             )
             return
 
+        result = ""
         authorization = self._authorizer.authorize_intent(intent)
+        if authorization.is_granted():
+            result = self._manager.can_deploy(intent)
+            if result.successful:
+                response.add_informational(
+                    ResponseMessage(
+                        code=ResponseCode.SUCCESSFUL_COMPLETION,
+                        text="Deployment authorization has been granted."
+                    )
+                )
+            else:
+                authorization.reject(result.user_message)
+
         LOG.i(
-            "User %s requested a deployment of resources for project %s: %s",
+            "User %s requested a deployment of resources for project %s: "
+            "%s %s",
             request.authenticated_user_id,
-            request.project.identifier, # pyright: ignore
+            request.project,
             authorization,
+            result and result.user_message,
         )
         response.deployment_authorization = authorization
-        if authorization.is_granted():
-            response.add_informational(
-                ResponseMessage(
-                    code=ResponseCode.SUCCESSFUL_COMPLETION,
-                    text="Deployment authorization has been granted."
-                )
-            )
 
     def _project_info_is_set(self, intent):
         return (

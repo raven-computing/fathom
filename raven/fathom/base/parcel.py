@@ -371,6 +371,7 @@ class RequestParcelJSON(Parcel):
             intent=None,
             token=token,
             expiration_time=None,
+            rejection_reason=None,
         )
 
     def _encode_package(self, structure):
@@ -620,6 +621,10 @@ class ResponseParcelJSON(Parcel):
                 structure["deploymentAuthorization"]["statusCode"] = (
                     auth.status.code()
                 )
+                if auth.rejection_reason is not None:
+                    structure["deploymentAuthorization"]["rejectionReason"] = (
+                        auth.rejection_reason
+                    )
 
     def _encode_deployment_result(self, structure):
         assert isinstance(self._response, ServerResponse)
@@ -707,6 +712,7 @@ class ResponseParcelJSON(Parcel):
         assert isinstance(auth_struct, dict)
         token = auth_struct.get("token")
         expiration_time = auth_struct.get("expirationTime")
+        rejection_reason = auth_struct.get("rejectionReason")
         if expiration_time is not None:
             try:
                 expiration_time = datetime.fromisoformat(expiration_time)
@@ -741,6 +747,7 @@ class ResponseParcelJSON(Parcel):
             intent=None,
             token=token,
             expiration_time=expiration_time,
+            rejection_reason=rejection_reason,
         )
         return auth
 

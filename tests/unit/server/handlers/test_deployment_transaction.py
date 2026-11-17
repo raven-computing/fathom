@@ -85,6 +85,7 @@ class TestDeploymentTransactionHandler(TestCase):
             intent=None,
             token="InvalidToken",
             expiration_time=None,
+            rejection_reason=None,
         )
 
         handler = DeploymentTransactionHandler(

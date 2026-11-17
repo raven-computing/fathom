@@ -86,6 +86,9 @@
         },
         "statusCode": {
           "type": "integer"
+        },
+        "rejectionReason": {
+          "type": "string"
         }
       }
     },

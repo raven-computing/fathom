@@ -246,8 +246,12 @@ class FathomDeployment:
     def _unauthorized(self, deployment_authorization):
         result = DeploymentResult()
         result.set_successful(False)
+        reason = (
+            deployment_authorization.rejection_reason
+            or deployment_authorization.status.message()
+        )
         result.info_message = (
             "Deployment authorization not granted: "
-            f"{deployment_authorization.status.message()}"
+            f"{reason}"
         )
         return result

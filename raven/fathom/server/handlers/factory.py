@@ -65,7 +65,8 @@ class HandlerFactory:
             handler = ServerInfoHandler()
         elif client_action == Interaction.REQUEST_DEPLOYMENT:
             handler = DeploymentIntentHandler(
-                DeploymentAuthorizer(SystemClock())
+                DeploymentAuthorizer(SystemClock()),
+                DeploymentManager(ConfigurationManager().get_server_config())
             )
         elif client_action == Interaction.TRANSACT_DEPLOYMENT:
             handler = DeploymentTransactionHandler(

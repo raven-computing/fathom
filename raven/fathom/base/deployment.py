@@ -63,8 +63,8 @@ class ClientDeploymentIntent:
 class DeploymentAuthorization:
     """An authorization which grants a package deployment to a client.
 
-    An authorization is bound to a secret token. Only a client in possession
-    of that token is granted a deployment.
+    A granted authorization is bound to a secret token. Only a client
+    in possession of that token can execute a deployment.
 
     Attributes:
         status (DeploymentAuthorization.Status): The status of the
@@ -73,6 +73,8 @@ class DeploymentAuthorization:
         expiration_time (datetime): The time of expiration of the secret token,
             if it is set. May be `None` if no token is set, otherwise
             a `datetime` must be set.
+        rejection_reason (str): A message that indicates details of why
+            an authorization was rejected. May be `None`.
     """
 
     class Status(Enum):
@@ -99,6 +101,8 @@ class DeploymentAuthorization:
         EXPIRED = 6, "Authorization has expired"
 
         INVALID_TOKEN = 7, "Authorization token is invalid"
+
+        REJECTED = 8, "Requirement not satisfied"
 
         def code(self) -> int:
             """The numeric code of this authorization status.
@@ -146,15 +150,18 @@ class DeploymentAuthorization:
         intent: Optional[ClientDeploymentIntent],
         token: Optional[str],
         expiration_time: Optional[datetime],
+        rejection_reason: Optional[str],
     ):
         self._status = status
         self._granted_intent = intent
         self._token = token
         self._expiration_time = expiration_time
+        self._rejection_reason = rejection_reason
         self._is_granted = (
             status == DeploymentAuthorization.Status.GRANTED
             and bool(self._token)
             and bool(expiration_time)
+            and not rejection_reason
         )
 
     @property
@@ -176,6 +183,14 @@ class DeploymentAuthorization:
         """
         return self._expiration_time
 
+    @property
+    def rejection_reason(self) -> Optional[str]:
+        """The reason message why the authorization was rejected.
+
+        May be `None`.
+        """
+        return self._rejection_reason
+
     def is_granted(self) -> bool:
         """Indicates whether this authorization is valid and granted.
 
@@ -196,6 +211,23 @@ class DeploymentAuthorization:
             return self._granted_intent
 
         return None
+
+    def reject(self, reason: str):
+        """Rejects this authorization and sets its status to rejected.
+
+        This deployment authorization will be rejected regardless
+        of its current status.
+
+        Args:
+            reason (str): The message detailing why this authorization
+                is rejected.
+        """
+        self._status = DeploymentAuthorization.Status.REJECTED
+        self._granted_intent = None
+        self._token = None
+        self._expiration_time = None
+        self._rejection_reason = reason
+        self._is_granted = False
 
     def __hash__(self):
         return hash((self._status, self._token, self._expiration_time))
@@ -221,6 +253,7 @@ class DeploymentAuthorization:
             intent,
             token,
             expiration_time,
+            rejection_reason=None,
         )
 
     @staticmethod
@@ -236,6 +269,7 @@ class DeploymentAuthorization:
             intent=None,
             token=None,
             expiration_time=expiration_time,
+            rejection_reason=None,
         )
 
 

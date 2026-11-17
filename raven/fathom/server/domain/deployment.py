@@ -201,12 +201,19 @@ class DeploymentSite:
 
 class DeploymentExecutor:
     """An executor for a deployment.
-    
+
     Moves resources from the staging area to the deployment site
     for a given project.
+
+    Attributes:
+        overwrite_existing (bool): Whether to remove an existing target
+            directory in the deployment site if deploying for the same
+            project version. If this is `False` (default), trying to deploy
+            for an already existing project version will raise an exception.
     """
 
     def __init__(self, sa: StagingArea, ds: DeploymentSite):
+        self.overwrite_existing: bool = False
         self._staging_area = sa
         self._deployment_site = ds
 
@@ -229,6 +236,7 @@ class DeploymentExecutor:
         resource = self._staging_area.get_allocation_directory(project)
         target_directory = self._deployment_site.get_target_directory(project)
         self._ensure_target_directory_ready(target_directory)
+        self._clear_target_directory(target_directory)
         self._deploy_target(resource, target_directory)
         self._set_target_state(target_directory)
         self._handle_linkage(target_directory)
@@ -323,9 +331,27 @@ class DeploymentExecutor:
             parent.create_directory_tree()
         except FileIOException as ex:
             raise DeploymentExecutionException(
-                "Failed to create target parent directory "
-                f"for deployment ({parent})"
+                "Failed to prepare target directory for deployment "
+                f"({target_directory})"
             ) from ex
+
+    def _clear_target_directory(self, target_directory: File):
+        if target_directory.exists():
+            if self.overwrite_existing:
+                try:
+                    target_directory.remove()
+                except FileIOException as ex:
+                    raise DeploymentExecutionException(
+                        "Failed to remove target directory for deployment "
+                        "that was meant to replace existing target version: "
+                        f"'{target_directory}'"
+                    ) from ex
+            else:
+                raise DeploymentExecutionException(
+                    "Failed to deploy to target directory. "
+                    "The directory already exists: "
+                    f"'{target_directory}'"
+                )
 
 
 class DeploymentError(Enum):
@@ -462,7 +488,9 @@ class DeploymentManager:
 
         staging_area = StagingArea(self._config)
         staging_area.put(project, package)
-        DeploymentExecutor(staging_area, deployment_site).deploy(project)
+        executor = DeploymentExecutor(staging_area, deployment_site)
+        executor.overwrite_existing = intent.overwrite_existing
+        executor.deploy(project)
         return DeploymentResult(
             successful=True,
             user_message=f"Successfully deployed package for {project}",

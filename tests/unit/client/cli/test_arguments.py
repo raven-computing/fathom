@@ -72,6 +72,11 @@ class TestAppArgs(TestCase):
         self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.project_directory, "")
 
+    def test_overwrite_existing_argument_is_false_by_default(self):
+        args = parse_args(["fathom", "deploy"])
+        self.assertIsInstance(args, AppArgs)
+        self.assertFalse(args.overwrite_existing)
+
     def test_user_argument_stores_provided_value(self):
         args = parse_args(["fathom", "--user", "testuser", "deploy"])
         self.assertIsInstance(args, AppArgs)
@@ -95,6 +100,11 @@ class TestAppArgs(TestCase):
         )
         self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.project_directory, "/my/project")
+
+    def test_overwrite_existing_argument_stores_provided_value(self):
+        args = parse_args(["fathom", "deploy", "--overwrite-existing"])
+        self.assertIsInstance(args, AppArgs)
+        self.assertTrue(args.overwrite_existing)
 
     def test_deploy_command_is_recognized(self):
         args = parse_args(["fathom", "deploy"])

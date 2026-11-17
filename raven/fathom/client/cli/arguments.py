@@ -103,6 +103,8 @@ class AppArgs:
 
     project_directory: str = ""
 
+    overwrite_existing: bool = False
+
 
 @noexcept
 def parse_args(argv: list[str]) -> AppArgs:
@@ -181,6 +183,13 @@ def parse_args(argv: list[str]) -> AppArgs:
     deploy = subparsers.add_parser(
         str(AppCommand.DEPLOY),
         help="Deploy project documentation resources."
+    )
+    deploy.add_argument(
+        "--overwrite-existing",
+        action="store_true",
+        default=AppArgs.overwrite_existing,
+        help="Replace an already deployed project version on the server if one "
+             "already exists."
     )
     deploy.add_argument(
         "--project-directory",
@@ -439,5 +448,6 @@ def parse_args(argv: list[str]) -> AppArgs:
         project_name=getattr(args, "project_name", ""),
         project_description=getattr(args, "project_description", ""),
         setup_user_identifier=getattr(args, "setup_user_identifier", ""),
-        project_directory=getattr(args, "project_directory", "")
+        project_directory=getattr(args, "project_directory", ""),
+        overwrite_existing=getattr(args, "overwrite_existing", False),
     )

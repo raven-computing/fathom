@@ -85,6 +85,31 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
         self.assertServerIsRunning()
         self.assertProjectIsDeployedOnServer(self.project)
 
+    def test_client_cannot_overwrite_existing_deployment_by_default(self):
+        self.client.execute("deploy")
+
+        self.assertClientSuccess()
+        self.assertProjectIsDeployedOnServer(self.project)
+
+        self.client.execute("deploy")
+
+        self.assertClientFailure()
+        self.assertClientStdoutContains("Deployment FAILED")
+        self.assertClientStdoutContains("that version is already deployed")
+        self.assertProjectIsDeployedOnServer(self.project)
+
+    def test_client_can_overwrite_existing_deployment_with_cli_option(self):
+        self.client.execute("deploy")
+
+        self.assertClientSuccess()
+        self.assertProjectIsDeployedOnServer(self.project)
+
+        self.client.execute("deploy", "--overwrite-existing")
+
+        self.assertClientSuccess()
+        self.assertClientStdoutContains("Deployment SUCCESSFUL")
+        self.assertProjectIsDeployedOnServer(self.project)
+
     def test_when_deploying_resources_linkage_symlinks_are_updated(self):
         project_v1 = self.project_v1
         self.client.execute("deploy")

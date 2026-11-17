@@ -97,6 +97,7 @@ class FathomDeployment:
         self._project = None
         self._resource = None
         self._client_authentication = None
+        self._overwrite_existing = False
 
     @property
     def location(self) -> ServerLocator:
@@ -107,6 +108,19 @@ class FathomDeployment:
             ServerLocator: The server locator for this deployment.
         """
         return self._location
+
+    @property
+    def overwrite_existing(self) -> bool:
+        """Whether an existing deployed project version should be replaced.
+
+        Can be set.
+        """
+        return self._overwrite_existing
+
+    @overwrite_existing.setter
+    def overwrite_existing(self, value: bool):
+        TypeCheck.require_prop(value, bool, "overwrite_existing")
+        self._overwrite_existing = value
 
     def use_authentication(
         self,
@@ -197,8 +211,10 @@ class FathomDeployment:
         self._check_deployment_preconditions()
 
         server = Server(self._location, self._client_authentication)
-        intent = ClientDeploymentIntent()
-        intent.project = self.get_project()
+        intent = ClientDeploymentIntent(
+            project = self.get_project(),
+            overwrite_existing = self._overwrite_existing,
+        )
 
         deployment_authorization = server.request_deployment(intent)
         if not deployment_authorization.is_granted():

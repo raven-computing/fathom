@@ -98,6 +98,7 @@ class DeployCommand(ClientCommand):
             )
         )
         deployment.set_project(project)
+        deployment.overwrite_existing = self.args.overwrite_existing
         deployment.add_resource(docs)
 
         LOG.i("Deploying project %s", project)

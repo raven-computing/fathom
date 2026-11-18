@@ -31,7 +31,8 @@ from raven.fathom.base import Project, Package
 from raven.fathom.server.dao import DataAccess, FailedQueryException
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import DomainException
-from raven.fathom.server.domain.staging import StagingArea, StagingAreaException
+from raven.fathom.server.domain.staging import StagingArea
+from raven.fathom.server.domain.staging import StagingAreaException
 
 
 LATEST_LINKAGE_SYMLINK_FILENAME: Final[str] = "latest"

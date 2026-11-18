@@ -28,7 +28,7 @@ from raven.fathom.server.core.setup import confirm_system_privileges
 from raven.fathom.server.core.exceptions import DomainException
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.user_management import UserInternalException
-from raven.fathom.server.domain.project import ProjectInternalException
+from raven.fathom.server.domain import ProjectInternalException
 
 if TYPE_CHECKING:
     from raven.fathom.server.cli.arguments import AppArgs

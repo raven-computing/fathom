@@ -19,9 +19,9 @@ from raven.fathom.base import ResponseCode, Package
 from raven.fathom.base import DeploymentAuthorization, ClientDeploymentIntent
 from raven.fathom.base import ProcessingException
 from raven.fathom.server.security import DeploymentAuthorizer
-from raven.fathom.server.domain.deployment import DeploymentManager
-from raven.fathom.server.domain.deployment import DeploymentResult
-from raven.fathom.server.domain.deployment import DeploymentExecutionException
+from raven.fathom.server.domain import DeploymentManager
+from raven.fathom.server.domain import DeploymentResult
+from raven.fathom.server.domain import DeploymentExecutionException
 from raven.fathom.server.handlers.deployment_transaction import (
     DeploymentTransactionHandler
 )

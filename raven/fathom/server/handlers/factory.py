@@ -21,9 +21,9 @@ from raven.fathom.base import SystemClock
 from raven.fathom.server.core.config import ConfigurationManager
 from raven.fathom.server.security import DeploymentAuthorizer, UserAuthorizer
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.domain.deployment import DeploymentManager
 from raven.fathom.server.core.user_management import UserManager
-from raven.fathom.server.domain.project import ProjectManager
+from raven.fathom.server.domain import DeploymentManager
+from raven.fathom.server.domain import ProjectManager
 
 from .handler import ActionHandler
 from .server_info import ServerInfoHandler

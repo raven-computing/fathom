@@ -20,10 +20,10 @@ from raven.fathom.base import Configuration
 from raven.fathom.base import InputPrompt
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.datastore import DatabaseManager, DatabaseException
-from raven.fathom.server.domain.deployment import DeploymentSite
 from raven.fathom.server.core.logging import LogLevel, Logger
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.domain.staging import StagingArea
+from raven.fathom.server.domain import DeploymentSite
+from raven.fathom.server.domain import StagingArea
 from raven.fathom.server.updates import FailedApplicationUpdateException
 from raven.fathom.server.updates import UpdateManager
 from raven.fathom.server.core.exceptions import FathomServerException

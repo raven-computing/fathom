@@ -19,7 +19,7 @@ from raven.fathom.base import TableFormatter
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.domain.project import ProjectManager
+from raven.fathom.server.domain import ProjectManager
 
 
 LOG = Logger.get()

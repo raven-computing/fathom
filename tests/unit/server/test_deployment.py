@@ -19,11 +19,11 @@ from raven.fathom.base import Configuration
 from raven.fathom.base import ApplicationContext
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.server.core.config import ServerConfiguration
-from raven.fathom.server.domain.deployment import DeploymentSite
+from raven.fathom.server.domain import DeploymentSite
+from raven.fathom.server.domain import DeploymentManager
+from raven.fathom.server.domain import DeploymentResult
+from raven.fathom.server.domain import DeploymentExecutionException
 from raven.fathom.server.domain.deployment import DeploymentExecutor
-from raven.fathom.server.domain.deployment import DeploymentManager
-from raven.fathom.server.domain.deployment import DeploymentResult
-from raven.fathom.server.domain.deployment import DeploymentExecutionException
 
 from tests.unit import TestFixture
 from tests.unit import TestCase

@@ -22,7 +22,7 @@ from raven.fathom.server.handlers.project import (
     ProjectUserUnassignHandler,
 )
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.domain.project import (
+from raven.fathom.server.domain import (
     ProjectManager,
     ProjectNotFoundException,
 )

@@ -18,10 +18,11 @@ from raven.fathom.base import File, FilePermission, FileAccess
 from raven.fathom.base import Package
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.models import ProjectVersion, StagingAllocation
-from raven.fathom.server.domain.staging import StagingArea, StagingSpot
-from raven.fathom.server.domain.staging import StagingAreaException
-from raven.fathom.server.domain.staging import InvalidStagingSpotException
-from raven.fathom.server.domain.staging import Unpacker, UnpackException
+from raven.fathom.server.domain import StagingArea, StagingSpot
+from raven.fathom.server.domain import StagingAreaException
+from raven.fathom.server.domain import InvalidStagingSpotException
+from raven.fathom.server.domain import UnpackException
+from raven.fathom.server.domain.staging import Unpacker
 
 from tests.unit import TestFixture
 from tests.unit import TestCase

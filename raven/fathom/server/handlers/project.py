@@ -20,7 +20,7 @@ from raven.fathom.base import ProcessingException
 from raven.fathom.base import Project, User
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthorizer
-from raven.fathom.server.domain.project import (
+from raven.fathom.server.domain import (
     ProjectManager,
     ProjectManagementException,
     ProjectNotFoundException,

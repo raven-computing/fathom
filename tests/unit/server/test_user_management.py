@@ -18,7 +18,7 @@ from raven.fathom.base import Project, User, UserState
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import Settings
-from raven.fathom.server.domain.project import (
+from raven.fathom.server.domain import (
     ProjectManagementException,
     ProjectManager,
 )

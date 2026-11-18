@@ -25,7 +25,7 @@ from raven.fathom.base import (
     ServerResponse,
     User,
 )
-from raven.fathom.server.domain.deployment import (
+from raven.fathom.server.domain import (
     DeploymentManager,
     DeploymentResult,
 )

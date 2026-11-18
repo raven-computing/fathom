@@ -17,7 +17,7 @@
 from raven.fathom.base import Project
 from raven.fathom.base import User
 from raven.fathom.server.dao import DataAccess
-from raven.fathom.server.domain.project import ProjectManager
+from raven.fathom.server.domain import ProjectManager
 
 from tests.integration import DatabaseIntegrationTestCase
 

@@ -29,13 +29,10 @@ from raven.fathom.base import FileCreationException, FilePermissionException
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import Project, Package
 from raven.fathom.server.dao import DataAccess, FailedQueryException
-from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.config import ServerConfiguration
 from raven.fathom.server.core.exceptions import DomainException
 from raven.fathom.server.domain.staging import StagingArea, StagingAreaException
 
-
-LOG = Logger.get()
 
 LATEST_LINKAGE_SYMLINK_FILENAME: Final[str] = "latest"
 
@@ -127,10 +124,7 @@ class DeploymentSite:
         """
         try:
             return self._check_site_dir_access()
-        except FileIOException as ex:
-            LOG.e(
-                "File I/O error while checking deployment site access: %s", ex
-            )
+        except FileIOException:
             return False
 
     def contains(self, project: Project) -> bool:

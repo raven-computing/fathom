@@ -186,7 +186,7 @@ class TestDeploymentManager(
         manager = DeploymentManager(self.config)
         result = manager.deploy(self.intent, self.packed_package)
         self.assertIsInstance(result, DeploymentResult)
-        self.assertTrue(result.successful)
+        self.assertTrue(result.ok)
         self.assertIn("Successfully deployed package", result.user_message)
 
     def test_deploy_is_rejected_when_project_version_missing(self):
@@ -195,7 +195,7 @@ class TestDeploymentManager(
         manager = DeploymentManager(self.config)
         result = manager.deploy(self.intent, self.packed_package)
         self.assertIsInstance(result, DeploymentResult)
-        self.assertFalse(result.successful)
+        self.assertFalse(result.ok)
         self.assertIn(
             "Cannot deploy package without project version",
             result.user_message
@@ -210,7 +210,7 @@ class TestDeploymentManager(
         manager = DeploymentManager(self.config)
         result = manager.deploy(self.intent, self.packed_package)
         self.assertIsInstance(result, DeploymentResult)
-        self.assertFalse(result.successful)
+        self.assertFalse(result.ok)
         self.assertIn("Cannot deploy project", result.user_message)
         self.assertIn(
             "because that version is already deployed and "

@@ -101,7 +101,7 @@ class TestDeploymentIntentHandler(TestCase):
         )
         self.authorizer.authorize_intent.return_value = granted
         self.manager.can_deploy.return_value = DeploymentResult(
-            successful=True,
+            ok=True,
             user_message="Can be deployed",
         )
 
@@ -135,7 +135,7 @@ class TestDeploymentIntentHandler(TestCase):
         )
         self.authorizer.authorize_intent.return_value = granted
         self.manager.can_deploy.return_value = DeploymentResult(
-            successful=False,
+            ok=False,
             user_message="Deployment is blocked",
         )
 

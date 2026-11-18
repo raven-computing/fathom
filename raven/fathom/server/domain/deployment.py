@@ -367,12 +367,12 @@ class DeploymentResult:
     """The result of an executed deployment.
 
     Attributes:
-        successful (bool): Whether the deployment was successful.
+        ok (bool): Whether the deployment was successful.
         user_message (str): A message to be displayed to the user.
         error (DeploymentError): The error that was encountered. May be `None`.
     """
 
-    successful: bool
+    ok: bool
 
     user_message: str
 
@@ -403,14 +403,14 @@ class DeploymentManager:
         project = intent.project
         if project is None:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message="Cannot deploy package without project",
                 error=DeploymentError.MISSING_INPUT,
             )
 
         if project.version is None:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message="Cannot deploy package without project version",
                 error=DeploymentError.MISSING_INPUT,
             )
@@ -418,7 +418,7 @@ class DeploymentManager:
         deployment_site = DeploymentSite(self._config)
         if deployment_site.contains(project) and not intent.overwrite_existing:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message=(
                     f"Cannot deploy project {project} because that version "
                     "is already deployed and the 'overwrite-existing' setting "
@@ -428,7 +428,7 @@ class DeploymentManager:
             )
 
         return DeploymentResult(
-            successful=True,
+            ok=True,
             user_message="Can be deployed",
         )
 
@@ -460,14 +460,14 @@ class DeploymentManager:
         project = intent.project
         if project is None:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message="Cannot deploy package without project",
                 error=DeploymentError.MISSING_INPUT,
             )
 
         if project.version is None:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message="Cannot deploy package without project version",
                 error=DeploymentError.MISSING_INPUT,
             )
@@ -475,7 +475,7 @@ class DeploymentManager:
         deployment_site = DeploymentSite(self._config)
         if deployment_site.contains(project) and not intent.overwrite_existing:
             return DeploymentResult(
-                successful=False,
+                ok=False,
                 user_message=(
                     f"Cannot deploy project {project} because that version "
                     "is already deployed and the 'overwrite-existing' setting "
@@ -492,7 +492,7 @@ class DeploymentManager:
         executor.overwrite_existing = intent.overwrite_existing
         executor.deploy(project)
         return DeploymentResult(
-            successful=True,
+            ok=True,
             user_message=f"Successfully deployed package for {project}",
         )
 

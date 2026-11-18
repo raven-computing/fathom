@@ -97,13 +97,13 @@ class DeploymentTransactionHandler(ActionHandler):
         LOG.i(
             "Deployment for project %s %s",
             intent.project,
-            "was successful" if result.successful else "has failed"
+            "was successful" if result.ok else "has failed"
         )
         response.deployment_message = DeploymentMessage(
-            is_successful=result.successful,
+            is_successful=result.ok,
             message=result.user_message,
         )
-        if result.successful:
+        if result.ok:
             response.add_informational(
                 ResponseMessage(
                     code=ResponseCode.SUCCESSFUL_COMPLETION,

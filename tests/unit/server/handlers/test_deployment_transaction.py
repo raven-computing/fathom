@@ -52,12 +52,12 @@ class TestDeploymentTransactionHandler(TestCase):
         )
         self.mock_manager = Mock(spec_set=DeploymentManager)
         self.mock_manager.deploy.return_value = DeploymentResult(
-            successful=True,
+            ok=True,
             user_message="Deployment succeeded",
         )
         self.mock_manager_failure = Mock(spec_set=DeploymentManager)
         self.mock_manager_failure.deploy.return_value = DeploymentResult(
-            successful=False,
+            ok=False,
             user_message="Deployment failed",
         )
         self.client_request = ClientRequest(Interaction.TRANSACT_DEPLOYMENT)

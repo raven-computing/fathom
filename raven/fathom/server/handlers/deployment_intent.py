@@ -67,7 +67,7 @@ class DeploymentIntentHandler(ActionHandler):
         authorization = self._authorizer.authorize_intent(intent)
         if authorization.is_granted():
             result = self._manager.can_deploy(intent)
-            if result.successful:
+            if result.ok:
                 response.add_informational(
                     ResponseMessage(
                         code=ResponseCode.SUCCESSFUL_COMPLETION,

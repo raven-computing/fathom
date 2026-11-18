@@ -401,19 +401,10 @@ class DeploymentManager:
             DeploymentResult: Whether deployment is allowed.
         """
         project = intent.project
-        if project is None:
-            return DeploymentResult(
-                ok=False,
-                user_message="Cannot deploy package without project",
-                error=DeploymentError.MISSING_INPUT,
-            )
+        if error := self._check_project(project):
+            return error
 
-        if project.version is None:
-            return DeploymentResult(
-                ok=False,
-                user_message="Cannot deploy package without project version",
-                error=DeploymentError.MISSING_INPUT,
-            )
+        assert project is not None
 
         deployment_site = DeploymentSite(self._config)
         if deployment_site.contains(project) and not intent.overwrite_existing:
@@ -458,6 +449,26 @@ class DeploymentManager:
             DeploymentExecutionException: If an unexpected error occurs.
         """
         project = intent.project
+        check = self.can_deploy(intent)
+        if not check.ok:
+            return check
+
+        assert project is not None
+
+        self._create_project_version_record(project)
+
+        staging_area = StagingArea(self._config)
+        staging_area.put(project, package)
+        deployment_site = DeploymentSite(self._config)
+        executor = DeploymentExecutor(staging_area, deployment_site)
+        executor.overwrite_existing = intent.overwrite_existing
+        executor.deploy(project)
+        return DeploymentResult(
+            ok=True,
+            user_message=f"Successfully deployed package for {project}",
+        )
+
+    def _check_project(self, project):
         if project is None:
             return DeploymentResult(
                 ok=False,
@@ -472,29 +483,7 @@ class DeploymentManager:
                 error=DeploymentError.MISSING_INPUT,
             )
 
-        deployment_site = DeploymentSite(self._config)
-        if deployment_site.contains(project) and not intent.overwrite_existing:
-            return DeploymentResult(
-                ok=False,
-                user_message=(
-                    f"Cannot deploy project {project} because that version "
-                    "is already deployed and the 'overwrite-existing' setting "
-                    "was disabled or not authorized."
-                ),
-                error=DeploymentError.PROJECT_VERSION_ALREADY_DEPLOYED,
-            )
-
-        self._create_project_version_record(project)
-
-        staging_area = StagingArea(self._config)
-        staging_area.put(project, package)
-        executor = DeploymentExecutor(staging_area, deployment_site)
-        executor.overwrite_existing = intent.overwrite_existing
-        executor.deploy(project)
-        return DeploymentResult(
-            ok=True,
-            user_message=f"Successfully deployed package for {project}",
-        )
+        return None
 
     def _create_project_version_record(self, project):
         try:

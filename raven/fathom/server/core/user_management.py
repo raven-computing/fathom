@@ -14,6 +14,7 @@
 #
 """Management of dedicated application users."""
 
+from enum import StrEnum
 from typing import Final
 
 from raven.fathom.base import TypeCheck
@@ -61,6 +62,12 @@ class UserInternalException(UserManagementException):
 
     Signals a lower-level internal system error that is not a caller mistake.
     """
+
+
+class UserPermissionKey(StrEnum):
+    """Supported user permission keys."""
+
+    ALLOW_OVERWRITE = "allow_overwrite"
 
 
 class _SystemUser:
@@ -317,6 +324,60 @@ class UserManager:
 
         return result
 
+    def set_user_permission(
+        self,
+        user: User,
+        permission_key: UserPermissionKey,
+        value: str,
+    ):
+        """Sets a permission for a registered Fathom user.
+
+        Args:
+            user (User): The user whose permission should be changed.
+            permission_key (UserPermissionKey): The permission key to set.
+            value (str): The new permission value.
+
+        Raises:
+            UserManagementException: If the user or permission is invalid or
+                the update fails.
+        """
+        TypeCheck.require_arg(permission_key, UserPermissionKey)
+        if not user.identifier:
+            raise InvalidUserRequestException(
+                "Cannot set user permission. User identifier must not be empty"
+            )
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise UserNotFoundException(
+                f"User '{user.identifier}' does not exist"
+            )
+
+        if user_record.is_system_user():
+            raise UserStateException(
+                "Permissions of the system user cannot be changed"
+            )
+
+        permission = self._ds.users().find_permission(user_record)
+        if permission_key == UserPermissionKey.ALLOW_OVERWRITE:
+            permission.allow_overwrite = self._convert_bool_permission_value(
+                permission_key,
+                value
+            )
+        else:
+            raise UserInternalException(
+                f"Invalid permission '{permission_key}'"
+            )
+
+        try:
+            self._ds.users().update_permission(permission)
+        except FailedUpdateQueryException as ex:
+            raise UserInternalException(
+                f"Failed to set permission '{permission_key}' "
+                f"for user '{user.identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
     def delete_user(self, user: User):
         """Deletes the Fathom user and associated records.
 
@@ -351,3 +412,17 @@ class UserManager:
                 f"Failed to delete user '{user.identifier}'. "
                 "An internal error has occurred."
             ) from ex
+
+    def _convert_bool_permission_value(self, permission_key, value):
+        normalized_value = value.upper()
+        if normalized_value in ("ON", "YES", "1", "TRUE"):
+            permission_value = True
+        elif normalized_value in ("OFF", "NO", "0", "FALSE"):
+            permission_value = False
+        else:
+            raise InvalidUserRequestException(
+                    f"Invalid value '{value}' for permission "
+                    f"'{permission_key}'. Must be either 'ON' or 'OFF'"
+                )
+
+        return permission_value

@@ -14,10 +14,15 @@
 #
 """Unit tests for server-side user management logic."""
 
+from typing import cast
+
 from raven.fathom.base import Project, User, UserState
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
 from raven.fathom.server.models import Settings
+from raven.fathom.server.models import UserPermission
+from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
+from raven.fathom.server.models import SYSTEM_USER_NAME
 from raven.fathom.server.domain import (
     ProjectManagementException,
     ProjectManager,
@@ -25,9 +30,11 @@ from raven.fathom.server.domain import (
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import (
     UserManagementException,
-    UserManager,
     UserNotFoundException,
+    UserStateException,
     InvalidUserRequestException,
+    UserManager,
+    UserPermissionKey,
 )
 
 from tests.unit import TestCase
@@ -129,6 +136,88 @@ class TestUserManager(TestCase):
         self.assertEqual(["alpha"], [user.identifier for user in users])
         self.assertFalse(users[0].is_admin)
         self.assertEqual(users[0].state, UserState.ACTIVE)
+
+    def test_set_user_permission_updates_record(self):
+        user_record = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        permission = UserPermission(
+            user=user_record,
+            allow_overwrite=False,
+        )
+        self.ds.users().find_by_identifier.return_value = user_record
+        self.ds.users().find_permission.return_value = permission
+
+        self.manager.set_user_permission(
+            User(identifier="test-user"),
+            UserPermissionKey.ALLOW_OVERWRITE,
+            "yes",
+        )
+
+        self.assertTrue(permission.allow_overwrite)
+        self.ds.users().update_permission.assert_called_once_with(permission)
+
+    def test_set_user_permission_requires_permission_key_enum(self):
+        with self.assertRaises(TypeError):
+            self.manager.set_user_permission(
+                User(identifier="test-user"),
+                cast(UserPermissionKey, "unknown_permission"),
+                "true",
+            )
+
+    def test_set_user_permission_rejects_missing_user(self):
+        self.ds.users().find_by_identifier.return_value = None
+
+        with self.assertRaises(UserNotFoundException):
+            self.manager.set_user_permission(
+                User(identifier="missing-user"),
+                UserPermissionKey.ALLOW_OVERWRITE,
+                "true",
+            )
+
+    def test_set_user_permission_rejects_system_user(self):
+        user_record = UserModel(
+            identifier=SYSTEM_USER_IDENTIFIER,
+            name=SYSTEM_USER_NAME,
+            role=UserRole.SYSTEM,
+        )
+        self.ds.users().find_by_identifier.return_value = user_record
+
+        with self.assertRaises(UserStateException) as raised:
+            self.manager.set_user_permission(
+                User(identifier=SYSTEM_USER_IDENTIFIER),
+                UserPermissionKey.ALLOW_OVERWRITE,
+                "false",
+            )
+
+        self.assertIn(
+            "Permissions of the system user cannot be changed",
+            str(raised.exception),
+        )
+        self.ds.users().find_permission.assert_not_called()
+        self.ds.users().update_permission.assert_not_called()
+
+    def test_set_user_permission_rejects_invalid_boolean_value(self):
+        user_record = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        permission = UserPermission(
+            user=user_record,
+            allow_overwrite=False,
+        )
+        self.ds.users().find_by_identifier.return_value = user_record
+        self.ds.users().find_permission.return_value = permission
+
+        with self.assertRaises(InvalidUserRequestException) as raised:
+            self.manager.set_user_permission(
+                User(identifier="test-user"),
+                UserPermissionKey.ALLOW_OVERWRITE,
+                "enabled",
+            )
+
+        self.assertIn("Invalid value 'enabled'", str(raised.exception))
 
 
 if __name__ == "__main__":

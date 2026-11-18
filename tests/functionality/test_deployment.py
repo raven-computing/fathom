@@ -226,6 +226,42 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
         self.assertClientExitStatus(ExitStatus.FAILURE)
 
+    def test_server_cli_permission_controls_deployment_overwrite(self):
+        self.client.execute("deploy")
+        self.assertClientSuccess()
+
+        self.server.stdin = ["fathom", "fathom"]
+        self.server.execute(
+            "user",
+            "permission",
+            "set",
+            "alpha",
+            "allow_overwrite",
+            "off",
+        )
+
+        self.assertServerSuccess()
+        self.client.execute("deploy", "--overwrite-existing")
+        self.assertClientFailure()
+        self.assertClientStdoutContains(
+            "does not have permission to overwrite"
+        )
+
+        self.server.stdin = ["fathom", "fathom"]
+        self.server.execute(
+            "user",
+            "permission",
+            "set",
+            "alpha",
+            "allow_overwrite",
+            "YeS",
+        )
+
+        self.assertServerSuccess()
+        self.client.execute("deploy", "--overwrite-existing")
+        self.assertClientSuccess()
+        self.assertClientStdoutContains("Deployment SUCCESSFUL")
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

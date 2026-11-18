@@ -133,6 +133,9 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
 
         return permission
 
+    def update_permission(self, permission: UserPermission):
+        UpdateQuery[UserPermission](permission).execute()
+
     def find_deployment_authorization_by_token(
         self,
         token: str

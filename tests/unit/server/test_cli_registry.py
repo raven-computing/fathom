@@ -24,6 +24,7 @@ from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
+from raven.fathom.server.cli.user import UserPermissionSetCommand
 from raven.fathom.server.cli.command import ServerManagementCommand
 from raven.fathom.server.cli.project import ProjectCreateCommand
 from raven.fathom.server.cli.project import ProjectDeleteCommand
@@ -66,6 +67,18 @@ class TestServerCommandRegistry(TestCase):
         self.assertIsInstance(command, ServerManagementCommand)
         assert isinstance(command, ServerManagementCommand)
         self.assertIsInstance(command.command, UserDeleteCommand)
+
+    def test_registry_works_for_user_permission_set_command(self):
+        command = create_command(
+            AppArgs(
+                command=AppCommand.USER,
+                user_command=AppCommand.PERMISSION,
+                user_permission_command=AppCommand.SET,
+            )
+        )
+        self.assertIsInstance(command, ServerManagementCommand)
+        assert isinstance(command, ServerManagementCommand)
+        self.assertIsInstance(command.command, UserPermissionSetCommand)
 
     def test_registry_works_for_project_create_command(self):
         command = create_command(

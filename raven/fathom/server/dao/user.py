@@ -75,6 +75,14 @@ class UserDAO(DataAccessObject[User]):
         """
 
     @abstractmethod
+    def update_permission(self, permission: UserPermission):
+        """Updates a user's permission record.
+
+        Args:
+            permission (UserPermission): The permission record to update.
+        """
+
+    @abstractmethod
     def find_deployment_authorization_by_token(
         self,
         token: str

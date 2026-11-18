@@ -63,6 +63,43 @@ class TestServerAppArgs(TestCase):
         self.assertEqual(args.user_command, "delete")
         self.assertEqual(args.user_identifier, "alpha")
 
+    def test_user_permission_set_arguments_are_parsed(self):
+        for value in ("ON", "yes", "1", "TrUe"):
+            with self.subTest(value=value):
+                args = parse_args([
+                    "fathom-server",
+                    "user",
+                    "permission",
+                    "set",
+                    "alpha",
+                    "allow_overwrite",
+                    value,
+                ])
+
+                self.assertEqual(args.command, "user")
+                self.assertEqual(args.user_command, "permission")
+                self.assertEqual(args.user_permission_command, "set")
+                self.assertEqual(args.user_identifier, "alpha")
+                self.assertEqual(
+                    args.user_permission_key,
+                    "allow_overwrite",
+                )
+                self.assertEqual(args.user_permission_value, value)
+
+        for value in ("OFF", "no", "0", "FaLsE"):
+            with self.subTest(value=value):
+                args = parse_args([
+                    "fathom-server",
+                    "user",
+                    "permission",
+                    "set",
+                    "alpha",
+                    "allow_overwrite",
+                    value,
+                ])
+
+                self.assertEqual(args.user_permission_value, value)
+
     def test_project_create_arguments_are_parsed(self):
         args = parse_args([
             "fathom-server", "project", "create", "alpha-project",

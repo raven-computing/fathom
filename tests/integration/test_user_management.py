@@ -19,6 +19,7 @@ from typing import cast
 from raven.fathom.base.user import User, UserState
 from raven.fathom.server.dao import DataAccess
 from raven.fathom.server.models import UserPermission
+from raven.fathom.server.core.user_management import UserPermissionKey
 from raven.fathom.server.models import UserProjectRel, AuthDeployment
 from raven.fathom.server.datastore.orm.field import OrmRecordId
 from raven.fathom.server.models.user import UserRole
@@ -159,6 +160,38 @@ class TestUserManagement(DatabaseIntegrationTestCase):
         ).count(), 0)
         # pylint: disable=no-value-for-parameter
         self.assertEqual(AuthDeployment.select().count(), 0) # type: ignore
+
+    def test_can_set_user_permission(self):
+        user_record = self.db.users().find_by_identifier("test-user-1")
+        assert user_record is not None
+        permission = self.db.users().find_permission(user_record)
+        self.assertTrue(permission.allow_overwrite)
+
+        self.mananger.set_user_permission(
+            User(identifier="test-user-1"),
+            UserPermissionKey.ALLOW_OVERWRITE,
+            "OFF",
+        )
+
+        persisted = self.db.users().find_permission(user_record)
+        self.assertFalse(persisted.allow_overwrite)
+
+    def test_cannot_set_system_user_permission(self):
+        with self.assertRaises(UserStateException) as raised:
+            self.mananger.set_user_permission(
+                User(identifier="fathom"),
+                UserPermissionKey.ALLOW_OVERWRITE,
+                "OFF",
+            )
+
+        self.assertIn(
+            "Permissions of the system user cannot be changed",
+            str(raised.exception),
+        )
+        system_user = self.db.users().find_by_identifier("fathom")
+        assert system_user is not None
+        permission = self.db.users().find_permission(system_user)
+        self.assertTrue(permission.allow_overwrite)
 
     def test_delete_rejects_system_user(self):
         with self.assertRaises(UserStateException) as raised:

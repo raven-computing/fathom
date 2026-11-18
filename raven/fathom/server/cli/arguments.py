@@ -25,6 +25,8 @@ from raven.fathom.base import ArgumentParser
 from raven.fathom.base.context import APPLICATION_PROJECT_ID, APPLICATION_NAME
 from raven.fathom.server.net.defaults import DEFAULT_SERVER_PORT
 
+# pylint: disable=too-many-locals
+
 
 def port_type(arg: str) -> int:
     """Validates and converts the argument for the port number."""
@@ -54,6 +56,10 @@ class AppCommand(StrEnum):
 
     DELETE = "delete"
 
+    PERMISSION = "permission"
+
+    SET = "set"
+
 
 @dataclass(frozen=True)
 class AppArgs:
@@ -79,6 +85,8 @@ class AppArgs:
 
     project_command: AppCommand = AppCommand.UNSPECIFIED
 
+    user_permission_command: AppCommand = AppCommand.UNSPECIFIED
+
     user_identifier: str = ""
 
     user_name: str = ""
@@ -90,6 +98,10 @@ class AppArgs:
     project_name: str = ""
 
     project_description: str = ""
+
+    user_permission_key: str = ""
+
+    user_permission_value: str = ""
 
     ready_event: Optional[Event] = None
 
@@ -230,6 +242,36 @@ def parse_args(argv: list[str]) -> AppArgs:
         help="The unique identifier of the user to delete."
     )
 
+    permission_parser = user_subparsers.add_parser(
+        str(AppCommand.PERMISSION),
+        help=f"Manage permissions for a {APPLICATION_NAME} user."
+    )
+    permission_subparsers = permission_parser.add_subparsers(
+        dest="user_permission_command",
+        required=True,
+        metavar="<COMMAND>",
+    )
+    permission_set = permission_subparsers.add_parser(
+        str(AppCommand.SET),
+        help="Set a permission for a user."
+    )
+    permission_set.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user whose permission to set."
+    )
+    permission_set.add_argument(
+        "permission",
+        choices=("allow_overwrite",),
+        metavar="<PERMISSION>",
+        help="The permission key to set."
+    )
+    permission_set.add_argument(
+        "value",
+        metavar="<VALUE>",
+        help="The permission value."
+    )
+
     project_parser = subparsers.add_parser(
         str(AppCommand.PROJECT),
         help="Manage deployable projects."
@@ -301,12 +343,21 @@ def parse_args(argv: list[str]) -> AppArgs:
         project_command=AppCommand(
             getattr(args, "project_command", str(AppCommand.UNSPECIFIED))
         ),
+        user_permission_command=AppCommand(
+            getattr(
+                args,
+                "user_permission_command",
+                str(AppCommand.UNSPECIFIED),
+            )
+        ),
         user_identifier=getattr(args, "identifier", ""),
         user_name=getattr(args, "name", ""),
         user_is_admin=getattr(args, "admin", False),
         project_identifier=getattr(args, "identifier", ""),
         project_name=getattr(args, "name", ""),
         project_description=getattr(args, "description", ""),
+        user_permission_key=getattr(args, "permission", ""),
+        user_permission_value=getattr(args, "value", ""),
         ready_event=ready_event,
         shutdown_event=shutdown_event,
     )

@@ -20,7 +20,10 @@ from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.core.user_management import UserManager
+from raven.fathom.server.core.user_management import (
+    UserManager,
+    UserPermissionKey,
+)
 
 
 LOG = Logger.get()
@@ -94,4 +97,34 @@ class UserDeleteCommand(ServerCommand):
         LOG.d("Deleting user '%s'", user.identifier)
         UserManager(UserAuthenticator()).delete_user(user)
         LOG.i("Deleted user '%s'.", self.args.user_identifier)
+        return ExitStatus.SUCCESS
+
+
+class UserPermissionSetCommand(ServerCommand):
+    """Implementation of `user permission set`."""
+
+    def execute(self) -> int:
+        user = User(identifier=self.args.user_identifier)
+        try:
+            permission_key = UserPermissionKey(self.args.user_permission_key)
+        except ValueError:
+            LOG.e("Invalid permission key: %s", self.args.user_permission_key)
+            return ExitStatus.FAILURE
+
+        LOG.d(
+            "Setting permission '%s' for user '%s'",
+            permission_key,
+            user.identifier,
+        )
+        UserManager(UserAuthenticator()).set_user_permission(
+            user,
+            permission_key,
+            self.args.user_permission_value,
+        )
+        LOG.i(
+            "Set permission '%s' for user %s to %s",
+            permission_key,
+            user.identifier,
+            self.args.user_permission_value,
+        )
         return ExitStatus.SUCCESS

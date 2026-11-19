@@ -32,7 +32,7 @@ from raven.fathom.server.domain import DeploymentExecutionException
 
 LOG = Logger.get()
 
-AUTHORIZATION_CHECK_FAILED: Final = None
+AUTHORIZATION_DENIED: Final = None
 
 
 class DeploymentTransactionHandler(ActionHandler):
@@ -47,7 +47,7 @@ class DeploymentTransactionHandler(ActionHandler):
 
     def handle(self, request: ClientRequest, response: ServerResponse):
         authorization = self._check_authorization(request, response)
-        if authorization is AUTHORIZATION_CHECK_FAILED:
+        if authorization is AUTHORIZATION_DENIED:
             return
 
         package = request.package
@@ -69,12 +69,12 @@ class DeploymentTransactionHandler(ActionHandler):
         alleged = request.deployment_authorization
         if alleged is None or not alleged.token:
             self._respond_missing_auth(request, response)
-            return AUTHORIZATION_CHECK_FAILED
+            return AUTHORIZATION_DENIED
 
         authorization = self._authorizer.check_authorization(alleged.token)
         if not authorization.is_granted():
             self._respond_auth_denied(request, response, authorization)
-            return AUTHORIZATION_CHECK_FAILED
+            return AUTHORIZATION_DENIED
 
         return authorization
 

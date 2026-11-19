@@ -163,6 +163,21 @@ class DeploymentAuthorizer:
 
         return self._create_deployment_auth_from_stored(auth)
 
+    def revoke_authorization(self, authorization: DeploymentAuthorization):
+        """Revoke a previously granted deployment authorization.
+
+        Args:
+            authorization (DeploymentAuthorization): The authorization that
+                should be revoked. Is mutated to invalidate a granted state.
+        """
+        TypeCheck.require_arg(authorization, DeploymentAuthorization)
+        if authorization.token:
+            self._ds.users().revoke_deployment_authorization_by_token(
+                authorization.token
+            )
+
+        authorization.reject("Authorization has been revoked")
+
     def clear_authorization(self, authorization: DeploymentAuthorization):
         """Clears a previously granted deployment authorization.
 
@@ -171,7 +186,8 @@ class DeploymentAuthorizer:
 
         Args:
             authorization (DeploymentAuthorization): The used up authorization
-                that should be cleared from the system.
+                that should be cleared from the system. Is not mutated as a
+                result of this operation.
         """
         TypeCheck.require_arg(authorization, DeploymentAuthorization)
         if authorization.token:

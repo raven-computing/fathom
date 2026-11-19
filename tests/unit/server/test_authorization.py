@@ -214,6 +214,29 @@ class TestDeploymentAuthorizer(TestCase):
         )
         delete_method.assert_called_once_with(auth.token)
 
+    def test_granted_authorization_is_revoked_by_token(self):
+        auth = DeploymentAuthorizer(self._clock).authorize_intent(
+            self.valid_intent
+        )
+        token = auth.token
+        authorizer = DeploymentAuthorizer(self._clock)
+
+        authorizer.revoke_authorization(auth)
+
+        revoke_method = (
+            self.dao.users().revoke_deployment_authorization_by_token
+        )
+        revoke_method.assert_called_once_with(token)
+        self.assertFalse(auth.is_granted())
+        self.assertEqual(
+            auth.status,
+            DeploymentAuthorization.Status.REJECTED
+        )
+        self.assertEqual(
+            auth.rejection_reason,
+            "Authorization has been revoked"
+        )
+
     def test_denied_authorization_is_not_cleared(self):
         auth = DeploymentAuthorization.deny(
             DeploymentAuthorization.Status.INVALID_TOKEN

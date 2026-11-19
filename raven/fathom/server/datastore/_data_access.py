@@ -144,6 +144,12 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
             AuthDeployment.select().where(AuthDeployment.token == token)
         ).find_one()
 
+    def revoke_deployment_authorization_by_token(self, token: str):
+        auth = self.find_deployment_authorization_by_token(token)
+        if auth is not None:
+            auth.is_revoked = True
+            UpdateQuery[AuthDeployment](auth).execute()
+
     def delete_deployment_authorization_by_token(self, token: str):
         DeleteQuery[AuthDeployment](
             AuthDeployment.delete().where(AuthDeployment.token == token)

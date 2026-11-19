@@ -99,6 +99,15 @@ class UserDAO(DataAccessObject[User]):
         """
 
     @abstractmethod
+    def revoke_deployment_authorization_by_token(self, token: str):
+        """Revokes the deployment authorization with the specified token.
+
+        Args:
+            token (str): The secret token string corresponding to
+                the deployment authorization to revoke.
+        """
+
+    @abstractmethod
     def delete_deployment_authorization_by_token(self, token: str):
         """Deletes the deployment authorization with the specified token.
 

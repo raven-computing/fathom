@@ -126,6 +126,7 @@ class TestDeploymentIntentHandler(TestCase):
         self.assertIs(self.request.deployment_intent.user, self.user)
         self.assertIs(self.request.deployment_intent.project, self.project)
         self.assertIs(self.response.deployment_authorization, granted)
+        self.authorizer.revoke_authorization.assert_not_called()
 
     def test_handle_failed_can_deploy_rejects_authorization(self):
         granted = DeploymentAuthorization.grant(
@@ -152,6 +153,7 @@ class TestDeploymentIntentHandler(TestCase):
             "Deployment is blocked",
         )
         self.assertFalse(self.response.has_informational())
+        self.authorizer.revoke_authorization.assert_called_once_with(granted)
 
 
 if __name__ == "__main__":

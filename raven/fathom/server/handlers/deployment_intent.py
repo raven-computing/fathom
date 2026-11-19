@@ -75,6 +75,7 @@ class DeploymentIntentHandler(ActionHandler):
                     )
                 )
             else:
+                self._authorizer.revoke_authorization(authorization)
                 authorization.reject(result.user_message)
 
         LOG.i(

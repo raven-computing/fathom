@@ -52,7 +52,7 @@ class DeploymentTransactionHandler(ActionHandler):
 
         package = request.package
         if package is None:
-            self._respond_missing_package(response)
+            self._respond_missing_package(request, response)
             return
 
         assert authorization is not None
@@ -68,12 +68,12 @@ class DeploymentTransactionHandler(ActionHandler):
     def _check_authorization(self, request, response):
         alleged = request.deployment_authorization
         if alleged is None or not alleged.token:
-            self._respond_missing_auth(response)
+            self._respond_missing_auth(request, response)
             return AUTHORIZATION_CHECK_FAILED
 
         authorization = self._authorizer.check_authorization(alleged.token)
         if not authorization.is_granted():
-            self._respond_auth_denied(response, authorization)
+            self._respond_auth_denied(request, response, authorization)
             return AUTHORIZATION_CHECK_FAILED
 
         return authorization
@@ -123,7 +123,12 @@ class DeploymentTransactionHandler(ActionHandler):
             "An error has occurred while deploying package"
         )
 
-    def _respond_missing_package(self, response):
+    def _respond_missing_package(self, request, response):
+        LOG.i(
+            "User %s requested the execution of a deployment but "
+            "did not provide a package to deploy",
+            request.authenticated_user_id,
+        )
         self._set_error(
             response,
             ResponseMessage(
@@ -132,7 +137,13 @@ class DeploymentTransactionHandler(ActionHandler):
             )
         )
 
-    def _respond_auth_denied(self, response, authorization):
+    def _respond_auth_denied(self, request, response, authorization):
+        LOG.i(
+            "User %s requested the execution of a deployment but "
+            "the provided authorization is not valid: %r",
+            request.authenticated_user_id,
+            authorization.status,
+        )
         self._set_error(
             response,
             ResponseMessage(
@@ -141,7 +152,12 @@ class DeploymentTransactionHandler(ActionHandler):
             )
         )
 
-    def _respond_missing_auth(self, response):
+    def _respond_missing_auth(self, request, response):
+        LOG.i(
+            "User %s requested the execution of a deployment but "
+            "did not provide an authorization token",
+            request.authenticated_user_id,
+        )
         self._set_error(
             response,
             ResponseMessage(

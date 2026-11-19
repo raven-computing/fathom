@@ -443,7 +443,7 @@ class DeploymentManager:
             if not check.ok:
                 return check
 
-            self._create_project_version_record(intent.project)
+            self._create_project_version(intent.project)
             self._execute_deployment(intent, package)
             return DeploymentResult(
                 ok=True,
@@ -484,12 +484,19 @@ class DeploymentManager:
 
         return None
 
-    def _create_project_version_record(self, project):
+    def _create_project_version(self, project):
         try:
-            self._ds.projects().create_version(
+            dao = self._ds.projects()
+            version_does_not_exist = dao.find_version_by_identifier(
                 project.identifier,
                 project.version.identifier
-            )
+            ) is None
+
+            if version_does_not_exist:
+                dao.create_version(
+                    project.identifier,
+                    project.version.identifier
+                )
         except FailedQueryException as ex:
             raise DeploymentExecutionException(
                 "Failed to create record for new project version. "

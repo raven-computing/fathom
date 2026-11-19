@@ -198,6 +198,16 @@ class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
 
             project = project_record
 
+        version_already_exists = self.find_version_by_identifier(
+            project, version_identifier
+        ) is not None
+
+        if version_already_exists:
+            raise IllegalQueryException(
+                f"Cannot create project version '{version_identifier}': "
+                "The version record already exists"
+            )
+
         latest_version = self.find_version_by_identifier(
             project,
             project.latest_version

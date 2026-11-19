@@ -233,6 +233,8 @@ class FieldChecker:
         )
 
 
+Check = orm_impl.Check  # pylint: disable=invalid-name
+
 IntegerField = orm_impl.IntegerField
 
 BigIntegerField = orm_impl.BigIntegerField

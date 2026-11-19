@@ -22,6 +22,7 @@ from raven.fathom.server.datastore.orm import (
     TextField,
     BooleanField,
     ForeignKeyField,
+    Check,
 )
 
 
@@ -48,7 +49,9 @@ class ProjectVersion(Model):
         model=Project,
     )
 
-    version_sequence = IntegerField()
+    version_sequence = IntegerField(
+        constraints=[Check("version_sequence > 0")],
+    )
 
     version_identifier = CharField()
 

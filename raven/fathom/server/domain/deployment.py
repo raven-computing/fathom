@@ -21,6 +21,7 @@ resources in form of a `Package` to the Fathom server.
 from enum import Enum
 from dataclasses import dataclass
 from typing import Final, Optional
+from threading import RLock
 
 from raven.fathom.base import Configuration, ApplicationContext
 from raven.fathom.base import File, FilePermission, FileAccess, FileType
@@ -375,7 +376,10 @@ class DeploymentResult:
 
 
 class DeploymentManager:
-    """Manages Fathom server deployments."""
+    """Manages Fathom server deployments.
+
+    This class is MT-safe.
+    """
 
     def __init__(self, config: Configuration):
         """Initializes a new `DeploymentManager` instance.
@@ -385,6 +389,7 @@ class DeploymentManager:
         """
         self._config = config
         self._ds = DataAccess.instance()
+        self._lock = RLock()
 
     def can_deploy(self, intent: ClientDeploymentIntent) -> DeploymentResult:
         """Checks if the deployment can be carried out.
@@ -399,19 +404,9 @@ class DeploymentManager:
         if error := self._check_project(project):
             return error
 
-        assert project is not None
-
-        deployment_site = DeploymentSite(self._config)
-        if deployment_site.contains(project) and not intent.overwrite_existing:
-            return DeploymentResult(
-                ok=False,
-                user_message=(
-                    f"Cannot deploy project {project} because that version "
-                    "is already deployed and the 'overwrite-existing' setting "
-                    "was disabled or not authorized."
-                ),
-                error=DeploymentError.PROJECT_VERSION_ALREADY_DEPLOYED,
-            )
+        with self._lock:
+            if rejection := self._check_already_deployed(project, intent):
+                return rejection
 
         return DeploymentResult(
             ok=True,
@@ -443,25 +438,19 @@ class DeploymentManager:
                 or used.
             DeploymentExecutionException: If an unexpected error occurs.
         """
-        project = intent.project
-        check = self.can_deploy(intent)
-        if not check.ok:
-            return check
+        with self._lock:
+            check = self.can_deploy(intent)
+            if not check.ok:
+                return check
 
-        assert project is not None
-
-        self._create_project_version_record(project)
-
-        staging_area = StagingArea(self._config)
-        staging_area.put(project, package)
-        deployment_site = DeploymentSite(self._config)
-        executor = DeploymentExecutor(staging_area, deployment_site)
-        executor.overwrite_existing = intent.overwrite_existing
-        executor.deploy(project)
-        return DeploymentResult(
-            ok=True,
-            user_message=f"Successfully deployed package for {project}",
-        )
+            self._create_project_version_record(intent.project)
+            self._execute_deployment(intent, package)
+            return DeploymentResult(
+                ok=True,
+                user_message=(
+                    f"Successfully deployed package for {intent.project}"
+                ),
+            )
 
     def _check_project(self, project):
         if project is None:
@@ -480,6 +469,21 @@ class DeploymentManager:
 
         return None
 
+    def _check_already_deployed(self, project, intent):
+        deployment_site = DeploymentSite(self._config)
+        if deployment_site.contains(project) and not intent.overwrite_existing:
+            return DeploymentResult(
+                ok=False,
+                user_message=(
+                    f"Cannot deploy project {project} because that version "
+                    "is already deployed and the 'overwrite-existing' setting "
+                    "was disabled or not authorized."
+                ),
+                error=DeploymentError.PROJECT_VERSION_ALREADY_DEPLOYED,
+            )
+
+        return None
+
     def _create_project_version_record(self, project):
         try:
             self._ds.projects().create_version(
@@ -491,3 +495,18 @@ class DeploymentManager:
                 "Failed to create record for new project version. "
                 "An internal error has occurred"
             ) from ex
+
+    def _execute_deployment(
+        self,
+        intent: ClientDeploymentIntent,
+        package: Package
+    ):
+        project = intent.project
+        assert project is not None
+
+        staging_area = StagingArea(self._config)
+        staging_area.put(project, package)
+        deployment_site = DeploymentSite(self._config)
+        executor = DeploymentExecutor(staging_area, deployment_site)
+        executor.overwrite_existing = intent.overwrite_existing
+        executor.deploy(project)

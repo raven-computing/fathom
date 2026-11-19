@@ -163,6 +163,22 @@ class DeploymentAuthorizer:
 
         return self._create_deployment_auth_from_stored(auth)
 
+    def clear_authorization(self, authorization: DeploymentAuthorization):
+        """Clears a previously granted deployment authorization.
+
+        This is intended to be used after a successful deployment was
+        carried out in order to prevent reused of the specified authorization.
+
+        Args:
+            authorization (DeploymentAuthorization): The used up authorization
+                that should be cleared from the system.
+        """
+        TypeCheck.require_arg(authorization, DeploymentAuthorization)
+        if authorization.token:
+            self._ds.users().delete_deployment_authorization_by_token(
+                authorization.token
+            )
+
     def _is_user_assigned_to_project(
         self,
         user: StoredUser,

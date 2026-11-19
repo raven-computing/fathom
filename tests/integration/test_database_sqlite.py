@@ -159,6 +159,16 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
         )
         self.assertIsNone(auth)
 
+    def test_delete_deployment_authorization_by_token(self):
+        token = "abcdefghijklmnopqrstuvwxyz0123456789"
+        auth = self.db.users().find_deployment_authorization_by_token(token)
+        self.assertIsNotNone(auth)
+
+        self.db.users().delete_deployment_authorization_by_token(token)
+
+        deleted = self.db.users().find_deployment_authorization_by_token(token)
+        self.assertIsNone(deleted)
+
     def test_can_persist_deployment_authorization(self):
         user = self.db.users().find_by_identifier("test-user-1")
         project = self.db.projects().find_by_identifier("test-project-1")

@@ -201,6 +201,32 @@ class TestDeploymentAuthorizer(TestCase):
         self.assertEqual(auth_validated.token, auth.token)
         self.assertEqual(auth_validated.expiration_time, auth.expiration_time)
 
+    def test_granted_authorization_is_cleared_by_token(self):
+        auth = DeploymentAuthorizer(self._clock).authorize_intent(
+            self.valid_intent
+        )
+        authorizer = DeploymentAuthorizer(self._clock)
+
+        authorizer.clear_authorization(auth)
+
+        delete_method = (
+            self.dao.users().delete_deployment_authorization_by_token
+        )
+        delete_method.assert_called_once_with(auth.token)
+
+    def test_denied_authorization_is_not_cleared(self):
+        auth = DeploymentAuthorization.deny(
+            DeploymentAuthorization.Status.INVALID_TOKEN
+        )
+        authorizer = DeploymentAuthorizer(self._clock)
+
+        authorizer.clear_authorization(auth)
+
+        delete_method = (
+            self.dao.users().delete_deployment_authorization_by_token
+        )
+        delete_method.assert_not_called()
+
     def test_expired_authorization_token_is_denied_at_expiration_time(self):
         auth = DeploymentAuthorizer(self._clock).authorize_intent(
             self.valid_intent

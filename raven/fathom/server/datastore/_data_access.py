@@ -144,6 +144,11 @@ class _UserDAOImpl(DataAccessObjectRDBMS, UserDAO):
             AuthDeployment.select().where(AuthDeployment.token == token)
         ).find_one()
 
+    def delete_deployment_authorization_by_token(self, token: str):
+        DeleteQuery[AuthDeployment](
+            AuthDeployment.delete().where(AuthDeployment.token == token)
+        ).execute()
+
 
 class _ProjectDAOImpl(DataAccessObjectRDBMS, ProjectDAO):
 

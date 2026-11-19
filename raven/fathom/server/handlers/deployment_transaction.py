@@ -63,7 +63,8 @@ class DeploymentTransactionHandler(ActionHandler):
             request.authenticated_user_id,
             intent.project,
         )
-        self._handle_deployment(authorization, package, response)
+        if self._handle_deployment(authorization, package, response):
+            self._authorizer.clear_authorization(authorization)
 
     def _check_authorization(self, request, response):
         alleged = request.deployment_authorization
@@ -81,7 +82,7 @@ class DeploymentTransactionHandler(ActionHandler):
     def _handle_deployment(self, authorization, package, response):
         intent = authorization.granted_parameters()
         try:
-            self._execute_deployment(intent, package, response)
+            return self._execute_deployment(intent, package, response)
         except DeploymentExecutionException as ex:
             LOG.e(
                 "An error occurred during deployment execution "
@@ -90,6 +91,8 @@ class DeploymentTransactionHandler(ActionHandler):
             )
             LOG.e(ex)
             self._respond_failed_deployment(response, ex)
+
+        return False
 
     def _execute_deployment(self, intent, package, response):
         LOG.i("Executing deployment for project %s", intent.project)
@@ -110,6 +113,8 @@ class DeploymentTransactionHandler(ActionHandler):
                     text="Deployment succeeded."
                 )
             )
+
+        return result.ok
 
     def _set_error(self, response, message):
         response.add_error(message)

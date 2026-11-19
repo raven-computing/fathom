@@ -143,6 +143,12 @@ class TestDeploymentTransactionHandler(TestCase):
             self.mock_manager.deploy.call_args.args[1],
             self.deployment_package
         )
+        checked_authorization = (
+            self.mock_authorizer_grant.check_authorization.return_value
+        )
+        self.mock_authorizer_grant.clear_authorization.assert_called_once_with(
+            checked_authorization
+        )
 
     def test_handle_failed_deployment_without_encountered_exception(self):
         handler = DeploymentTransactionHandler(
@@ -159,6 +165,7 @@ class TestDeploymentTransactionHandler(TestCase):
             self.server_response.deployment_message.message,
             "Deployment failed"
         )
+        self.mock_authorizer_grant.clear_authorization.assert_not_called()
 
     def test_handle_deployment_execution_exception(self):
         self.mock_manager_failure.deploy.side_effect = (
@@ -177,6 +184,7 @@ class TestDeploymentTransactionHandler(TestCase):
             "An error has occurred while deploying package",
             str(raised.exception)
         )
+        self.mock_authorizer_grant.clear_authorization.assert_not_called()
 
 
 if __name__ == "__main__":

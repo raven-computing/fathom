@@ -382,7 +382,7 @@ class UserAuthenticator:
             user_record is not None
             and user_record.password is not None
             and str(user_record.password) != ""
-            and UserState(user_record.state) == UserState.ACTIVE
+            and user_record.state == UserState.ACTIVE
         )
 
     def _active_non_system_user_record_has_password_set(
@@ -392,7 +392,7 @@ class UserAuthenticator:
         return (
             self._active_user_record_has_password_set(user_record)
             and user_record is not None
-            and UserRole(str(user_record.role)) != UserRole.SYSTEM
+            and user_record.role != UserRole.SYSTEM
         )
 
     def _active_system_user_record_has_password_set(
@@ -402,7 +402,7 @@ class UserAuthenticator:
         return (
             self._active_user_record_has_password_set(user_record)
             and user_record is not None
-            and UserRole(str(user_record.role)) == UserRole.SYSTEM
+            and user_record.role == UserRole.SYSTEM
         )
 
     def _onboarding_user_record_has_password_set(
@@ -413,7 +413,7 @@ class UserAuthenticator:
             user_record is not None
             and user_record.password is not None
             and str(user_record.password) != ""
-            and UserState(user_record.state) == UserState.ONBOARDING
+            and user_record.state == UserState.ONBOARDING
         )
 
     def _store_hashed_password_for(self, user: User):
@@ -427,8 +427,8 @@ class UserAuthenticator:
         request.authenticated_user = BaseUser(
             user.identifier,
             user.name,
-            is_admin=UserRole(user.role).has_administrative_privileges(),
-            state=UserState(str(user.state)),
+            is_admin=user.role.has_administrative_privileges(),
+            state=user.state,
         )
         assert request.authentication is not None
         request.authentication.password = "********"

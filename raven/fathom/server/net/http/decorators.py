@@ -29,7 +29,7 @@ from typing import Union, Final
 
 import cherrypy
 
-from raven.fathom.base import MethodHTTP
+from raven.fathom.base import MethodHTTP, StatusHTTP
 from raven.fathom.base import Interaction, ServerResponse
 from raven.fathom.base import RequestParcelJSON, ResponseParcelJSON
 from raven.fathom.base import ParcelEncodingException, ParcelDecodingException
@@ -113,13 +113,14 @@ class _RequestProcessorHTTP(cherrypy.Tool):
             content_type = request.headers.get("Content-Type", "")
             if content_type != _INTERACTION_CONTENT_TYPE:
                 raise cherrypy.HTTPError(
-                    415, "Expected an entity of content type application/json"
+                    StatusHTTP.UNSUPPORTED_MEDIA_TYPE.code,
+                    "Expected an entity of content type application/json"
                 )
 
             body = request.body
             if body is None:
                 raise cherrypy.HTTPError(
-                    400,
+                    StatusHTTP.BAD_REQUEST.code,
                     "Bad request: No request body specified"
                 )
 
@@ -131,23 +132,24 @@ class _RequestProcessorHTTP(cherrypy.Tool):
             client_request.authentication = client_authentication
         except ParcelDecodingException:
             raise cherrypy.HTTPError(
-                400, "Bad request: Expected a valid JSON entity"
+                StatusHTTP.BAD_REQUEST.code,
+                "Bad request: Expected a valid JSON entity"
             )
         except ParcelValidationException:
             raise cherrypy.HTTPError(
-                400,
+                StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Content validation failed. "
                 "The request body does not represent a valid client request"
             )
         except HTTPDecodeException:
             raise cherrypy.HTTPError(
-                400,
+                StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Decode error"
             )
 
         if client_request.action != action_query:
             raise cherrypy.HTTPError(
-                400,
+                StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Action query paramter "
                 "does not match client request body action"
             )
@@ -158,14 +160,16 @@ class _RequestProcessorHTTP(cherrypy.Tool):
     def _get_action_query(self, request_action):
         if not request_action:
             raise cherrypy.HTTPError(
-                400, "Bad request: Expected request action as query parameter"
+                StatusHTTP.BAD_REQUEST.code,
+                "Bad request: Expected request action as query parameter"
             )
 
         try:
             action_query = Interaction(request_action)
         except ValueError:
             raise cherrypy.HTTPError(
-                400, f"Bad request: Unknown request action '{request_action}'"
+                StatusHTTP.BAD_REQUEST.code,
+                f"Bad request: Unknown request action '{request_action}'"
             )
         return action_query
 
@@ -183,7 +187,10 @@ def _fathom_handler(*args, **kwargs):
             "Return value must be a ServerResponse or ResponseStatusHTTP "
             "object. This is a programming error."
         )
-        raise cherrypy.HTTPError(500, "Internal server error.")
+        raise cherrypy.HTTPError(
+            StatusHTTP.INTERNAL_SERVER_ERROR.code,
+            "Internal server error."
+        )
 
     try:
         response_parcel = ResponseParcelJSON(
@@ -193,11 +200,17 @@ def _fathom_handler(*args, **kwargs):
     except ParcelEncodingException as ex:
         LOG.e("An error occurred while encoding server response:")
         LOG.e(ex)
-        raise cherrypy.HTTPError(500, "An internal server error has occurred.")
+        raise cherrypy.HTTPError(
+            StatusHTTP.INTERNAL_SERVER_ERROR.code,
+            "An internal server error has occurred."
+        )
     except ParcelValidationException as ex:
         LOG.e("An error occurred while validating server response:")
         LOG.e(ex)
-        raise cherrypy.HTTPError(500, "An internal server error has occurred.")
+        raise cherrypy.HTTPError(
+            StatusHTTP.INTERNAL_SERVER_ERROR.code,
+            "An internal server error has occurred."
+        )
 
     return response_parcel
 

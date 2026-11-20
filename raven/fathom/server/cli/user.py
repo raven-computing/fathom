@@ -158,6 +158,7 @@ class UserPermissionGetCommand(ServerCommand):
             f"Invalid permission value: {value}"
         )
 
+
 class UserPermissionSetCommand(ServerCommand):
     """Implementation of `user permission set`."""
 

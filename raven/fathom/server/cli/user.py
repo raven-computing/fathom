@@ -106,13 +106,7 @@ class UserPermissionSetCommand(ServerCommand):
 
     def execute(self) -> int:
         user = User(identifier=self.args.user_identifier)
-        try:
-            permission_key = UserPermissionKey(self.args.user_permission_key)
-        except ValueError as ex:
-            raise InvalidUserRequestException(
-                f"Invalid permission key: {self.args.user_permission_key}"
-            ) from ex
-
+        permission_key = self._create_permission_key()
         LOG.d(
             "Setting permission '%s' for user '%s'",
             permission_key,
@@ -130,3 +124,11 @@ class UserPermissionSetCommand(ServerCommand):
             self.args.user_permission_value,
         )
         return ExitStatus.SUCCESS
+
+    def _create_permission_key(self):
+        try:
+            return UserPermissionKey(self.args.user_permission_key)
+        except ValueError as ex:
+            raise InvalidUserRequestException(
+                f"Invalid permission key: {self.args.user_permission_key}"
+            ) from ex

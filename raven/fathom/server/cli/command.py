@@ -28,6 +28,7 @@ from raven.fathom.server.core.setup import confirm_system_privileges
 from raven.fathom.server.core.exceptions import DomainException
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.user_management import UserInternalException
+from raven.fathom.server.core.user_management import UserManagementException
 from raven.fathom.server.domain import ProjectInternalException
 
 if TYPE_CHECKING:
@@ -97,7 +98,8 @@ class ServerManagementCommand(ServerCommand):
 
     Wraps a `ServerCommand` object that manages resources directly.
     Applies `@require_privileges`.
-    Handles errors of type `DomainException`.
+    Handles internal errors and errors of type `DomainException`
+    and `UserManagementException`.
 
     Attributes:
         command (ServerCommand): The `ServerCommand` object
@@ -117,7 +119,7 @@ class ServerManagementCommand(ServerCommand):
             LOG.e("%s", ex)
             LOG.d(ex)
             return ExitStatus.INTERNAL_ERROR
-        except DomainException as ex:
+        except (UserManagementException, DomainException) as ex:
             LOG.e("%s", ex)
             return ExitStatus.FAILURE
 

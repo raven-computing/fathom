@@ -22,7 +22,6 @@ from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import (
     InvalidUserRequestException,
-    UserManagementException,
     UserManager,
     UserPermissionKey,
 )
@@ -35,13 +34,6 @@ class UserCreateCommand(ServerCommand):
     """Implementation of `user create`."""
 
     def execute(self) -> int:
-        try:
-            return self._create_user()
-        except UserManagementException as ex:
-            LOG.e("%s", ex)
-            return ExitStatus.FAILURE
-
-    def _create_user(self) -> ExitStatus:
         user = User(
             identifier=self.args.user_identifier,
             name=self.args.user_name,
@@ -74,13 +66,6 @@ class UserListCommand(ServerCommand):
     """Implementation of `user list`."""
 
     def execute(self) -> int:
-        try:
-            return self._list_users()
-        except UserManagementException as ex:
-            LOG.e("%s", ex)
-            return ExitStatus.FAILURE
-
-    def _list_users(self) -> ExitStatus:
         formatter = TableFormatter().set_headers(
             "Identifier", "Name", "Role", "State"
         )
@@ -109,13 +94,6 @@ class UserDeleteCommand(ServerCommand):
     """Implementation of `user delete`."""
 
     def execute(self) -> int:
-        try:
-            return self._delete_user()
-        except UserManagementException as ex:
-            LOG.e("%s", ex)
-            return ExitStatus.FAILURE
-
-    def _delete_user(self) -> ExitStatus:
         user = User(identifier=self.args.user_identifier)
         LOG.d("Deleting user '%s'", user.identifier)
         UserManager(UserAuthenticator()).delete_user(user)
@@ -127,13 +105,6 @@ class UserPermissionSetCommand(ServerCommand):
     """Implementation of `user permission set`."""
 
     def execute(self) -> int:
-        try:
-            return self._set_user_permission()
-        except UserManagementException as ex:
-            LOG.e("%s", ex)
-            return ExitStatus.FAILURE
-
-    def _set_user_permission(self) -> ExitStatus:
         user = User(identifier=self.args.user_identifier)
         try:
             permission_key = UserPermissionKey(self.args.user_permission_key)

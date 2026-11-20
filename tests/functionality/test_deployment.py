@@ -232,15 +232,18 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
         self.server.stdin = ["fathom", "fathom"]
         self.server.execute(
-            "user",
-            "permission",
-            "set",
-            "alpha",
-            "allow_overwrite",
-            "off",
+            "user", "permission", "set", "alpha", "allow_overwrite", "off"
         )
 
         self.assertServerSuccess()
+        self.server.stdin = ["fathom", "fathom"]
+        self.server.execute(
+            "user", "permission", "get", "alpha", "allow_overwrite"
+        )
+        self.assertServerSuccess()
+        self.assertIn("alpha", self.server.stdout)
+        self.assertIn("Off", self.server.stdout)
+
         self.client.execute("deploy", "--overwrite-existing")
         self.assertClientFailure()
         self.assertClientStdoutContains(
@@ -249,15 +252,18 @@ class TestDeployment(TestCase, ProjectFixture, ConfigurationFixture):
 
         self.server.stdin = ["fathom", "fathom"]
         self.server.execute(
-            "user",
-            "permission",
-            "set",
-            "alpha",
-            "allow_overwrite",
-            "YeS",
+            "user", "permission", "set", "alpha", "allow_overwrite", "YeS"
         )
 
         self.assertServerSuccess()
+        self.server.stdin = ["fathom", "fathom"]
+        self.server.execute(
+            "user", "permission", "get", "alpha", "allow_overwrite"
+        )
+        self.assertServerSuccess()
+        self.assertIn("alpha", self.server.stdout)
+        self.assertIn("On", self.server.stdout)
+
         self.client.execute("deploy", "--overwrite-existing")
         self.assertClientSuccess()
         self.assertClientStdoutContains("Deployment SUCCESSFUL")

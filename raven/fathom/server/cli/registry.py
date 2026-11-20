@@ -26,10 +26,14 @@ from raven.fathom.server.cli.setup import SetupCommand
 from raven.fathom.server.cli.user import UserCreateCommand
 from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
+from raven.fathom.server.cli.user import UserPermissionGetCommand
 from raven.fathom.server.cli.user import UserPermissionSetCommand
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.user_management import UserManager
 from raven.fathom.server.security import UserAuthenticator
+
+
+# pylint: disable=too-many-branches
 
 
 LOG = Logger.get()
@@ -76,6 +80,12 @@ def create_command(args: AppArgs) -> ServerCommand:
                 )
             )
         if args.user_command == AppCommand.PERMISSION:
+            if args.user_permission_command == AppCommand.GET:
+                return ServerManagementCommand(
+                    UserPermissionGetCommand(
+                        args, UserManager(UserAuthenticator())
+                    )
+                )
             if args.user_permission_command == AppCommand.SET:
                 return ServerManagementCommand(
                     UserPermissionSetCommand(

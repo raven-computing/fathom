@@ -324,6 +324,38 @@ class UserManager:
 
         return result
 
+    def get_user_permission(
+        self,
+        user: User,
+        permission_key: UserPermissionKey,
+    ) -> str:
+        """Gets a permission value for a registered Fathom user.
+
+        Args:
+            user (User): The user whose permission should be read.
+            permission_key (UserPermissionKey): The permission key to read.
+
+        Returns:
+            str: The current value of the requested permission.
+
+        Raises:
+            UserManagementException: If the user or permission is invalid.
+        """
+        TypeCheck.require_arg(permission_key, UserPermissionKey)
+        if not user.identifier:
+            raise InvalidUserRequestException(
+                "Cannot get user permission. User identifier must not be empty"
+            )
+
+        user_record = self._ds.users().find_by_identifier(user.identifier)
+        if user_record is None:
+            raise UserNotFoundException(
+                f"User '{user.identifier}' does not exist"
+            )
+
+        permission = self._ds.users().find_permission(user_record)
+        return str(permission.allow_overwrite)
+
     def set_user_permission(
         self,
         user: User,

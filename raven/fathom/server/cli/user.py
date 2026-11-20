@@ -112,6 +112,52 @@ class UserDeleteCommand(ServerCommand):
         return ExitStatus.SUCCESS
 
 
+class UserPermissionGetCommand(ServerCommand):
+    """Implementation of `user permission get`."""
+
+    def __init__(self, args: AppArgs, manager: UserManager):
+        super().__init__(args)
+        self._manager = manager
+
+    def execute(self) -> int:
+        user = User(identifier=self.args.user_identifier)
+        permission_key = self._create_permission_key()
+        LOG.d(
+            "Getting permission '%s' for user '%s'",
+            permission_key,
+            user.identifier,
+        )
+        value = self._manager.get_user_permission(user, permission_key)
+        formatter = TableFormatter().set_headers("User", "Permission", "Value")
+        formatter.add_row(
+            user.identifier,
+            self.args.user_permission_key,
+            self._format_permission_value(value),
+        )
+        LOG.i("User permission:")
+        self._print_table(formatter)
+        return ExitStatus.SUCCESS
+
+    def _format_permission_value(self, value):
+        normalized_value = value.lower()
+        if normalized_value == "true":
+            return "On"
+        if normalized_value == "false":
+            return "Off"
+
+        raise InvalidUserRequestException(
+            f"Invalid permission value: {value}"
+        )
+
+    def _create_permission_key(self):
+        try:
+            return UserPermissionKey(self.args.user_permission_key)
+        except ValueError as ex:
+            raise InvalidUserRequestException(
+                f"Invalid permission key: {self.args.user_permission_key}"
+            ) from ex
+
+
 class UserPermissionSetCommand(ServerCommand):
     """Implementation of `user permission set`."""
 

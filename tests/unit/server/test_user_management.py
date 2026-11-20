@@ -219,6 +219,42 @@ class TestUserManager(TestCase):
 
         self.assertIn("Invalid value 'enabled'", str(raised.exception))
 
+    def test_get_user_permission_returns_current_value(self):
+        user_record = UserModel(
+            identifier="test-user",
+            name="Test User",
+        )
+        permission = UserPermission(
+            user=user_record,
+            allow_overwrite=True,
+        )
+        self.ds.users().find_by_identifier.return_value = user_record
+        self.ds.users().find_permission.return_value = permission
+
+        value = self.manager.get_user_permission(
+            User(identifier="test-user"),
+            UserPermissionKey.ALLOW_OVERWRITE,
+        )
+
+        self.assertEqual(value, "True")
+        self.ds.users().find_permission.assert_called_once_with(user_record)
+
+    def test_get_user_permission_rejects_missing_user(self):
+        self.ds.users().find_by_identifier.return_value = None
+
+        with self.assertRaises(UserNotFoundException):
+            self.manager.get_user_permission(
+                User(identifier="missing-user"),
+                UserPermissionKey.ALLOW_OVERWRITE,
+            )
+
+    def test_get_user_permission_requires_permission_key_enum(self):
+        with self.assertRaises(TypeError):
+            self.manager.get_user_permission(
+                User(identifier="test-user"),
+                cast(UserPermissionKey, "unknown_permission"),
+            )
+
 
 if __name__ == "__main__":
     TestCase.run_tests()

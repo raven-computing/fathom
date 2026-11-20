@@ -58,6 +58,8 @@ class AppCommand(StrEnum):
 
     PERMISSION = "permission"
 
+    GET = "get"
+
     SET = "set"
 
 
@@ -251,6 +253,21 @@ def parse_args(argv: list[str]) -> AppArgs:
         required=True,
         metavar="<COMMAND>",
     )
+    permission_get = permission_subparsers.add_parser(
+        str(AppCommand.GET),
+        help="Show the current value of a permission for a user."
+    )
+    permission_get.add_argument(
+        "identifier",
+        metavar="<IDENTIFIER>",
+        help="The unique identifier of the user whose permission to get."
+    )
+    permission_get.add_argument(
+        "permission",
+        choices=("allow_overwrite",),
+        metavar="<PERMISSION>",
+        help="The key of the permission to get."
+    )
     permission_set = permission_subparsers.add_parser(
         str(AppCommand.SET),
         help="Set a permission for a user."
@@ -264,7 +281,7 @@ def parse_args(argv: list[str]) -> AppArgs:
         "permission",
         choices=("allow_overwrite",),
         metavar="<PERMISSION>",
-        help="The permission key to set."
+        help="The key of the permission to set."
     )
     permission_set.add_argument(
         "value",

@@ -133,4 +133,4 @@ class SetupCommand(ServerCommand):
         )
         LOG.i("Server setup completed")
         LOG.i("You may now start the server")
-        return 0
+        return ExitStatus.SUCCESS

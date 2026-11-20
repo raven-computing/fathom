@@ -28,6 +28,8 @@ from raven.fathom.server.cli.user import UserDeleteCommand
 from raven.fathom.server.cli.user import UserListCommand
 from raven.fathom.server.cli.user import UserPermissionSetCommand
 from raven.fathom.server.core.logging import Logger
+from raven.fathom.server.core.user_management import UserManager
+from raven.fathom.server.security import UserAuthenticator
 
 
 LOG = Logger.get()
@@ -56,14 +58,30 @@ def create_command(args: AppArgs) -> ServerCommand:
 
     if args.command == AppCommand.USER:
         if args.user_command == AppCommand.CREATE:
-            return ServerManagementCommand(UserCreateCommand(args))
+            return ServerManagementCommand(
+                UserCreateCommand(
+                    args, UserManager(UserAuthenticator())
+                )
+            )
         if args.user_command == AppCommand.LIST:
-            return ServerManagementCommand(UserListCommand(args))
+            return ServerManagementCommand(
+                UserListCommand(
+                    args, UserManager(UserAuthenticator())
+                )
+            )
         if args.user_command == AppCommand.DELETE:
-            return ServerManagementCommand(UserDeleteCommand(args))
+            return ServerManagementCommand(
+                UserDeleteCommand(
+                    args, UserManager(UserAuthenticator())
+                )
+            )
         if args.user_command == AppCommand.PERMISSION:
             if args.user_permission_command == AppCommand.SET:
-                return ServerManagementCommand(UserPermissionSetCommand(args))
+                return ServerManagementCommand(
+                    UserPermissionSetCommand(
+                        args, UserManager(UserAuthenticator())
+                    )
+                )
 
         raise ValueError(f"Invalid user command '{args.user_command}'")
 

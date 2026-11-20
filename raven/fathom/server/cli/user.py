@@ -16,10 +16,10 @@
 
 from raven.fathom.base import User, UserState
 from raven.fathom.base import TableFormatter
+from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.user_management import (
     InvalidUserRequestException,
     UserManager,
@@ -33,6 +33,10 @@ LOG = Logger.get()
 class UserCreateCommand(ServerCommand):
     """Implementation of `user create`."""
 
+    def __init__(self, args: AppArgs, manager: UserManager):
+        super().__init__(args)
+        self._manager = manager
+
     def execute(self) -> int:
         user = User(
             identifier=self.args.user_identifier,
@@ -41,7 +45,7 @@ class UserCreateCommand(ServerCommand):
             state=UserState.ONBOARDING,
         )
         LOG.d("Creating user '%s'", user.identifier)
-        UserManager(UserAuthenticator()).create_user(user)
+        self._manager.create_user(user)
         role_msg = (
             "with admin privileges"
             if user.is_admin
@@ -65,19 +69,22 @@ class UserCreateCommand(ServerCommand):
 class UserListCommand(ServerCommand):
     """Implementation of `user list`."""
 
+    def __init__(self, args: AppArgs, manager: UserManager):
+        super().__init__(args)
+        self._manager = manager
+
     def execute(self) -> int:
         formatter = TableFormatter().set_headers(
             "Identifier", "Name", "Role", "State"
         )
         LOG.d("Fetching user list")
-        manager = UserManager(UserAuthenticator())
-        users = manager.list_users()
+        users = self._manager.list_users()
         if len(users) == 0:
             LOG.i("No users found")
             return ExitStatus.SUCCESS
 
         for user in users:
-            role = manager.get_user_role(user.identifier)
+            role = self._manager.get_user_role(user.identifier)
             formatter.add_row(
                 user.identifier,
                 user.name,
@@ -93,16 +100,24 @@ class UserListCommand(ServerCommand):
 class UserDeleteCommand(ServerCommand):
     """Implementation of `user delete`."""
 
+    def __init__(self, args: AppArgs, manager: UserManager):
+        super().__init__(args)
+        self._manager = manager
+
     def execute(self) -> int:
         user = User(identifier=self.args.user_identifier)
         LOG.d("Deleting user '%s'", user.identifier)
-        UserManager(UserAuthenticator()).delete_user(user)
+        self._manager.delete_user(user)
         LOG.i("Deleted user '%s'.", self.args.user_identifier)
         return ExitStatus.SUCCESS
 
 
 class UserPermissionSetCommand(ServerCommand):
     """Implementation of `user permission set`."""
+
+    def __init__(self, args: AppArgs, manager: UserManager):
+        super().__init__(args)
+        self._manager = manager
 
     def execute(self) -> int:
         user = User(identifier=self.args.user_identifier)
@@ -112,7 +127,7 @@ class UserPermissionSetCommand(ServerCommand):
             permission_key,
             user.identifier,
         )
-        UserManager(UserAuthenticator()).set_user_permission(
+        self._manager.set_user_permission(
             user,
             permission_key,
             self.args.user_permission_value,

@@ -76,7 +76,8 @@ def run_server_command(args: AppArgs) -> ExitStatus:
         command.cancel()
         return ExitStatus.CANCELLED
     except Exception as ex:  # pylint: disable=broad-exception-caught
-        LOG.e("Failed to run server application")
+        LOG.e("Failed to run server application.")
+        LOG.e("An internal error has occurred.")
         LOG.e(str(ex))
         LOG.d(ex)
         return ExitStatus.INTERNAL_ERROR

@@ -30,6 +30,15 @@ from raven.fathom.server.core.user_management import (
 LOG = Logger.get()
 
 
+def _create_permission_key(value: str) -> UserPermissionKey:
+    try:
+        return UserPermissionKey(value)
+    except ValueError as ex:
+        raise InvalidUserRequestException(
+            f"Invalid permission key: {value}"
+        ) from ex
+
+
 class UserCreateCommand(ServerCommand):
     """Implementation of `user create`."""
 
@@ -121,7 +130,7 @@ class UserPermissionGetCommand(ServerCommand):
 
     def execute(self) -> int:
         user = User(identifier=self.args.user_identifier)
-        permission_key = self._create_permission_key()
+        permission_key = _create_permission_key(self.args.user_permission_key)
         LOG.d(
             "Getting permission '%s' for user '%s'",
             permission_key,
@@ -149,15 +158,6 @@ class UserPermissionGetCommand(ServerCommand):
             f"Invalid permission value: {value}"
         )
 
-    def _create_permission_key(self):
-        try:
-            return UserPermissionKey(self.args.user_permission_key)
-        except ValueError as ex:
-            raise InvalidUserRequestException(
-                f"Invalid permission key: {self.args.user_permission_key}"
-            ) from ex
-
-
 class UserPermissionSetCommand(ServerCommand):
     """Implementation of `user permission set`."""
 
@@ -167,7 +167,7 @@ class UserPermissionSetCommand(ServerCommand):
 
     def execute(self) -> int:
         user = User(identifier=self.args.user_identifier)
-        permission_key = self._create_permission_key()
+        permission_key = _create_permission_key(self.args.user_permission_key)
         LOG.d(
             "Setting permission '%s' for user '%s'",
             permission_key,
@@ -185,11 +185,3 @@ class UserPermissionSetCommand(ServerCommand):
             self.args.user_permission_value,
         )
         return ExitStatus.SUCCESS
-
-    def _create_permission_key(self):
-        try:
-            return UserPermissionKey(self.args.user_permission_key)
-        except ValueError as ex:
-            raise InvalidUserRequestException(
-                f"Invalid permission key: {self.args.user_permission_key}"
-            ) from ex

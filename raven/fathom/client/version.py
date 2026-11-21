@@ -18,6 +18,7 @@ from typing import Optional
 
 from raven.fathom.base import determine_current_version
 from raven.fathom.base import VersionStruct
+from raven.fathom.base.context import APPLICATION_PROJECT_ID
 
 
 class Version(VersionStruct):
@@ -31,7 +32,9 @@ class Version(VersionStruct):
             Version: The current Fathom client application version
                 or `None` if the version cannot be determined.
         """
-        version = determine_current_version("raven-fathom-client")
+        version = determine_current_version(
+            f"raven-{APPLICATION_PROJECT_ID}-client"
+        )
         if version is not None:
             return Version(
                 version.major,

@@ -14,9 +14,9 @@
 #
 """Implements a function to retrieve client authentication details."""
 
-from typing import TYPE_CHECKING, Final, Optional
+from typing import TYPE_CHECKING, Final, Optional, TypeAlias
 
-from raven.fathom.base import ClientAuthentication
+from raven.fathom.base import ClientAuthentication as ClientAuthenticationBase
 from raven.fathom.base import SystemEnvironment, InputPrompt
 from raven.fathom.base import Configuration
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
@@ -36,6 +36,9 @@ ENVIRONMENT_VARIABLE_USER_NAME: Final[str] = (
 ENVIRONMENT_VARIABLE_USER_PASSWORD: Final[str] = (
     f"{APPLICATION_PROJECT_ID.upper()}_CLIENT_PASSWORD"
 )
+
+
+ClientAuthentication: TypeAlias = ClientAuthenticationBase
 
 
 def _set_client_authentication(auth, username, password):

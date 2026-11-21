@@ -15,9 +15,9 @@
 """CLI command handling for setup actions."""
 
 from raven.fathom.base import InputPrompt, User
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import ConfigurationWriteException
 from raven.fathom.client.config import ConfigurationManager
+from raven.fathom.client.authentication import ClientAuthentication
 from raven.fathom.client.connection import Server
 from raven.fathom.client.connection import ServerConnectionException
 from raven.fathom.client.logging import Logger

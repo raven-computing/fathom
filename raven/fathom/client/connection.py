@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Optional, TypeVar, Generic
 
 from raven.fathom.base import ServerInteraction
 from raven.fathom.base import Interaction
-from raven.fathom.base import ClientRequest, ClientAuthentication
+from raven.fathom.base import ClientRequest
 from raven.fathom.base import ServerResponse, ResponseCode
 from raven.fathom.base import TransmissionException, ProcessingException
 from raven.fathom.base import InteractionException
@@ -34,6 +34,7 @@ from raven.fathom.base.context import APPLICATION_NAME
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.signup import UserSignupRequest, ResultStatus
 from raven.fathom.client.signup import SignupConnectionException
+from raven.fathom.client.authentication import ClientAuthentication
 from raven.fathom.client.exceptions import FathomClientException
 
 if TYPE_CHECKING:

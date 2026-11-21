@@ -16,12 +16,12 @@
 
 from typing import Optional
 
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import ClientDeploymentIntent
 from raven.fathom.base import PackageOperationException
 from raven.fathom.base import TypeCheck
 from raven.fathom.client.logging import Logger
 from raven.fathom.client.project import Project
+from raven.fathom.client.authentication import ClientAuthentication
 from raven.fathom.client.documentation import DocumentationResource
 from raven.fathom.client.package import DocumentationPackage
 from raven.fathom.client.locator import ServerLocator

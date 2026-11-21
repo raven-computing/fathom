@@ -17,10 +17,10 @@
 from raven.fathom.base import RequestHTTP as BaseRequestHTTP
 from raven.fathom.base import MethodHTTP
 from raven.fathom.base import URL
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import HTTP_HEADER_CLIENT_AUTHENTICATION
 from raven.fathom.base import ClientAuthenticationHeader
 from raven.fathom.base.context import APPLICATION_NAME
+from raven.fathom.client.authentication import ClientAuthentication
 from raven.fathom.client.version import Version
 
 

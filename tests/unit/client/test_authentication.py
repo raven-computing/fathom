@@ -14,14 +14,14 @@
 #
 """Unit tests for the client authentication module."""
 
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import Configuration, ConfigurationSection
 from raven.fathom.base.testing import TestEnvironment, SystemInputPromptMock
-from raven.fathom.client.authentication import (
-    load_client_authentication,
+from raven.fathom.client import (
+    ClientAuthentication,
     ENVIRONMENT_VARIABLE_USER_NAME,
-    ENVIRONMENT_VARIABLE_USER_PASSWORD
+    ENVIRONMENT_VARIABLE_USER_PASSWORD,
 )
+from raven.fathom.client.authentication import load_client_authentication
 from raven.fathom.client.locator import ServerLocator
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.cli.arguments import AppArgs

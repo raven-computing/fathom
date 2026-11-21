@@ -24,6 +24,7 @@ from raven.fathom.base import Dependencies as _Dependencies
 
 from .authentication import ENVIRONMENT_VARIABLE_USER_NAME
 from .authentication import ENVIRONMENT_VARIABLE_USER_PASSWORD
+from .authentication import ClientAuthentication
 from .deployment import DeploymentResult
 from .deployment import FathomDeployment
 from .deployment import DeploymentException

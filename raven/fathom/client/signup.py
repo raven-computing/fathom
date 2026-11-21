@@ -17,11 +17,11 @@
 from enum import StrEnum
 from dataclasses import dataclass
 
-from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import User
 from raven.fathom.base import MethodHTTP
 from raven.fathom.base import ConnectionException, HTTPEncodeException
 from raven.fathom.base import JSONDecodeException
+from raven.fathom.client.authentication import ClientAuthentication
 from raven.fathom.client.http import RequestHTTP
 from raven.fathom.client.locator import ServerLocator, server_locator_to_url
 from raven.fathom.client.exceptions import FathomClientException

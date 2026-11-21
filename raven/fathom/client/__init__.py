@@ -28,6 +28,7 @@ from .documentation import DocumentationResource
 from .documentation import DocsFile
 from .documentation import DocsDir
 from .locator import ServerLocator
+from .logging import FATHOM_CLIENT_LOGGER_NAME
 from .exceptions import FathomClientException
 from .filter import FileFilter
 from .filter import FileSizeRange, UNBOUND_FILE_SIZE

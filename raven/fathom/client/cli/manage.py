@@ -198,7 +198,8 @@ class ManageCommand(ClientCommand):
         return ExitStatus.SUCCESS
 
     def _delete_user(self, server: Server) -> ExitStatus:
-        response = server.delete_user(self.args.user_identifier)
+        user = User(identifier=self.args.user_identifier)
+        response = server.delete_user(user)
         if (error := self._handle(response)):
             return error
 
@@ -210,10 +211,9 @@ class ManageCommand(ClientCommand):
         return ExitStatus.SUCCESS
 
     def _assign_user(self, server: Server) -> ExitStatus:
-        response = server.assign_user_to_project(
-            self.args.user_identifier,
-            self.args.project_identifier,
-        )
+        user = User(identifier=self.args.user_identifier)
+        project = Project(identifier=self.args.project_identifier)
+        response = server.assign_user_to_project(user, project)
         if (error := self._handle(response)):
             return error
 
@@ -226,10 +226,9 @@ class ManageCommand(ClientCommand):
         return ExitStatus.SUCCESS
 
     def _unassign_user(self, server: Server) -> ExitStatus:
-        response = server.unassign_user_from_project(
-            self.args.user_identifier,
-            self.args.project_identifier,
-        )
+        user = User(identifier=self.args.user_identifier)
+        project = Project(identifier=self.args.project_identifier)
+        response = server.unassign_user_from_project(user, project)
         if (error := self._handle(response)):
             return error
 
@@ -286,9 +285,8 @@ class ManageCommand(ClientCommand):
         return ExitStatus.SUCCESS
 
     def _list_project_users(self, server: Server) -> ExitStatus:
-        response = server.list_project_users(
-            self.args.project_identifier
-        )
+        project = Project(identifier=self.args.project_identifier)
+        response = server.list_project_users(project)
         if (error := self._handle(response)):
             return error
 
@@ -314,7 +312,8 @@ class ManageCommand(ClientCommand):
         return ExitStatus.SUCCESS
 
     def _delete_project(self, server: Server) -> ExitStatus:
-        response = server.delete_project(self.args.project_identifier)
+        project = Project(identifier=self.args.project_identifier)
+        response = server.delete_project(project)
         if (error := self._handle(response)):
             return error
 

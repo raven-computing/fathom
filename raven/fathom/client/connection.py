@@ -326,11 +326,11 @@ class Server:
 
         return self._empty(result)
 
-    def delete_user(self, identifier: str) -> Result:
+    def delete_user(self, user: User) -> Result:
         """Deletes an application user on the server.
 
         Args:
-            identifier (str): The identifier of the user to delete.
+            user (User): The user to delete.
 
         Returns:
             Result: The result of the deletion operation.
@@ -341,23 +341,18 @@ class Server:
         """
         request = ClientRequest(Interaction.DELETE_USER)
         request.authentication = self._client_authentication
-        request.user = User(identifier=identifier)
+        request.user = user
 
         LOG.v("Requesting remote user deletion")
         response = self._send(request)
         return self._prepare_result(response)
 
-    def assign_user_to_project(
-        self,
-        user_identifier: str,
-        project_identifier: str
-    ) -> Result:
+    def assign_user_to_project(self, user: User, project: Project) -> Result:
         """Assigns an application user to a project on the server.
 
         Args:
-            user_identifier (str): The identifier of the user to assign.
-            project_identifier (str): The identifier of the project to assign
-                the user to.
+            user (User): The user to assign.
+            project (Project): The project to assign the user to.
 
         Returns:
             Result: The result of the assignment operation.
@@ -368,8 +363,8 @@ class Server:
         """
         request = ClientRequest(Interaction.ASSIGN_USER)
         request.authentication = self._client_authentication
-        request.user = User(identifier=user_identifier)
-        request.project = Project(identifier=project_identifier)
+        request.user = user
+        request.project = project
 
         LOG.v("Requesting remote user-project assignment")
         response = self._send(request)
@@ -377,15 +372,14 @@ class Server:
 
     def unassign_user_from_project(
         self,
-        user_identifier: str,
-        project_identifier: str
+        user: User,
+        project: Project
     ) -> Result:
         """Unassigns an application user from a project on the server.
 
         Args:
-            user_identifier (str): The identifier of the user to unassign.
-            project_identifier (str): The identifier of the project to remove
-                the user from.
+            user (User): The user to unassign.
+            project (Project): The project to remove the user from.
 
         Returns:
             Result: The result of the unassignment operation.
@@ -396,8 +390,8 @@ class Server:
         """
         request = ClientRequest(Interaction.UNASSIGN_USER)
         request.authentication = self._client_authentication
-        request.user = User(identifier=user_identifier)
-        request.project = Project(identifier=project_identifier)
+        request.user = user
+        request.project = project
 
         LOG.v("Requesting remote user-project unassignment")
         response = self._send(request)
@@ -452,11 +446,11 @@ class Server:
 
         return self._empty(result)
 
-    def list_project_users(self, identifier: str) -> DataResult[list[User]]:
+    def list_project_users(self, project: Project) -> DataResult[list[User]]:
         """Lists all users assigned to a project from the server.
 
         Args:
-            identifier (str): The identifier of the project to query.
+            project (Project): The project to query.
 
         Returns:
             DataResult[list]: A `list` of `User` objects assigned to the
@@ -468,7 +462,7 @@ class Server:
         """
         request = ClientRequest(Interaction.LIST_PROJECT_USERS)
         request.authentication = self._client_authentication
-        request.project = Project(identifier=identifier)
+        request.project = project
 
         LOG.v("Requesting remote project-user list")
         response = self._send(request)
@@ -479,11 +473,11 @@ class Server:
 
         return self._empty(result)
 
-    def delete_project(self, identifier: str) -> Result:
+    def delete_project(self, project: Project) -> Result:
         """Deletes a project on the server.
 
         Args:
-            identifier (str): The identifier of the project to delete.
+            project (Project): The project to delete.
 
         Returns:
             Result: The result of the deletion operation.
@@ -494,7 +488,7 @@ class Server:
         """
         request = ClientRequest(Interaction.DELETE_PROJECT)
         request.authentication = self._client_authentication
-        request.project = Project(identifier=identifier)
+        request.project = project
 
         LOG.v("Requesting remote project deletion")
         response = self._send(request)

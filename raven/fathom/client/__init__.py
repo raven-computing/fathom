@@ -22,6 +22,8 @@ from raven.fathom.base import FileSizeUnit
 from raven.fathom.base import Project, ProjectVersion
 from raven.fathom.base import Dependencies as _Dependencies
 
+from .authentication import ENVIRONMENT_VARIABLE_USER_NAME
+from .authentication import ENVIRONMENT_VARIABLE_USER_PASSWORD
 from .deployment import DeploymentResult
 from .deployment import FathomDeployment
 from .documentation import DocumentationResource

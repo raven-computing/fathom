@@ -34,8 +34,11 @@ from .documentation import DocsDir
 from .locator import ServerLocator
 from .logging import FATHOM_CLIENT_LOGGER_NAME
 from .exceptions import FathomClientException
+from .filter import FileSize
+from .filter import FileSizeUnit
+from .filter import FileSizeRange
+from .filter import UNBOUND_FILE_SIZE
 from .filter import FileFilter
-from .filter import FileSizeRange, UNBOUND_FILE_SIZE
 from .version import Version
 
 from ._provider import ClientProvider as _ProviderImpl

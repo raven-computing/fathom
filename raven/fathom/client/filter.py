@@ -25,9 +25,11 @@ from enum import Enum
 from dataclasses import dataclass, field
 from collections.abc import Collection
 from os import PathLike
-from typing import TypeVar, Optional, Final
+from typing import TypeVar, TypeAlias, Optional, Final
 
-from raven.fathom.base import File, FileSize, FileSizeUnit
+from raven.fathom.base import File
+from raven.fathom.base import FileSize as FileSizeBase
+from raven.fathom.base import FileSizeUnit as FileSizeUnitBase
 from raven.fathom.base import TypeCheck
 
 
@@ -53,6 +55,12 @@ UNBOUND_FILE_SIZE: Final = None
 
 # File-like
 F = TypeVar("F", bound=PathLike)
+
+# Exported client API
+FileSize: TypeAlias = FileSizeBase
+
+# Exported client API
+FileSizeUnit: TypeAlias = FileSizeUnitBase
 
 
 @dataclass

@@ -14,7 +14,7 @@
 #
 """Implements a function to retrieve client authentication details."""
 
-from typing import Final, Optional
+from typing import TYPE_CHECKING, Final, Optional
 
 from raven.fathom.base import ClientAuthentication
 from raven.fathom.base import SystemEnvironment, InputPrompt
@@ -22,7 +22,9 @@ from raven.fathom.base import Configuration
 from raven.fathom.base.context import APPLICATION_PROJECT_ID
 from raven.fathom.client.config import UserConfiguration, ProjectConfiguration
 from raven.fathom.client.logging import Logger
-from raven.fathom.client.cli.arguments import AppArgs
+
+if TYPE_CHECKING:
+    from raven.fathom.client.cli.arguments import AppArgs
 
 
 LOG = Logger.get()
@@ -119,7 +121,7 @@ def _gather_from_environment(
     _set_client_authentication(auth, username, password)
 
 
-def _gather_from_cli_arguments(auth: ClientAuthentication, args: AppArgs):
+def _gather_from_cli_arguments(auth: ClientAuthentication, args: "AppArgs"):
     _set_client_authentication(auth, args.user, args.password)
 
 
@@ -157,7 +159,7 @@ def _gather_from_user_prompt(auth: ClientAuthentication, sys_in: InputPrompt):
 
 
 def load_client_authentication(
-    args: AppArgs,
+    args: "AppArgs",
     user_config: Configuration,
     project_config: Configuration,
     server_name: Optional[str] = None,

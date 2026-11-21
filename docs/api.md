@@ -42,7 +42,7 @@ result = deployment.deploy()
 
 ## Documentation Resources
 
-::: raven.fathom.client.documentation
+[Documentation Resources](api/documentation.md)
 
 ## Deployment
 
@@ -58,7 +58,7 @@ result = deployment.deploy()
 
 ## Authentication
 
-::: raven.fathom.client.authentication
+[Authentication](api/authentication.md)
 
 ## Configuration
 

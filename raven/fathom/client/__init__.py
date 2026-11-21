@@ -26,6 +26,7 @@ from .authentication import ENVIRONMENT_VARIABLE_USER_NAME
 from .authentication import ENVIRONMENT_VARIABLE_USER_PASSWORD
 from .deployment import DeploymentResult
 from .deployment import FathomDeployment
+from .deployment import DeploymentException
 from .documentation import DocumentationResource
 from .documentation import DocsFile
 from .documentation import DocsDir

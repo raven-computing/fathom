@@ -30,7 +30,9 @@ if TYPE_CHECKING:
     from raven.fathom.client.cli import AppArgs
 
 
-FATHOM_CLIENT_LOGGER_NAME: Final[str] = f"raven.{APPLICATION_PROJECT_ID}.client"
+FATHOM_CLIENT_LOGGER_NAME: Final[str] = (
+    f"raven.{APPLICATION_PROJECT_ID}.client"
+)
 
 
 def _determine_log_level(args: "AppArgs") -> LogLevel:

@@ -92,6 +92,10 @@ positional arguments:
     project             Manage deployable projects.
 
 options:
+  --config-file <PATH>
+                        The absolute path to the server configuration file. When omitted, known
+                        configuration names are searched in the server working directory.
+
   --create-default-config
                         Create the server configuration file with default values if the file does
                         not already exist at startup.

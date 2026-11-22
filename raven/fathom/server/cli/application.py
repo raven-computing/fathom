@@ -47,6 +47,19 @@ def main(argv: list[str]) -> ExitStatus:
         ExitStatus: The exit status of the program.
     """
     args = parse_args(argv)
+    if args.config_file:
+        config_file = File(args.config_file)
+        if not config_file.path.is_absolute():
+            log_stderr("Error: The configuration file path must be absolute.")
+            return ExitStatus.FAILURE
+
+        if not config_file.is_regular_file():
+            log_stderr(
+                f"Error: The configuration file '{config_file.path}' "
+                "does not exist or is not a regular file."
+            )
+            return ExitStatus.FAILURE
+
     work_dir = None
     if args.working_directory:
         work_dir = File(args.working_directory)

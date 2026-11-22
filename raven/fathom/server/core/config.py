@@ -216,6 +216,18 @@ class ConfigurationManager:
         return File(f"{default_file_name}.{default_file_ext}")
 
     def _load_server_config(self):
+        if self._args is not None and self._args.config_file:
+            config_file = File(self._args.config_file)
+            LOG.d(
+                "Loading explicit server configuration file '%s'",
+                config_file,
+            )
+            return ConfigurationLoader(
+                ServerConfiguration,
+                LOG,
+                enable_validation=True,
+            ).load(config_file)
+
         config_dir = ApplicationContext.instance().get_working_directory()
         for config_file in self._get_all_file_permutations(
             ConfigurationManager.FILE_NAMES

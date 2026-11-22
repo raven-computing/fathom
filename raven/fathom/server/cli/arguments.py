@@ -79,6 +79,8 @@ class AppArgs:
 
     working_directory: str = ""
 
+    config_file: str = ""
+
     create_default_config: bool = False
 
     command: AppCommand = AppCommand.SERVE
@@ -142,6 +144,14 @@ def parse_args(argv: list[str]) -> AppArgs:
         epilog="[This version of the Fathom server is a Beta build]",
     )
 
+    parser.add_argument(
+        "--config-file",
+        metavar="<PATH>",
+        default=AppArgs.config_file,
+        help="The absolute path to the server configuration file. "
+             "When omitted, known configuration names are searched "
+             "in the server working directory."
+    )
     parser.add_argument(
         "--create-default-config",
         action="store_true",
@@ -348,6 +358,7 @@ def parse_args(argv: list[str]) -> AppArgs:
         version_short=bool(getattr(args, "version_short", "")),
         port=args.port,
         working_directory=args.working_directory,
+        config_file=args.config_file,
         create_default_config=args.create_default_config,
         command=(
             AppCommand.SERVE

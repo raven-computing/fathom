@@ -28,6 +28,19 @@ class TestServerAppArgs(TestCase):
         self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.command, "setup")
 
+    def test_external_config_file_is_recognized(self):
+        args = parse_args([
+            "fathom-server",
+            "--config-file",
+            "/etc/fathom-server/fathom.cfg",
+            "serve",
+        ])
+
+        self.assertEqual(
+            args.config_file,
+            "/etc/fathom-server/fathom.cfg",
+        )
+
     def test_user_create_arguments_are_parsed(self):
         args = parse_args([
             "fathom-server", "user", "create", "alpha",

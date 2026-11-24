@@ -112,6 +112,11 @@ class _RequestProcessorHTTP(cherrypy.Tool):
             client_authentication = decode_client_auth_header()
             content_type = request.headers.get("Content-Type", "")
             if content_type != _INTERACTION_CONTENT_TYPE:
+                LOG.d(
+                    "Bad client request: "
+                    "Expected an entity of content type application/json "
+                    "but found '%s'", content_type
+                )
                 raise cherrypy.HTTPError(
                     StatusHTTP.UNSUPPORTED_MEDIA_TYPE.code,
                     "Expected an entity of content type application/json"
@@ -119,6 +124,7 @@ class _RequestProcessorHTTP(cherrypy.Tool):
 
             body = request.body
             if body is None:
+                LOG.d("Bad client request: No request body specified")
                 raise cherrypy.HTTPError(
                     StatusHTTP.BAD_REQUEST.code,
                     "Bad request: No request body specified"
@@ -130,24 +136,39 @@ class _RequestProcessorHTTP(cherrypy.Tool):
                 ParcelValidatorJSON(SchemaLoaderJSON.for_request_schema())
             ).decode()
             client_request.authentication = client_authentication
-        except ParcelDecodingException:
+        except ParcelDecodingException as ex:
+            LOG.d("Bad client request: Expected a valid JSON entity")
+            LOG.d(ex)
             raise cherrypy.HTTPError(
                 StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Expected a valid JSON entity"
             )
-        except ParcelValidationException:
+        except ParcelValidationException as ex:
+            LOG.d(
+                "Bad client request: "
+                "Content validation failed. "
+                "The request body does not represent a valid client request"
+            )
+            LOG.d(ex)
             raise cherrypy.HTTPError(
                 StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Content validation failed. "
                 "The request body does not represent a valid client request"
             )
-        except HTTPDecodeException:
+        except HTTPDecodeException as ex:
+            LOG.d("Bad client request: Decode error")
+            LOG.d(ex)
             raise cherrypy.HTTPError(
                 StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Decode error"
             )
 
         if client_request.action != action_query:
+            LOG.d(
+                "Bad client request: "
+                "Action query paramter does not match "
+                "client request body action"
+            )
             raise cherrypy.HTTPError(
                 StatusHTTP.BAD_REQUEST.code,
                 "Bad request: Action query paramter "

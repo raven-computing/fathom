@@ -31,7 +31,7 @@ VERSION_FILE_NAME = "VERSION"
 
 VERSION_REGEX = re.compile(
     r"^(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)"
-    r"(?:-(?P<extension>[a-zA-Z0-9.]*))?$"
+    r"(?:(?:-|\.)(?P<extension>[a-zA-Z][a-zA-Z0-9]*))?$"
 )
 
 
@@ -181,7 +181,7 @@ class VersionStruct:
             bool: `True` if this version is a development version,
                 `False` otherwise.
         """
-        return self.extension == "dev"
+        return self.extension.startswith("dev")
 
     def __eq__(self, rhs):
         return all(map(lambda d: d == 0, self._diff(rhs)))

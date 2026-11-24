@@ -154,6 +154,9 @@ class TestVersionStruct(TestCase):
 
     def test_is_development_version(self):
         self.assertTrue(VersionStruct(1, 0, 0, "dev").is_development_version())
+        self.assertTrue(
+            VersionStruct(1, 0, 0, "dev0").is_development_version()
+        )
         self.assertFalse(VersionStruct(1, 0, 0).is_development_version())
         self.assertFalse(
             VersionStruct(1, 0, 0, "alpha").is_development_version()
@@ -173,6 +176,13 @@ class TestVersionStruct(TestCase):
         self.assertEqual(version.minor, 2)
         self.assertEqual(version.patch, 3)
         self.assertEqual(version.extension, "alpha")
+
+        version = read_version_string("1.2.3.dev0")
+        assert version is not None
+        self.assertEqual(version.major, 1)
+        self.assertEqual(version.minor, 2)
+        self.assertEqual(version.patch, 3)
+        self.assertEqual(version.extension, "dev0")
 
         self.assertIsNone(read_version_string("invalid_version"))
 

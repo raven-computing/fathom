@@ -40,6 +40,7 @@ PACKAGE_NAME = f"raven-fathom-{build_target}"
 install_requires = []  # Dependencies common to all packages
 entry_points = {}
 exclude_namespaces = []
+package_data = {}
 
 if build_target == "base":
     exclude_namespaces.extend([
@@ -64,13 +65,14 @@ elif build_target == "server":
     ])
     install_requires.extend([
         "raven-fathom-base>=0.0.1",
-        "CherryPy>=18.0.0",
+        "CherryPy==18.10.0",
         "jsonschema==4.26.0",
         "peewee==4.4.0",
     ])
     entry_points["console_scripts"] = [
         "fathom-server=raven.fathom.server:main"
     ]
+    package_data["raven.fathom.server.schemas"] = ["*.json"]
 else:
     print(f"Error: Unknown build target argument: '{build_target}'")
     sys.exit(1)
@@ -79,6 +81,7 @@ namespace_packages = find_namespace_packages(
     include=("raven.*",),
     exclude=exclude_namespaces
 )
+
 
 setup(
     name=PACKAGE_NAME,
@@ -91,6 +94,7 @@ setup(
     author_email="phil.gaiser@raven-computing.com",
     license="Apache-2.0",
     packages=namespace_packages,
+    package_data=package_data,
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent"

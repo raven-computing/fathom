@@ -27,7 +27,7 @@ with open(os.path.join(COMPONENT_ROOT, "pypi.md"), encoding="UTF-8") as f:
     README = f.read()
 
 with open(os.path.join(COMPONENT_ROOT, "VERSION"), encoding="UTF-8") as f:
-    VERSION = f.read()
+    VERSION = f.read().strip().replace("-dev", ".dev0")
 
 
 build_target = os.environ.get("FATHOM_BUILD_TARGET")

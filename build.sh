@@ -181,6 +181,7 @@ if [[ $ARG_VERBOSE == false ]]; then
 fi
 
 logI "Building base source and binary distribution packages";
+rm -rf "raven_fathom_base.egg-info";
 # Instruct the build frontend to not use any additional isolation
 # with venv for the build, since at this point we are already in
 # the virtual environment of the project.
@@ -191,6 +192,7 @@ if (( $? != 0 )); then
   exit 1;
 fi
 logI "Building client source and binary distribution packages";
+rm -rf "raven_fathom_client.egg-info";
 export FATHOM_BUILD_TARGET="client";
 ${_PYTHON_EXEC} -m build $quiet_arg --outdir "${_DIST_DIRECTORY}" --no-isolation;
 if (( $? != 0 )); then
@@ -198,6 +200,7 @@ if (( $? != 0 )); then
   exit 1;
 fi
 logI "Building server source and binary distribution packages";
+rm -rf "raven_fathom_server.egg-info";
 export FATHOM_BUILD_TARGET="server";
 ${_PYTHON_EXEC} -m build $quiet_arg --outdir "${_DIST_DIRECTORY}" --no-isolation;
 if (( $? != 0 )); then

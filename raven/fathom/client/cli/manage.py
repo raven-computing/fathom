@@ -80,6 +80,8 @@ class ManageCommand(ClientCommand):
             return self._assign_user(server)
         if self.args.manage_command == AppCommand.UNASSIGN:
             return self._unassign_user(server)
+        if self.args.manage_command in (AppCommand.GET, AppCommand.SET):
+            return self._manage_user_permission(server)
 
         raise ValueError(
             f"Invalid manage command '{self.args.manage_command}'"
@@ -163,6 +165,7 @@ class ManageCommand(ClientCommand):
                 self.args.user_name
                 or self.args.user_identifier
             ),
+            is_admin=self.args.user_is_admin,
         )
         response = server.create_user(user)
         if (error := self._handle(response)):
@@ -239,6 +242,68 @@ class ManageCommand(ClientCommand):
             server.name or "Server",
         )
         return ExitStatus.SUCCESS
+
+    def _manage_user_permission(self, server: Server) -> ExitStatus:
+        if self.args.manage_command == AppCommand.GET:
+            return self._get_user_permission(server)
+        if self.args.manage_command == AppCommand.SET:
+            return self._set_user_permission(server)
+
+        raise ValueError(
+            f"Invalid permission command '{self.args.manage_command}'"
+        )
+
+    def _get_user_permission(self, server: Server) -> ExitStatus:
+        user = User(identifier=self.args.user_identifier)
+        response = server.get_user_permission(user, self.args.permission_key)
+        if (error := self._handle(response)):
+            return error
+
+        perm_key, raw_value = response.data
+        perm_value = self._format_permission_value(raw_value)
+        formatter = TableFormatter()
+        formatter.set_headers("User", "Permission", "Value")
+        formatter.add_row(
+            self.args.user_identifier,
+            perm_key,
+            perm_value,
+        )
+        LOG.i(
+            "Permission '%s' for user %s at %s",
+            perm_key,
+            self.args.user_identifier,
+            server.name or "Server",
+        )
+        self._print_data(formatter)
+        return ExitStatus.SUCCESS
+
+    def _set_user_permission(self, server: Server) -> ExitStatus:
+        user = User(identifier=self.args.user_identifier)
+        response = server.set_user_permission(
+            user,
+            self.args.permission_key,
+            self.args.permission_value,
+        )
+        if (error := self._handle(response)):
+            return error
+
+        LOG.i(
+            "Set permission '%s' for user %s to '%s' at %s",
+            self.args.permission_key,
+            self.args.user_identifier,
+            self.args.permission_value,
+            server.name or "Server",
+        )
+        return ExitStatus.SUCCESS
+
+    def _format_permission_value(self, value: str) -> str:
+        normalized = value.lower()
+        if normalized == "true":
+            return "On"
+        if normalized == "false":
+            return "Off"
+
+        return value
 
     def _create_project(self, server: Server) -> ExitStatus:
         project = Project(

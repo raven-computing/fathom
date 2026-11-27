@@ -101,6 +101,10 @@ class Interaction(StrEnum):
 
     DELETE_USER = "user-delete"
 
+    GET_USER_PERMISSION = "user-perm-read"
+
+    SET_USER_PERMISSION = "user-perm-update"
+
     ASSIGN_USER = "user-assign"
 
     UNASSIGN_USER = "user-unassign"
@@ -169,6 +173,16 @@ class ClientRequest:
     )
 
     package: Optional[Package] = field(
+        init=False,
+        default=None,
+    )
+
+    permission_key: Optional[str] = field(
+        init=False,
+        default=None,
+    )
+
+    permission_value: Optional[str] = field(
         init=False,
         default=None,
     )
@@ -253,6 +267,10 @@ class ServerResponse:
             management requests.
         projects (list[Project]): An optional list of projects, in response
             to project management requests.
+        permission_key (str): The permission key returned in response to a
+            permission get request, if applicable.
+        permission_value (str): The permission value returned in response to a
+            permission get request, if applicable.
     """
 
     action: Interaction = field(
@@ -295,6 +313,16 @@ class ServerResponse:
     )
 
     projects: Optional[list[Project]] = field(
+        init=False,
+        default=None,
+    )
+
+    permission_key: Optional[str] = field(
+        init=False,
+        default=None,
+    )
+
+    permission_value: Optional[str] = field(
         init=False,
         default=None,
     )

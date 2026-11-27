@@ -197,6 +197,7 @@ class RequestParcelJSON(Parcel):
         self._encode_project(obj)
         self._encode_intent(obj)
         self._encode_deployment_authorization(obj)
+        self._encode_permission(obj)
         try:
             self._encode_package(obj)
         except PackageOperationException as ex:
@@ -236,6 +237,9 @@ class RequestParcelJSON(Parcel):
 
         request.deployment_authorization = self._decode_deployment_auth()
         request.package = self._decode_package()
+        request.permission_key, request.permission_value = (
+            self._decode_permission()
+        )
         return request
 
     def _encode_user(self, structure):
@@ -385,6 +389,30 @@ class RequestParcelJSON(Parcel):
             "encoding": PACKAGE_BYTES_ENCODING,
             "data": self._encode_package_data()
         }
+
+    def _encode_permission(self, structure):
+        assert isinstance(self._request, ClientRequest)
+        key = self._request.permission_key
+        if key is None:
+            return
+
+        perm_struct: dict[str, str] = {"key": key}
+        value = self._request.permission_value
+        if value is not None:
+            perm_struct["value"] = value
+
+        structure["permission"] = perm_struct
+
+    def _decode_permission(self):
+        assert isinstance(self._request, dict)
+        perm_struct = self._request.get("permission")
+        if perm_struct is None:
+            return None, None
+
+        assert isinstance(perm_struct, dict)
+        key = perm_struct.get("key")
+        value = perm_struct.get("value")
+        return key, value
 
     def _decode_package(self):
         assert isinstance(self._request, dict)
@@ -543,6 +571,7 @@ class ResponseParcelJSON(Parcel):
         self._encode_deployment_result(obj)
         self._encode_users(obj)
         self._encode_projects(obj)
+        self._encode_permission(obj)
         return obj
 
     def _decode_obj_structure(self):
@@ -568,6 +597,9 @@ class ResponseParcelJSON(Parcel):
         response.deployment_message = self._decode_deployment_result()
         response.users = self._decode_users()
         response.projects = self._decode_projects()
+        perm_key, perm_value = self._decode_response_permission()
+        response.permission_key = perm_key
+        response.permission_value = perm_value
         return response
 
     def _encode_info_messages(self, structure):
@@ -657,6 +689,28 @@ class ResponseParcelJSON(Parcel):
                     "description": project.description,
                 } for project in self._response.projects
             ]
+
+    def _encode_permission(self, structure):
+        assert isinstance(self._response, ServerResponse)
+        key = self._response.permission_key
+        if key is None:
+            return
+
+        perm_struct: dict[str, str] = {"key": key}
+        value = self._response.permission_value
+        if value is not None:
+            perm_struct["value"] = value
+
+        structure["permission"] = perm_struct
+
+    def _decode_response_permission(self):
+        assert isinstance(self._response, dict)
+        perm_struct = self._response.get("permission")
+        if perm_struct is None:
+            return None, None
+
+        assert isinstance(perm_struct, dict)
+        return perm_struct.get("key"), perm_struct.get("value")
 
     def _decode_info_messages(self):
         assert isinstance(self._response, dict)

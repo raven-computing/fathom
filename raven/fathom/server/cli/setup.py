@@ -14,7 +14,7 @@
 #
 """CLI command handling for setup actions."""
 
-from raven.fathom.base import InputPrompt, User
+from raven.fathom.base import InputPrompt
 from raven.fathom.base import SecretToken
 from raven.fathom.base import log_stdout
 from raven.fathom.base.context import APPLICATION_NAME
@@ -22,35 +22,60 @@ from raven.fathom.server.cli.command import ServerCommand
 from raven.fathom.server.cli.status import ExitStatus
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.models import Settings
+from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
 from raven.fathom.server.security import UserAuthenticator
-from raven.fathom.server.core.user_management import SYSTEM_USER_IDENTIFIER
 from raven.fathom.server.core.user_management import UserManager
 
 
 LOG = Logger.get()
 
-def _validate_organisation_name(name: str) -> bool:
-    if len(name) > 0:
+
+def _validate_non_empty(value: str) -> bool:
+    if len(value) > 0:
         return True
 
-    LOG.i("Organisation name must not be empty")
+    LOG.i("Value must not be empty")
     return False
 
 
-def _validate_password(password: str) -> bool:
-    if len(password) > 0:
-        return True
+def _prompt_system_user_password(
+    prompt: InputPrompt,
+    identifier: str
+) -> str:
+    """Prompts interactively for the system user password and confirmation."""
+    LOG.i(
+        "The server also requires a local system user account for "
+        "password recovery and secret rotation operations."
+    )
+    LOG.i(
+        "This account is never accessible over the network. "
+        "Its identifier is '%s'.", identifier
+    )
+    while True:
+        LOG.i("")
+        LOG.i("Please set a password for the system user '%s'.", identifier)
+        password = prompt.read(
+            "Password: ",
+            secret=True,
+            validator=_validate_non_empty
+        )
+        confirmation = prompt.read(
+            "Confirm password: ",
+            secret=True,
+            validator=_validate_non_empty
+        )
+        if confirmation == password:
+            return password
 
-    LOG.i("Password must not be empty")
-    return False
+        LOG.i("Password confirmation does not match. Please try again.")
 
 
 class SetupCommand(ServerCommand):
     """Implementation of the `setup` server command."""
 
     def execute(self) -> int:
-        user_mananger = UserManager(UserAuthenticator())
-        if user_mananger.is_setup_complete():
+        user_manager = UserManager(UserAuthenticator())
+        if user_manager.is_setup_complete():
             LOG.i("The server has already been set up")
             return ExitStatus.FAILURE
 
@@ -66,35 +91,28 @@ class SetupCommand(ServerCommand):
         )
         organisation_name = prompt.read(
             "Name: ",
-            validator=_validate_organisation_name
+            validator=_validate_non_empty
         )
 
         LOG.i("")
-        LOG.i("The server application needs to create a superuser account.")
-        LOG.i(
-            "This user is used to authenticate local administrative commands "
-            "submitted via the CLI."
+        LOG.i("Please enter the identifier for the initial administrator.")
+        admin_identifier = prompt.read(
+            "Administrator username: ",
+            validator=_validate_non_empty
         )
-        LOG.i(
-            "You will now be asked to create a password "
-            "for that system user."
-        )
+
         while True:
             LOG.i("")
-            LOG.i(
-                "Setting password for system user '%s'.",
-                SYSTEM_USER_IDENTIFIER
-            )
+            LOG.i("Please enter a password for '%s'.", admin_identifier)
             password = prompt.read(
                 "Password: ",
                 secret=True,
-                validator=_validate_password
+                validator=_validate_non_empty
             )
-
             confirmation = prompt.read(
                 "Confirm password: ",
                 secret=True,
-                validator=_validate_password
+                validator=_validate_non_empty
             )
             if confirmation == password:
                 break
@@ -108,7 +126,7 @@ class SetupCommand(ServerCommand):
         LOG.i("(Press enter to automatically generate one)")
         shared_secret = prompt.read("Secret: ", secret=True)
         if not shared_secret:
-            default_secret_size=16
+            default_secret_size = 16
             shared_secret = SecretToken(size=default_secret_size).to_string()
             LOG.i("Generated shared secret:")
             log_stdout("")
@@ -118,19 +136,23 @@ class SetupCommand(ServerCommand):
             log_stdout("")
             LOG.i("Please store it in a secure place.")
 
-        user = User(
-            identifier="",
-            password=password,
-        )
         LOG.i("")
-        LOG.i("Setting system user '%s'.", SYSTEM_USER_IDENTIFIER)
-        user_mananger.create_system_user(user)
         LOG.i("Creating organisation settings for '%s'", organisation_name)
         Settings.create(
             organisation_name=organisation_name,
             shared_secret=shared_secret,
             active=True,
         )
+        LOG.i("Creating initial administrator '%s'", admin_identifier)
+        user_manager.create_initial_admin(admin_identifier, password)
+
+        LOG.i("")
+        system_password = _prompt_system_user_password(
+            prompt, SYSTEM_USER_IDENTIFIER
+        )
+        LOG.i("")
+        LOG.i("Creating system user '%s'", SYSTEM_USER_IDENTIFIER)
+        user_manager.create_system_user(SYSTEM_USER_IDENTIFIER, system_password)
         LOG.i("Server setup completed")
         LOG.i("You may now start the server")
         return ExitStatus.SUCCESS

@@ -32,6 +32,7 @@ from .deployment_transaction import DeploymentTransactionHandler
 from .user import (
     UserHandler,
     UserCreateHandler, UserListHandler, UserDeleteHandler,
+    UserPermissionGetHandler, UserPermissionSetHandler,
 )
 from .project import (
     ProjectHandler,
@@ -43,6 +44,7 @@ from .project import (
 class HandlerFactory:
     """Factory class for creating `ActionHandler` objects."""
 
+    # pylint: disable=too-many-branches
     def create_action_handler_for(
         self,
         request: ClientRequest
@@ -96,6 +98,22 @@ class HandlerFactory:
                     UserManager(UserAuthenticator())
                 ),
                 "deletion of user",
+            )
+        elif client_action == Interaction.GET_USER_PERMISSION:
+            handler = UserHandler(
+                UserAuthorizer(),
+                UserPermissionGetHandler(
+                    UserManager(UserAuthenticator())
+                ),
+                "retrieval of user permission",
+            )
+        elif client_action == Interaction.SET_USER_PERMISSION:
+            handler = UserHandler(
+                UserAuthorizer(),
+                UserPermissionSetHandler(
+                    UserManager(UserAuthenticator())
+                ),
+                "setting of user permission",
             )
         elif client_action == Interaction.ASSIGN_USER:
             handler = ProjectHandler(

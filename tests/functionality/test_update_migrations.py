@@ -46,18 +46,8 @@ class TestServerUpdateMigrations(TestCase, ConfigurationFixture):
 
     def assert_can_interact_with_server_via_cli(self):
         """Asserts that server CLI commands work."""
-        self.server.stdin = ["fathom"]
-        self.server.execute("user", "list")
-
+        self.server.execute("serve", "--help")
         self.assertServerSuccess()
-        self.assertIn("alpha", self.server.stdout)
-        self.assertIn("test-user-1", self.server.stdout)
-
-        self.server.stdin = ["fathom"]
-        self.server.execute("project", "list")
-
-        self.assertServerSuccess()
-        self.assertIn("test-project-1", self.server.stdout)
 
     def assert_can_interact_with_server_via_client(self):
         """Asserts that the client can interact with the server."""

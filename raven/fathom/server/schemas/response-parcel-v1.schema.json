@@ -61,6 +61,7 @@
     },
     "serverInfo": {
       "type": "object",
+      "additionalProperties": true,
       "properties": {
         "domain": {
           "description": "The web domain under which the server operates.",
@@ -127,6 +128,18 @@
         },
         "required": ["identifier", "name", "description"]
       }
+    },
+    "permission": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": ["key"]
     }
   },
   "deploymentResult": {

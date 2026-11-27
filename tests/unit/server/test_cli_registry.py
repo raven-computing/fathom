@@ -19,109 +19,43 @@ from typing import cast
 from raven.fathom.server.cli import AppArgs
 from raven.fathom.server.cli import AppCommand
 from raven.fathom.server.cli import create_command
+from raven.fathom.server.cli.reset import ResetSharedSecretCommand
+from raven.fathom.server.cli.reset import ResetUserCommand
 from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.cli.setup import SetupCommand
-from raven.fathom.server.cli.user import UserCreateCommand
-from raven.fathom.server.cli.user import UserDeleteCommand
-from raven.fathom.server.cli.user import UserListCommand
-from raven.fathom.server.cli.user import UserPermissionGetCommand
-from raven.fathom.server.cli.user import UserPermissionSetCommand
-from raven.fathom.server.cli.command import ServerManagementCommand
-from raven.fathom.server.cli.project import ProjectCreateCommand
-from raven.fathom.server.cli.project import ProjectDeleteCommand
-from raven.fathom.server.cli.project import ProjectListCommand
 
 from tests.unit import TestCase
 
 
 class TestServerCommandRegistry(TestCase):
-    """Unit tests for the `command_with_args()` function."""
+    """Unit tests for the `create_command()` function."""
 
     def test_registry_works_for_no_command(self):
         command = create_command(AppArgs())
+        self.assertIsInstance(command, ServeCommand)
+
+    def test_registry_works_for_serve_command(self):
+        command = create_command(AppArgs(command=AppCommand.SERVE))
         self.assertIsInstance(command, ServeCommand)
 
     def test_registry_works_for_setup_command(self):
         command = create_command(AppArgs(command=AppCommand.SETUP))
         self.assertIsInstance(command, SetupCommand)
 
-    def test_registry_works_for_user_create_command(self):
+    def test_registry_works_for_reset_user_command(self):
         command = create_command(
-            AppArgs(command=AppCommand.USER, user_command=AppCommand.CREATE)
+            AppArgs(command=AppCommand.RESET, reset_subject=AppCommand.USER)
         )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, UserCreateCommand)
+        self.assertIsInstance(command, ResetUserCommand)
 
-    def test_registry_works_for_user_list_command(self):
-        command = create_command(
-            AppArgs(command=AppCommand.USER, user_command=AppCommand.LIST)
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, UserListCommand)
-
-    def test_registry_works_for_user_delete_command(self):
-        command = create_command(
-            AppArgs(command=AppCommand.USER, user_command=AppCommand.DELETE)
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, UserDeleteCommand)
-
-    def test_registry_works_for_user_permission_get_command(self):
+    def test_registry_works_for_reset_shared_secret_command(self):
         command = create_command(
             AppArgs(
-                command=AppCommand.USER,
-                user_command=AppCommand.PERMISSION,
-                user_permission_command=AppCommand.GET,
+                command=AppCommand.RESET,
+                reset_subject=AppCommand.SHARED_SECRET,
             )
         )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, UserPermissionGetCommand)
-
-    def test_registry_works_for_user_permission_set_command(self):
-        command = create_command(
-            AppArgs(
-                command=AppCommand.USER,
-                user_command=AppCommand.PERMISSION,
-                user_permission_command=AppCommand.SET,
-            )
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, UserPermissionSetCommand)
-
-    def test_registry_works_for_project_create_command(self):
-        command = create_command(
-            AppArgs(
-                command=AppCommand.PROJECT,
-                project_command=AppCommand.CREATE
-            )
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, ProjectCreateCommand)
-
-    def test_registry_works_for_project_list_command(self):
-        command = create_command(
-            AppArgs(command=AppCommand.PROJECT, project_command=AppCommand.LIST)
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, ProjectListCommand)
-
-    def test_registry_works_for_project_delete_command(self):
-        command = create_command(
-            AppArgs(
-                command=AppCommand.PROJECT,
-                project_command=AppCommand.DELETE
-            )
-        )
-        self.assertIsInstance(command, ServerManagementCommand)
-        assert isinstance(command, ServerManagementCommand)
-        self.assertIsInstance(command.command, ProjectDeleteCommand)
+        self.assertIsInstance(command, ResetSharedSecretCommand)
 
     def test_registry_rejects_invalid_command(self):
         with self.assertRaises(ValueError) as raised:
@@ -129,27 +63,16 @@ class TestServerCommandRegistry(TestCase):
 
         self.assertIn("Invalid command 'invalid'", str(raised.exception))
 
-    def test_registry_rejects_invalid_user_subcommand(self):
+    def test_registry_rejects_invalid_reset_subject(self):
         with self.assertRaises(ValueError) as raised:
             create_command(
                 AppArgs(
-                    command=AppCommand.USER,
-                    user_command=cast(AppCommand, "oops")
+                    command=AppCommand.RESET,
+                    reset_subject=cast(AppCommand, "oops"),
                 )
             )
 
-        self.assertIn("Invalid user command 'oops'", str(raised.exception))
-
-    def test_registry_rejects_invalid_project_subcommand(self):
-        with self.assertRaises(ValueError) as raised:
-            create_command(
-                AppArgs(
-                    command=AppCommand.PROJECT,
-                    project_command=cast(AppCommand, "oops")
-                )
-            )
-
-        self.assertIn("Invalid project command 'oops'", str(raised.exception))
+        self.assertIn("Invalid reset subject 'oops'", str(raised.exception))
 
 
 if __name__ == "__main__":

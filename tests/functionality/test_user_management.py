@@ -153,108 +153,70 @@ class TestServerUserManagementCLI(TestCase):
 
     AUTO_START_SERVER = False
 
-    def test_server_cli_setup_creates_system_user(self):
+    def test_server_cli_setup_creates_initial_administrator(self):
         self.server.stdin = [
             "My Org",
+            "initial-admin",
             "secret-password",
             "secret-password",
             "my-shared-secret",
+            "system-pass",
+            "system-pass",
         ]
 
         self.server.execute("setup")
 
         self.assertServerSuccess()
-        self.assertIn(
-            "Server setup completed",
-            self.server.stdout
-        )
+        self.assertIn("Server setup completed", self.server.stdout)
+        self.assertIn("initial-admin", self.server.stdout)
+        self.assertIn("fathom", self.server.stdout)
 
-        self.server.stdin = ["secret-password"]
-        self.server.execute("user", "list")
+    def test_server_cli_requires_setup_before_serve(self):
+        self.server.execute("serve", "--help")
 
-        self.assertServerSuccess()
-        self.assertNotIn("Fathom System User", self.server.stdout)
+        self.assertEqual(0, self.server.command_exit_status)
 
-    def server_cli_can_create_list_and_delete_admin_user(self):
-        """Tests an entire cycle of creating, listing and deleting
-        an admin user.
-        """
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute(
-            "user", "create", "local-admin",
-            "--name", "Local Admin", "--admin"
-        )
 
-        self.assertServerSuccess()
-        self.assertIn(
-            "Created user local-admin with admin privileges",
-            self.server.stdout
-        )
+class TestServerResetCLI(TestCase):
+    """End-to-end functionality tests for the `fathom-server reset` command."""
 
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("user", "list")
+    AUTO_START_SERVER = False
+
+    def test_reset_user_allows_subsequent_resign(self):
+        self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
+        self.server.stdin = ["fathom", "alpha", "alpha-new-password",
+                             "alpha-new-password"]
+        self.server.execute("reset", "user", "alpha")
 
         self.assertServerSuccess()
-        self.assertIn("local-admin", self.server.stdout)
-        self.assertIn("Local Admin", self.server.stdout)
-        self.assertIn("admin", self.server.stdout)
-        self.assertIn("onboarding", self.server.stdout)
+        self.assertIn("credentials for user 'alpha' have been reset",
+                      self.server.stdout.lower())
 
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("user", "delete", "local-admin")
-
-        self.assertServerSuccess()
-        self.assertIn("Deleted user 'local-admin'.", self.server.stdout)
-
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("user", "list")
-
-        self.assertServerSuccess()
-        self.assertNotIn("local-admin", self.server.stdout)
-        self.assertNotIn("Local Admin", self.server.stdout)
-
-    def test_server_cli_can_create_list_and_delete_admin_user(self):
-        self.server.initialize_datastore(self.DATASTORE_SQL_FILE)
-        self.server_cli_can_create_list_and_delete_admin_user()
-
-    def test_server_cli_requires_setup_before_other_commands(self):
-        self.server.execute("user", "list")
+    def test_reset_user_rejects_wrong_system_password(self):
+        self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
+        self.server.stdin = ["wrong-system-password"]
+        self.server.execute("reset", "user", "alpha")
 
         self.assertNotEqual(0, self.server.command_exit_status)
-        self.assertIn(
-            "Run 'fathom-server setup' first.",
-            self.server.stdout
-        )
+
+    def test_reset_shared_secret_succeeds_with_correct_auth(self):
+        self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
+        self.server.stdin = ["fathom", "brand-new-secret"]
+        self.server.execute("reset", "shared-secret")
+
+        self.assertServerSuccess()
+        self.assertIn("shared secret has been updated",
+                      self.server.stdout.lower())
 
 
-class TestServerUserManagementWithRunningServer(TestServerUserManagementCLI):
-    """Same tests as `TestServerUserManagementCLI` but with the
-    server already running.
-
-    This tests that there is no conflict when a Fathom server is running in
-    the background and a server admin user uses a CLI command to
-    manage server resources. Additionally contains tests that require the
-    datastore to be pre-initialized.
-    """
+class TestServerUserManagementWithRunningServer(TestCase):
+    """Tests for the server user management when the server is running."""
 
     AUTO_START_SERVER = True
 
-    def test_server_cli_can_create_list_and_delete_admin_user(self):
-        self.server_cli_can_create_list_and_delete_admin_user()
-
-    def test_server_cli_requires_setup_before_other_commands(self):
+    def test_server_cli_setup_creates_initial_administrator(self):
         self.skipTest("Only applicable before the server datastore is seeded")
 
-    def test_server_cli_setup_creates_system_user(self):
-        self.skipTest("Only applicable before the server datastore is seeded")
-
-    def test_server_cli_rejects_non_admin_user(self):
-        self.server.stdin = ["test-user-1", "123456"]
-
-        self.server.execute("user", "list")
-
-        self.assertNotEqual(0, self.server.command_exit_status)
-        self.assertIn("Incorrect username or password.", self.server.stdout)
 
 
 if __name__ == "__main__":

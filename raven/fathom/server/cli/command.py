@@ -25,11 +25,7 @@ from raven.fathom.base import log_stdout
 from raven.fathom.server.datastore import DatabaseManager
 from raven.fathom.server.core.logging import Logger
 from raven.fathom.server.core.setup import confirm_system_privileges
-from raven.fathom.server.core.exceptions import DomainException
 from raven.fathom.server.cli.status import ExitStatus
-from raven.fathom.server.core.user_management import UserInternalException
-from raven.fathom.server.core.user_management import UserManagementException
-from raven.fathom.server.domain import ProjectInternalException
 
 if TYPE_CHECKING:
     from raven.fathom.server.cli.arguments import AppArgs
@@ -91,37 +87,3 @@ def require_privileges(method: ExecuteMethod[S]) -> ExecuteMethod[S]:
         return method(instance)
 
     return wrapped
-
-
-class ServerManagementCommand(ServerCommand):
-    """Server CLI management command wrapper.
-
-    Wraps a `ServerCommand` object that manages resources directly.
-    Applies `@require_privileges`.
-    Handles internal errors and errors of type `DomainException`
-    and `UserManagementException`.
-
-    Attributes:
-        command (ServerCommand): The `ServerCommand` object
-            to delegate operations to.
-    """
-
-    def __init__(self, command: ServerCommand):
-        super().__init__(command.args)
-        self.command = command
-
-    @require_privileges
-    def execute(self) -> int:
-        try:
-            return self.command.execute()
-        except (UserInternalException, ProjectInternalException) as ex:
-            LOG.e("An internal error has occurred.")
-            LOG.e("%s", ex)
-            LOG.d(ex)
-            return ExitStatus.INTERNAL_ERROR
-        except (UserManagementException, DomainException) as ex:
-            LOG.e("%s", ex)
-            return ExitStatus.FAILURE
-
-    def cancel(self):
-        self.command.cancel()

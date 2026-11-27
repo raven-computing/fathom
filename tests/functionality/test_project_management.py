@@ -83,49 +83,21 @@ class TestClientProjectManagement(TestCase, ConfigurationFixture):
 
 
 class TestServerProjectManagementCLI(TestCase):
-    """Functionality tests for project management via fathom-server CLI."""
+    """Functionality tests verifying that fathom-server CLI no longer
+    exposes project management commands, which are now only available
+    through the client CLI.
+    """
 
     AUTO_START_SERVER = False
 
-    def test_server_cli_can_create_list_and_delete_project(self):
-        self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute(
-            "project", "create", "local-project",
-            "--name", "Local Project",
-            "--description", "Local project description",
-        )
-
-        self.assertServerSuccess()
-        self.assertIn("Created project local-project.", self.server.stdout)
-
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("project", "list")
-
-        self.assertServerSuccess()
-        self.assertIn("local-project", self.server.stdout)
-        self.assertIn("Local Project", self.server.stdout)
-        self.assertIn("Local project description", self.server.stdout)
-
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("project", "delete", "local-project")
-
-        self.assertServerSuccess()
-        self.assertIn("Deleted project 'local-project'.", self.server.stdout)
-
-        self.server.stdin = ["fathom", "fathom"]
-        self.server.execute("project", "list")
-
-        self.assertNotIn("'local-project'", self.server.stdout)
-
-    def test_server_cli_rejects_non_admin_user(self):
-        self.server.initialize_datastore(TestCase.DATASTORE_SQL_FILE)
-        self.server.stdin = ["test-user-1", "123456"]
-
+    def test_server_cli_rejects_project_command(self):
         self.server.execute("project", "list")
 
         self.assertNotEqual(0, self.server.command_exit_status)
-        self.assertIn("Incorrect username or password.", self.server.stdout)
+        self.assertIn(
+            "invalid choice: 'project'",
+            self.server.stderr,
+        )
 
 
 if __name__ == "__main__":

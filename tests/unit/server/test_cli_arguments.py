@@ -14,7 +14,7 @@
 #
 """Unit tests for server CLI argument parsing."""
 
-from raven.fathom.server.cli.arguments import AppArgs, parse_args
+from raven.fathom.server.cli.arguments import AppArgs, AppCommand, parse_args
 
 from tests.unit import TestCase
 
@@ -27,6 +27,18 @@ class TestServerAppArgs(TestCase):
 
         self.assertIsInstance(args, AppArgs)
         self.assertEqual(args.command, "setup")
+
+    def test_serve_command_is_recognized(self):
+        args = parse_args(["fathom-server", "serve"])
+
+        self.assertIsInstance(args, AppArgs)
+        self.assertEqual(args.command, "serve")
+
+    def test_no_command_defaults_to_serve(self):
+        args = parse_args(["fathom-server"])
+
+        self.assertIsInstance(args, AppArgs)
+        self.assertEqual(args.command, AppCommand.SERVE)
 
     def test_external_config_file_is_recognized(self):
         args = parse_args([
@@ -41,123 +53,19 @@ class TestServerAppArgs(TestCase):
             "/etc/fathom-server/fathom.cfg",
         )
 
-    def test_user_create_arguments_are_parsed(self):
-        args = parse_args([
-            "fathom-server", "user", "create", "alpha",
-            "--name", "Alpha User",
-        ])
+    def test_reset_user_command_is_recognized(self):
+        args = parse_args(["fathom-server", "reset", "user", "alice"])
 
-        self.assertEqual(args.command, "user")
-        self.assertEqual(args.user_command, "create")
-        self.assertEqual(args.user_identifier, "alpha")
-        self.assertEqual(args.user_name, "Alpha User")
-        self.assertFalse(args.user_is_admin)
+        self.assertEqual(args.command, AppCommand.RESET)
+        self.assertEqual(args.reset_subject, AppCommand.USER)
+        self.assertEqual(args.reset_user_identifier, "alice")
 
-    def test_user_create_admin_flag_is_parsed(self):
-        args = parse_args([
-            "fathom-server", "user", "create", "alpha",
-            "--admin",
-        ])
+    def test_reset_shared_secret_command_is_recognized(self):
+        args = parse_args(["fathom-server", "reset", "shared-secret"])
 
-        self.assertEqual(args.user_command, "create")
-        self.assertTrue(args.user_is_admin)
-
-    def test_user_list_command_is_parsed(self):
-        args = parse_args(["fathom-server", "user", "list"])
-
-        self.assertEqual(args.command, "user")
-        self.assertEqual(args.user_command, "list")
-        self.assertEqual(args.user_identifier, "")
-
-    def test_user_delete_command_is_parsed(self):
-        args = parse_args(["fathom-server", "user", "delete", "alpha"])
-
-        self.assertEqual(args.command, "user")
-        self.assertEqual(args.user_command, "delete")
-        self.assertEqual(args.user_identifier, "alpha")
-
-    def test_user_permission_set_arguments_are_parsed(self):
-        for value in ("ON", "yes", "1", "TrUe"):
-            with self.subTest(value=value):
-                args = parse_args([
-                    "fathom-server",
-                    "user",
-                    "permission",
-                    "set",
-                    "alpha",
-                    "allow_overwrite",
-                    value,
-                ])
-
-                self.assertEqual(args.command, "user")
-                self.assertEqual(args.user_command, "permission")
-                self.assertEqual(args.user_permission_command, "set")
-                self.assertEqual(args.user_identifier, "alpha")
-                self.assertEqual(
-                    args.user_permission_key,
-                    "allow_overwrite",
-                )
-                self.assertEqual(args.user_permission_value, value)
-
-        for value in ("OFF", "no", "0", "FaLsE"):
-            with self.subTest(value=value):
-                args = parse_args([
-                    "fathom-server",
-                    "user",
-                    "permission",
-                    "set",
-                    "alpha",
-                    "allow_overwrite",
-                    value,
-                ])
-
-                self.assertEqual(args.user_permission_value, value)
-
-    def test_user_permission_get_arguments_are_parsed(self):
-        args = parse_args([
-            "fathom-server",
-            "user",
-            "permission",
-            "get",
-            "alpha",
-            "allow_overwrite",
-        ])
-
-        self.assertEqual(args.command, "user")
-        self.assertEqual(args.user_command, "permission")
-        self.assertEqual(args.user_permission_command, "get")
-        self.assertEqual(args.user_identifier, "alpha")
-        self.assertEqual(args.user_permission_key, "allow_overwrite")
-        self.assertEqual(args.user_permission_value, "")
-
-    def test_project_create_arguments_are_parsed(self):
-        args = parse_args([
-            "fathom-server", "project", "create", "alpha-project",
-            "--name", "Alpha Project",
-            "--description", "Primary project",
-        ])
-
-        self.assertEqual(args.command, "project")
-        self.assertEqual(args.project_command, "create")
-        self.assertEqual(args.project_identifier, "alpha-project")
-        self.assertEqual(args.project_name, "Alpha Project")
-        self.assertEqual(args.project_description, "Primary project")
-
-    def test_project_list_command_is_parsed(self):
-        args = parse_args(["fathom-server", "project", "list"])
-
-        self.assertEqual(args.command, "project")
-        self.assertEqual(args.project_command, "list")
-        self.assertEqual(args.project_identifier, "")
-
-    def test_project_delete_command_is_parsed(self):
-        args = parse_args([
-            "fathom-server", "project", "delete", "alpha-project"
-        ])
-
-        self.assertEqual(args.command, "project")
-        self.assertEqual(args.project_command, "delete")
-        self.assertEqual(args.project_identifier, "alpha-project")
+        self.assertEqual(args.command, AppCommand.RESET)
+        self.assertEqual(args.reset_subject, AppCommand.SHARED_SECRET)
+        self.assertEqual(args.reset_user_identifier, "")
 
 
 if __name__ == "__main__":

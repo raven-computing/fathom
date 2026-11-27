@@ -86,10 +86,8 @@ positional arguments:
     setup               Perform initial setup work for the server application. This should be done
                         once after installation. This step is interactive.
 
-    user                Manage dedicated application users. This command requires you to
-                        authenticate and have administrative privileges.
-
-    project             Manage deployable projects.
+    reset               Perform a local administrative reset operation. Requires authentication as
+                        the system user.
 
 options:
   --config-file <PATH>  The absolute path to the server configuration file. When omitted, known

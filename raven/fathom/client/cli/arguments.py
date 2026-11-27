@@ -58,6 +58,12 @@ class AppCommand(StrEnum):
 
     SHOW = "show"
 
+    PERMISSION = "permission"
+
+    GET = "get"
+
+    SET = "set"
+
 
 @dataclass(frozen=True)
 class AppArgs:
@@ -92,6 +98,12 @@ class AppArgs:
     user_identifier: str = ""
 
     user_name: str = ""
+
+    user_is_admin: bool = False
+
+    permission_key: str = ""
+
+    permission_value: str = ""
 
     project_identifier: str = ""
 
@@ -240,6 +252,13 @@ def parse_args(argv: list[str]) -> AppArgs:
         metavar="<NAME>",
         help="The display name of the user to create."
     )
+    manage_user_create.add_argument(
+        "--admin",
+        action="store_true",
+        default=False,
+        dest="user_is_admin",
+        help="Create the user with administrator privileges."
+    )
 
     manage_user_subparsers.add_parser(
         str(AppCommand.LIST),
@@ -286,6 +305,53 @@ def parse_args(argv: list[str]) -> AppArgs:
         "project_identifier",
         metavar="<PROJECT>",
         help="The unique identifier of the project to remove the user from."
+    )
+
+    manage_user_permission = manage_user_subparsers.add_parser(
+        str(AppCommand.PERMISSION),
+        help="Manage permissions for a dedicated application user."
+    )
+    manage_user_permission_subparsers = manage_user_permission.add_subparsers(
+        dest="manage_command",
+        required=True,
+        metavar="<ACTION>",
+    )
+
+    manage_user_permission_get = manage_user_permission_subparsers.add_parser(
+        str(AppCommand.GET),
+        help="Show the current value of a permission for a user."
+    )
+    manage_user_permission_get.add_argument(
+        "user_identifier",
+        metavar="<USER>",
+        help="The unique identifier of the user whose permission to get."
+    )
+    manage_user_permission_get.add_argument(
+        "permission_key",
+        choices=("allow_overwrite",),
+        metavar="<PERMISSION>",
+        help="The key of the permission to get."
+    )
+
+    manage_user_permission_set = manage_user_permission_subparsers.add_parser(
+        str(AppCommand.SET),
+        help="Set a permission for a user."
+    )
+    manage_user_permission_set.add_argument(
+        "user_identifier",
+        metavar="<USER>",
+        help="The unique identifier of the user whose permission to set."
+    )
+    manage_user_permission_set.add_argument(
+        "permission_key",
+        choices=("allow_overwrite",),
+        metavar="<PERMISSION>",
+        help="The key of the permission to set."
+    )
+    manage_user_permission_set.add_argument(
+        "permission_value",
+        metavar="<VALUE>",
+        help="The new permission value."
     )
 
     manage_project = manage_subparsers.add_parser(
@@ -444,6 +510,9 @@ def parse_args(argv: list[str]) -> AppArgs:
         ),
         user_identifier=getattr(args, "user_identifier", ""),
         user_name=getattr(args, "user_name", ""),
+        user_is_admin=getattr(args, "user_is_admin", False),
+        permission_key=getattr(args, "permission_key", ""),
+        permission_value=getattr(args, "permission_value", ""),
         project_identifier=getattr(args, "project_identifier", ""),
         project_name=getattr(args, "project_name", ""),
         project_description=getattr(args, "project_description", ""),

@@ -229,7 +229,7 @@ class UserAuthenticator:
 
         user = self._ds.users().find_by_identifier(authentication.username)
         is_authenticated = False
-        if self._onboarding_user_record_has_password_set(user):
+        if self._pending_signup_user_record_has_password_set(user):
             assert user is not None
             user = self._validate_user_authentication_by(
                 user,
@@ -414,6 +414,20 @@ class UserAuthenticator:
             and user_record.password is not None
             and str(user_record.password) != ""
             and user_record.state == UserState.ONBOARDING
+        )
+
+    def _pending_signup_user_record_has_password_set(
+        self,
+        user_record: Optional[User]
+    ) -> bool:
+        """Returns `True` for users in ONBOARDING or RESET state
+        that have a stored credential (shared-secret hash) set.
+        """
+        return (
+            user_record is not None
+            and user_record.password is not None
+            and str(user_record.password) != ""
+            and user_record.state in (UserState.ONBOARDING, UserState.RESET)
         )
 
     def _store_hashed_password_for(self, user: User):

@@ -37,16 +37,16 @@ def _check_version_option(args) -> ExitStatus | None:
     return None
 
 
-def main(argv: list[str]) -> ExitStatus:
+def main(argv: list[str] | None = None) -> ExitStatus:
     """Main function of the Fathom server application.
 
     Args:
-        argv (list): The list of str program arguments.
+        argv (list): The list of str program arguments. Defaults to `sys.argv`.
 
     Returns:
         ExitStatus: The exit status of the program.
     """
-    args = parse_args(argv)
+    args = parse_args(sys.argv if argv is None else argv)
     if args.config_file:
         config_file = File(args.config_file)
         if not config_file.path.is_absolute():

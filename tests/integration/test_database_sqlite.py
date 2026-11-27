@@ -112,10 +112,11 @@ class TestDatabaseSQLite(DatabaseIntegrationTestCase):
 
     def test_query_can_find_all_users(self):
         users = self.db.users().read_all()
-        self.assertEqual(len(users), 2)
+        self.assertEqual(len(users), 3)
         self.assertIsInstance(users[0], User)
         self.assertEqual(users[0].identifier, "fathom")
-        self.assertEqual(users[1].identifier, "test-user-1")
+        self.assertEqual(users[1].identifier, "admin")
+        self.assertEqual(users[2].identifier, "test-user-1")
 
     def test_query_to_find_user_with_unknown_identifier_returns_none(self):
         user = self.db.users().find_by_identifier("this-user-does-not-exist")

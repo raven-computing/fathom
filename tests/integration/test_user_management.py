@@ -102,28 +102,53 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
     def test_can_create_system_user_during_setup(self):
         self.db.users().delete_by_identifier("fathom")
-        user = User(
-            identifier="ignored",
-            name="Ignored",
-            password="secret-password"
+
+        self.mananger.create_system_user("fathom", "secret-password")
+
+        stored = self.db.users().find_by_identifier("fathom")
+        assert stored is not None
+        self.assertEqual(stored.identifier, "fathom")
+        self.assertEqual(stored.name, "Fathom System User")
+        self.assertEqual(stored.role, UserRole.SYSTEM)
+        self.assertEqual(stored.state, UserState.ACTIVE)
+        self.assertTrue(
+            StoredPasswordHash.is_stored_representation(str(stored.password))
         )
-
-        self.mananger.create_system_user(user)
-
-        stored_user = self.db.users().find_by_identifier("fathom")
-        assert stored_user is not None
-        self.assertEqual(stored_user.identifier, "fathom")
-        self.assertEqual(stored_user.name, "Fathom System User")
-        self.assertEqual(stored_user.role, UserRole.SYSTEM)
-        self.assertEqual(stored_user.state, UserState.ACTIVE)
 
     def test_cannot_create_second_system_user(self):
         with self.assertRaises(UserManagementException) as raised:
-            self.mananger.create_system_user(
-                User(password="secret-password", identifier="ignored")
-            )
+            self.mananger.create_system_user("fathom", "another-pass")
 
         self.assertIn("already been set up", str(raised.exception))
+
+    def test_reset_user_sets_reset_state_and_stamps_shared_secret(self):
+        self.mananger.reset_user("test-user-1")
+
+        stored = self.db.users().find_by_identifier("test-user-1")
+        assert stored is not None
+        self.assertEqual(stored.state, UserState.RESET)
+        self.assertTrue(
+            StoredPasswordHash.is_stored_representation(str(stored.password))
+        )
+
+    def test_reset_user_enables_re_signup(self):
+        self.mananger.reset_user("test-user-1")
+
+        user = User(identifier="test-user-1", password="brand-new-password")
+        self.mananger.sign_up_user(user)
+
+        self.assertEqual(user.state, UserState.ACTIVE)
+        stored = self.db.users().find_by_identifier("test-user-1")
+        assert stored is not None
+        self.assertEqual(stored.state, UserState.ACTIVE)
+
+    def test_rotate_shared_secret_updates_settings(self):
+        new_secret = "rotated-secret-value"
+
+        self.mananger.rotate_shared_secret(new_secret)
+
+        settings = self.db.settings().find_server_settings()
+        self.assertEqual(settings.shared_secret, new_secret)
 
     def test_list_users_returns_admin_state(self):
         user = User(
@@ -134,14 +159,19 @@ class TestUserManagement(DatabaseIntegrationTestCase):
 
         users = self.mananger.list_users()
 
-        self.assertEqual(
-            [user.identifier for user in users],
-            ["test-user-1", "test-user-2"]
-        )
-        self.assertFalse(users[0].is_admin)
-        self.assertFalse(users[1].is_admin)
-        self.assertEqual(users[0].state, UserState.ACTIVE)
-        self.assertEqual(users[1].state, UserState.ONBOARDING)
+        identifiers = [u.identifier for u in users]
+        self.assertIn("admin", identifiers)
+        self.assertIn("test-user-1", identifiers)
+        self.assertIn("test-user-2", identifiers)
+        admin = next(u for u in users if u.identifier == "admin")
+        user1 = next(u for u in users if u.identifier == "test-user-1")
+        user2 = next(u for u in users if u.identifier == "test-user-2")
+        self.assertTrue(admin.is_admin)
+        self.assertEqual(admin.state, UserState.ACTIVE)
+        self.assertFalse(user1.is_admin)
+        self.assertEqual(user1.state, UserState.ACTIVE)
+        self.assertFalse(user2.is_admin)
+        self.assertEqual(user2.state, UserState.ONBOARDING)
 
     def test_delete_user_removes_associated_records(self):
         user_record = self.db.users().find_by_identifier("test-user-1")
@@ -185,7 +215,7 @@ class TestUserManagement(DatabaseIntegrationTestCase):
             )
 
         self.assertIn(
-            "Permissions of the system user cannot be changed",
+            "system user cannot be changed",
             str(raised.exception),
         )
         system_user = self.db.users().find_by_identifier("fathom")

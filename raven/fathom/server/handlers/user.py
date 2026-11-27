@@ -25,6 +25,7 @@ from raven.fathom.server.core.user_management import (
     UserManagementException,
     UserNotFoundException,
     UserInternalException,
+    UserPermissionKey,
 )
 
 from .handler import ActionHandler, require_admin_privileges
@@ -138,18 +139,6 @@ class UserCreateHandler(ActionHandler):
             return
 
         assert user is not None
-        if user.is_admin:
-            response.add_error(
-                ResponseMessage(
-                    code=ResponseCode.AUTHORIZATION_DENIED,
-                    text=(
-                        "Remote user creation cannot grant "
-                        "administrator permissions."
-                    ),
-                )
-            )
-            return
-
         user.state = UserState.ONBOARDING
 
         self._manager.create_user(user)
@@ -202,7 +191,7 @@ class UserDeleteHandler(ActionHandler):
 
         assert user is not None
 
-        self._manager.delete_user(user)
+        self._manager.delete_user(user, request.authenticated_user_id)
         LOG.i(
             "User %s deleted user %s",
             request.authenticated_user_id,
@@ -212,5 +201,119 @@ class UserDeleteHandler(ActionHandler):
             ResponseMessage(
                 code=ResponseCode.SUCCESSFUL_COMPLETION,
                 text=f"User {user.identifier} has been deleted."
+            )
+        )
+
+
+class UserPermissionGetHandler(ActionHandler):
+    """Handles remote requests to get a user permission value."""
+
+    def __init__(self, manager: UserManager):
+        super().__init__(None)
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        user = request.user
+        if not _has_user_identifier_set(user, response):
+            return
+
+        assert user is not None
+        perm_key_str = request.permission_key
+        if not perm_key_str:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No permission key provided.",
+                )
+            )
+            return
+
+        try:
+            permission_key = UserPermissionKey(perm_key_str)
+        except ValueError:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text=f"Unknown permission key '{perm_key_str}'.",
+                )
+            )
+            return
+
+        value = self._manager.get_user_permission(user, permission_key)
+        LOG.i(
+            "User %s retrieved permission '%s' for user %s",
+            request.authenticated_user_id,
+            perm_key_str,
+            user.identifier,
+        )
+        response.permission_key = perm_key_str
+        response.permission_value = value
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text="Success."
+            )
+        )
+
+
+class UserPermissionSetHandler(ActionHandler):
+    """Handles remote requests to set a user permission value."""
+
+    def __init__(self, manager: UserManager):
+        super().__init__(None)
+        self._manager = manager
+
+    def handle(self, request: ClientRequest, response: ServerResponse):
+        user = request.user
+        if not _has_user_identifier_set(user, response):
+            return
+
+        assert user is not None
+        perm_key_str = request.permission_key
+        perm_value = request.permission_value
+        if not perm_key_str:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No permission key provided.",
+                )
+            )
+            return
+
+        if perm_value is None:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text="No permission value provided.",
+                )
+            )
+            return
+
+        try:
+            permission_key = UserPermissionKey(perm_key_str)
+        except ValueError:
+            response.add_error(
+                ResponseMessage(
+                    code=ResponseCode.INCOMPLETE_REQUEST,
+                    text=f"Unknown permission key '{perm_key_str}'.",
+                )
+            )
+            return
+
+        self._manager.set_user_permission(user, permission_key, perm_value)
+        LOG.i(
+            "User %s set permission '%s' for user %s to '%s'",
+            request.authenticated_user_id,
+            perm_key_str,
+            user.identifier,
+            perm_value,
+        )
+        response.add_informational(
+            ResponseMessage(
+                code=ResponseCode.SUCCESSFUL_COMPLETION,
+                text=(
+                    f"Permission '{perm_key_str}' for user "
+                    f"'{user.identifier}' set to '{perm_value}'."
+                )
             )
         )

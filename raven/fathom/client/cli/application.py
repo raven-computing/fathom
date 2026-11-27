@@ -55,15 +55,19 @@ def _setup_client(args: AppArgs):
         LOG.i("Running in a development environment")
 
 
-def main(argv: list[str]) -> ExitStatus:
+def main(argv: list[str] | None = None) -> ExitStatus:
     """Main function of the Fathom client CLI application.
 
     Args:
         argv (list): The list of str program arguments.
+            Defaults to `sys.argv`.
 
     Returns:
         ExitStatus: The exit status of the program.
     """
+    if argv is None:
+        argv = sys.argv
+
     args = parse_args(argv)
 
     app_mode = determine_client_application_mode()

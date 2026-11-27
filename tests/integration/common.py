@@ -136,6 +136,17 @@ class DatabaseIntegrationTestCase(TestCase):
             user=test_user_id,
             allow_overwrite=True,
         )
+        admin_user_id = User.create(
+            identifier="admin",
+            name="Admin User",
+            password="adminpass",
+            role=UserRole.ADMINISTRATOR,
+            state="active",
+        )
+        UserPermission.create(
+            user=admin_user_id,
+            allow_overwrite=True,
+        )
         regular_user_id = User.create(
             identifier="test-user-1",
             name="Test User 1",

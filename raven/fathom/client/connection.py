@@ -251,10 +251,12 @@ class Server:
         return message
 
     def create_user(self, user: User) -> DataResult[User]:
-        """Creates a regular application user on the server.
+        """Creates an application user on the server.
 
         Args:
-            user (User): The User object to create on the server.
+            user (User): The User object to create on the server. Set
+                `is_admin=True` to create the user with administrator
+                privileges.
 
         Returns:
             DataResult[User]: The created user as returned by the server.
@@ -345,6 +347,76 @@ class Server:
         request.user = user
 
         LOG.v("Requesting remote user deletion")
+        response = self._send(request)
+        return self._prepare_result(response)
+
+    def get_user_permission(
+        self,
+        user: User,
+        permission_key: str,
+    ) -> DataResult[tuple[str, str]]:
+        """Gets a permission value for an application user on the server.
+
+        Args:
+            user (User): The user whose permission to retrieve.
+            permission_key (str): The permission key to retrieve.
+
+        Returns:
+            DataResult: A tuple of ``(permission_key, permission_value)``
+                returned by the server, encapsulated in a DataResult.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or the request encounters an unexpected error.
+        """
+        request = ClientRequest(Interaction.GET_USER_PERMISSION)
+        request.authentication = self._client_authentication
+        request.user = user
+        request.permission_key = permission_key
+
+        LOG.v("Requesting remote user permission get")
+        response = self._send(request)
+        result = self._prepare_result(response)
+        if result.ok:
+            key = response.permission_key
+            value = response.permission_value
+            if key is None or value is None:
+                raise ServerConnectionException(
+                    "Server response for permission get is missing "
+                    "expected permission data"
+                )
+
+            return self._combine(result, (key, value))
+
+        return self._empty(result)
+
+    def set_user_permission(
+        self,
+        user: User,
+        permission_key: str,
+        permission_value: str,
+    ) -> Result:
+        """Sets a permission value for an application user on the server.
+
+        Args:
+            user (User): The user whose permission to change.
+            permission_key (str): The permission key to set.
+            permission_value (str): The new permission value.
+
+        Returns:
+            Result: The result of the set-permission operation.
+
+        Raises:
+            ServerConnectionException: If a connection to the server cannot
+                be established or the request encounters an unexpected error.
+        """
+        request = ClientRequest(Interaction.SET_USER_PERMISSION)
+        request.authentication = self._client_authentication
+        request.user = user
+        request.permission_key = permission_key
+        request.permission_value = permission_value
+
+        LOG.v("Requesting remote user permission set")
         response = self._send(request)
         return self._prepare_result(response)
 

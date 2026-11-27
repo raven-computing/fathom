@@ -15,7 +15,6 @@
 """Management of dedicated application users."""
 
 from enum import StrEnum
-from typing import Final
 
 from raven.fathom.base import TypeCheck
 from raven.fathom.base import User
@@ -25,9 +24,9 @@ from raven.fathom.server.dao import FailedCreateQueryException
 from raven.fathom.server.dao import FailedReadQueryException
 from raven.fathom.server.dao import FailedUpdateQueryException
 from raven.fathom.server.dao import FailedDeleteQueryException
+from raven.fathom.server.dao import IncoherentDatastoreStateException
 from raven.fathom.server.models import User as UserModel
 from raven.fathom.server.models import UserRole
-from raven.fathom.server.models import SYSTEM_USER_IDENTIFIER
 from raven.fathom.server.models import SYSTEM_USER_NAME
 from raven.fathom.server.security import UserAuthenticator
 from raven.fathom.server.core.exceptions import FathomServerException
@@ -70,59 +69,6 @@ class UserPermissionKey(StrEnum):
     ALLOW_OVERWRITE = "allow_overwrite"
 
 
-class _SystemUser:
-    """The Fathom system user.
-
-    Models the domain-concept of the system user, encapsulates
-    the system user's identity and provides methods to manage the record
-    in the datastore.
-    """
-
-    IDENTIFIER: Final[str] = SYSTEM_USER_IDENTIFIER
-
-    NAME: Final[str] = SYSTEM_USER_NAME
-
-    def __init__(self):
-        self._ds = DataAccess.instance()
-
-    def exists(self) -> bool:
-        """Checks whether a system user already exists
-        in the application's datastore.
-
-        Returns:
-            bool: `True` if a system user record exists,
-                `False` if no such record could be found.
-        """
-        for user in self._ds.users().read_all():
-            if user.role == UserRole.SYSTEM:
-                return True
-
-        return False
-
-    def create(self, authenticator: UserAuthenticator, password: str):
-        """Creates the systen user record in the datastore.
-
-        Only one system user must exist in the datastore.
-
-        Args:
-            authenticator (UserAuthenticator): The authenticator object to use
-                to establish a password-based authentication.
-            password (str): The password to use for authentication.
-
-        Raises:
-            FailedCreateQueryException: If an error occurs in the datastore.
-        """
-        system_user_record = UserModel(
-            identifier=_SystemUser.IDENTIFIER,
-            name=_SystemUser.NAME,
-            password=password,
-            role=UserRole.SYSTEM,
-            state=UserState.ACTIVE,
-        )
-        authenticator.constitute_password_authentication(system_user_record)
-        self._ds.users().create_new_user(system_user_record)
-
-
 class UserManager:
     """Provides methods to manage application users."""
 
@@ -138,16 +84,214 @@ class UserManager:
         self._authenticator = authenticator
 
     def is_setup_complete(self) -> bool:
-        """Indicates whether the server bootstrap has been completed."""
-        return self.find_system_user_record() is not None
+        """Indicates whether the server bootstrap has been completed.
 
-    def find_system_user_record(self) -> UserModel | None:
-        """Returns the configured system user record, if one exists."""
+        Setup is complete when server settings exist, the system user has
+        been created, and at least one Administrator account is present
+        (in ACTIVE or RESET state).
+        """
+        try:
+            settings = self._ds.settings().find_server_settings()
+        except IncoherentDatastoreStateException:
+            return False
+
+        if settings is None:
+            return False
+
+        if not self._system_user_exists():
+            return False
+
+        return self._has_active_or_reset_administrator()
+
+    def _system_user_exists(self) -> bool:
         for user in self._ds.users().read_all():
             if user.role == UserRole.SYSTEM:
-                return user
+                return True
 
-        return None
+        return False
+
+    def _has_active_or_reset_administrator(self) -> bool:
+        for user in self._ds.users().read_all():
+            if (
+                user.role == UserRole.ADMINISTRATOR
+                and user.state in (UserState.ACTIVE, UserState.RESET)
+            ):
+                return True
+
+        return False
+
+    def _has_active_administrator(self) -> bool:
+        for user in self._ds.users().read_all():
+            if (
+                user.role == UserRole.ADMINISTRATOR
+                and user.state == UserState.ACTIVE
+            ):
+                return True
+
+        return False
+
+    def create_system_user(self, identifier: str, password: str):
+        """Creates the one-time system user for local administrative access.
+
+        The system user is never accessible over the network.
+
+        Args:
+            identifier (str): The unique identifier for the system user.
+            password (str): The plain-text password for the system user.
+
+        Raises:
+            UserManagementException: If the system user cannot be created.
+        """
+        if not identifier:
+            raise InvalidUserRequestException(
+                "System user identifier must not be empty"
+            )
+
+        if not password:
+            raise InvalidUserRequestException(
+                "System user password must not be empty"
+            )
+
+        if self._system_user_exists():
+            raise UserManagementException(
+                "A system user already exists. "
+                "The server has already been set up."
+            )
+
+        user_record = UserModel(
+            identifier=identifier,
+            name=SYSTEM_USER_NAME,
+            password=password,
+            role=UserRole.SYSTEM,
+            state=UserState.ACTIVE,
+        )
+        self._authenticator.constitute_password_authentication(user_record)
+        try:
+            self._ds.users().create_new_user(user_record)
+        except FailedCreateQueryException as ex:
+            raise UserInternalException(
+                f"Failed to create system user '{identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
+    def reset_user(self, identifier: str):
+        """Resets a user's credentials and places the account in RESET state.
+
+        The user record is stamped with the current shared-secret hash,
+        identical to the ONBOARDING flow. The affected user must re-establish
+        their credentials by running the client sign-up procedure using the
+        current shared secret before they can log in again.
+
+        Args:
+            identifier (str): The identifier of the user to reset.
+
+        Raises:
+            UserManagementException: If the user cannot be reset.
+        """
+        if not identifier:
+            raise InvalidUserRequestException(
+                "Cannot reset user. User identifier must not be empty"
+            )
+
+        user_record = self._ds.users().find_by_identifier(identifier)
+        if user_record is None:
+            raise UserNotFoundException(
+                f"Cannot reset user '{identifier}'. User does not exist."
+            )
+
+        if user_record.role == UserRole.SYSTEM:
+            raise UserStateException(
+                "The system user password cannot be reset through this "
+                "command. To recover a lost system user password, the "
+                "stored credential must be updated directly in the database."
+            )
+
+        settings = self._ds.settings().find_server_settings()
+        user_record.password = settings.shared_secret
+        user_record._state = UserState.RESET  # pylint: disable=protected-access
+        self._authenticator.constitute_password_authentication(user_record)
+        try:
+            self._ds.users().update(user_record)
+        except FailedUpdateQueryException as ex:
+            raise UserInternalException(
+                f"Failed to reset user '{identifier}'. "
+                "An internal error has occurred."
+            ) from ex
+
+    def rotate_shared_secret(self, new_secret: str):
+        """Replaces the organisation's shared signup secret.
+
+        Existing active users are unaffected. Users in ONBOARDING or RESET
+        state who were stamped with the previous secret will no longer be
+        able to complete sign-up and must be reset again to receive the
+        updated secret.
+
+        Args:
+            new_secret (str): The new shared secret to set.
+
+        Raises:
+            UserManagementException: If the secret cannot be updated.
+        """
+        if not new_secret:
+            raise InvalidUserRequestException(
+                "Shared secret must not be empty"
+            )
+
+        settings = self._ds.settings().find_server_settings()
+        settings.shared_secret = new_secret
+        try:
+            self._ds.settings().update(settings)
+        except FailedUpdateQueryException as ex:
+            raise UserInternalException(
+                "Failed to update shared secret. "
+                "An internal error has occurred."
+            ) from ex
+
+    def create_initial_admin(self, identifier: str, password: str):
+        """Creates the first active Administrator during server setup.
+
+        This method bypasses the normal onboarding flow and creates an
+        immediately active Administrator. It must only be called once
+        during the initial setup procedure.
+
+        Args:
+            identifier (str): The unique identifier for the administrator.
+            password (str): The plain-text password for the administrator.
+
+        Raises:
+            UserManagementException: If the administrator cannot be created.
+        """
+        if not identifier:
+            raise InvalidUserRequestException(
+                "Administrator identifier must not be empty"
+            )
+
+        if not password:
+            raise InvalidUserRequestException(
+                "Administrator password must not be empty"
+            )
+
+        if self._ds.users().find_by_identifier(identifier) is not None:
+            raise UserAlreadyExistsException(
+                f"Cannot create administrator '{identifier}'. "
+                "User already exists"
+            )
+
+        user_record = UserModel(
+            identifier=identifier,
+            name=identifier,
+            password=password,
+            role=UserRole.ADMINISTRATOR,
+            state=UserState.ACTIVE,
+        )
+        self._authenticator.constitute_password_authentication(user_record)
+        try:
+            self._ds.users().create_new_user(user_record)
+        except FailedCreateQueryException as ex:
+            raise UserInternalException(
+                f"Failed to create initial administrator '{identifier}'. "
+                "An internal error has occurred."
+            ) from ex
 
     def get_user_role(self, identifier: str) -> UserRole:
         """Resolves the stored role of a managed user."""
@@ -156,37 +300,6 @@ class UserManager:
             raise UserNotFoundException(f"User '{identifier}' does not exist")
 
         return user.role
-
-    def create_system_user(self, user: User):
-        """Creates the one-time system user for the server bootstrap.
-        
-        Args:
-            user (User): The User object representing the system user to create.
-
-        Raises:
-            UserManagementException: If the system user cannot be created.
-        """
-        TypeCheck.require_arg(user.password, str)
-        if not user.password:
-            raise InvalidUserRequestException("User password must not be empty")
-
-        system_user = _SystemUser()
-        if system_user.exists():
-            raise UserManagementException("The server has already been set up")
-
-        try:
-            system_user.create(self._authenticator, user.password)
-        except FailedCreateQueryException as ex:
-            raise UserInternalException(
-                f"Failed to create system user '{_SystemUser.IDENTIFIER}'. "
-                "An internal error has occurred."
-            ) from ex
-
-        user.identifier = _SystemUser.IDENTIFIER
-        user.name = _SystemUser.NAME
-        user.password = ""
-        user.is_admin = True
-        user.state = UserState.ACTIVE
 
     def create_user(self, user: User):
         """Creates a new Fathom user on the server.
@@ -277,7 +390,7 @@ class UserManager:
         if user_record is None:
             raise UserNotFoundException(f"User '{identifier}' does not exist")
 
-        if user_record.state != UserState.ONBOARDING:
+        if user_record.state not in (UserState.ONBOARDING, UserState.RESET):
             raise UserStateException(
                 f"User '{identifier}' has already been initialized"
             )
@@ -353,6 +466,11 @@ class UserManager:
                 f"User '{user.identifier}' does not exist"
             )
 
+        if user_record.role == UserRole.SYSTEM:
+            raise UserStateException(
+                "Cannot get permissions of a system user"
+            )
+
         permission = self._ds.users().find_permission(user_record)
         return str(permission.allow_overwrite)
 
@@ -385,9 +503,9 @@ class UserManager:
                 f"User '{user.identifier}' does not exist"
             )
 
-        if user_record.is_system_user():
+        if user_record.role == UserRole.SYSTEM:
             raise UserStateException(
-                "Permissions of the system user cannot be changed"
+                "Permissions of a system user cannot be changed"
             )
 
         permission = self._ds.users().find_permission(user_record)
@@ -410,12 +528,14 @@ class UserManager:
                 "An internal error has occurred."
             ) from ex
 
-    def delete_user(self, user: User):
+    def delete_user(self, user: User, requesting_user_id: str = ""):
         """Deletes the Fathom user and associated records.
 
         Args:
             user (User): The base User object which represents the Fathom
                 user to delete from the server backend.
+            requesting_user_id (str): The identifier of the user making
+                the deletion request. Used to enforce self-deletion invariant.
 
         Raises:
             UserManagementException: If the given user is invalid or could
@@ -438,12 +558,34 @@ class UserManager:
             if user_record.role == UserRole.SYSTEM:
                 raise UserStateException("The system user cannot be deleted")
 
+            if requesting_user_id and user.identifier == requesting_user_id:
+                raise UserStateException(
+                    f"User '{user.identifier}' cannot delete themselves"
+                )
+
+            if user_record.role == UserRole.ADMINISTRATOR:
+                self._ensure_not_last_administrator(user.identifier)
+
             self._ds.users().delete_by_identifier(user.identifier)
         except FailedDeleteQueryException as ex:
             raise UserInternalException(
                 f"Failed to delete user '{user.identifier}'. "
                 "An internal error has occurred."
             ) from ex
+
+    def _ensure_not_last_administrator(self, identifier: str):
+        remaining_admin_count = sum(
+            1
+            for u in self._ds.users().read_all()
+            if u.role == UserRole.ADMINISTRATOR
+            and u.state in (UserState.ACTIVE, UserState.RESET)
+            and str(u.identifier) != identifier
+        )
+        if remaining_admin_count == 0:
+            raise UserStateException(
+                f"Cannot delete administrator '{identifier}'. "
+                "At least one active administrator must remain."
+            )
 
     def _convert_bool_permission_value(self, permission_key, value):
         normalized_value = value.upper()

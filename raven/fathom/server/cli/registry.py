@@ -17,23 +17,11 @@
 from raven.fathom.server.cli.arguments import AppArgs
 from raven.fathom.server.cli.arguments import AppCommand
 from raven.fathom.server.cli.command import ServerCommand
-from raven.fathom.server.cli.command import ServerManagementCommand
-from raven.fathom.server.cli.project import ProjectCreateCommand
-from raven.fathom.server.cli.project import ProjectDeleteCommand
-from raven.fathom.server.cli.project import ProjectListCommand
+from raven.fathom.server.cli.reset import ResetSharedSecretCommand
+from raven.fathom.server.cli.reset import ResetUserCommand
 from raven.fathom.server.cli.serve import ServeCommand
 from raven.fathom.server.cli.setup import SetupCommand
-from raven.fathom.server.cli.user import UserCreateCommand
-from raven.fathom.server.cli.user import UserDeleteCommand
-from raven.fathom.server.cli.user import UserListCommand
-from raven.fathom.server.cli.user import UserPermissionGetCommand
-from raven.fathom.server.cli.user import UserPermissionSetCommand
 from raven.fathom.server.core.logging import Logger
-from raven.fathom.server.core.user_management import UserManager
-from raven.fathom.server.security import UserAuthenticator
-
-
-# pylint: disable=too-many-branches
 
 
 LOG = Logger.get()
@@ -60,49 +48,11 @@ def create_command(args: AppArgs) -> ServerCommand:
     if args.command == AppCommand.SETUP:
         return SetupCommand(args)
 
-    if args.command == AppCommand.USER:
-        if args.user_command == AppCommand.CREATE:
-            return ServerManagementCommand(
-                UserCreateCommand(
-                    args, UserManager(UserAuthenticator())
-                )
-            )
-        if args.user_command == AppCommand.LIST:
-            return ServerManagementCommand(
-                UserListCommand(
-                    args, UserManager(UserAuthenticator())
-                )
-            )
-        if args.user_command == AppCommand.DELETE:
-            return ServerManagementCommand(
-                UserDeleteCommand(
-                    args, UserManager(UserAuthenticator())
-                )
-            )
-        if args.user_command == AppCommand.PERMISSION:
-            if args.user_permission_command == AppCommand.GET:
-                return ServerManagementCommand(
-                    UserPermissionGetCommand(
-                        args, UserManager(UserAuthenticator())
-                    )
-                )
-            if args.user_permission_command == AppCommand.SET:
-                return ServerManagementCommand(
-                    UserPermissionSetCommand(
-                        args, UserManager(UserAuthenticator())
-                    )
-                )
-
-        raise ValueError(f"Invalid user command '{args.user_command}'")
-
-    if args.command == AppCommand.PROJECT:
-        if args.project_command == AppCommand.CREATE:
-            return ServerManagementCommand(ProjectCreateCommand(args))
-        if args.project_command == AppCommand.LIST:
-            return ServerManagementCommand(ProjectListCommand(args))
-        if args.project_command == AppCommand.DELETE:
-            return ServerManagementCommand(ProjectDeleteCommand(args))
-
-        raise ValueError(f"Invalid project command '{args.project_command}'")
+    if args.command == AppCommand.RESET:
+        if args.reset_subject == AppCommand.USER:
+            return ResetUserCommand(args)
+        if args.reset_subject == AppCommand.SHARED_SECRET:
+            return ResetSharedSecretCommand(args)
+        raise ValueError(f"Invalid reset subject '{args.reset_subject}'")
 
     raise ValueError(f"Invalid command '{args.command}'")

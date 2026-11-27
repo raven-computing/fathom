@@ -36,6 +36,10 @@ class Settings(Model):
         """The shared secret of the organisation."""
         return self._shared_secret
 
+    @shared_secret.setter
+    def shared_secret(self, value: str):
+        self._shared_secret = value
+
     @property
     def active(self) -> bool:
         """Indicates whether this settings record is active."""

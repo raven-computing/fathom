@@ -121,6 +121,38 @@ class TestAppArgs(TestCase):
         self.assertEqual(args.manage_command, "create")
         self.assertEqual(args.user_identifier, "user2")
         self.assertEqual(args.user_name, "User Two")
+        self.assertFalse(args.user_is_admin)
+
+    def test_manage_user_create_admin_flag_is_parsed(self):
+        args = parse_args([
+            "fathom", "manage", "user", "create", "admin2", "--admin",
+        ])
+        self.assertEqual(args.manage_command, "create")
+        self.assertEqual(args.user_identifier, "admin2")
+        self.assertTrue(args.user_is_admin)
+
+    def test_manage_user_permission_get_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "user", "permission", "get",
+            "user2", "allow_overwrite",
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "user")
+        self.assertEqual(args.manage_command, "get")
+        self.assertEqual(args.user_identifier, "user2")
+        self.assertEqual(args.permission_key, "allow_overwrite")
+
+    def test_manage_user_permission_set_is_recognized(self):
+        args = parse_args([
+            "fathom", "manage", "user", "permission", "set",
+            "user2", "allow_overwrite", "ON",
+        ])
+        self.assertEqual(args.command, "manage")
+        self.assertEqual(args.manage_subject, "user")
+        self.assertEqual(args.manage_command, "set")
+        self.assertEqual(args.user_identifier, "user2")
+        self.assertEqual(args.permission_key, "allow_overwrite")
+        self.assertEqual(args.permission_value, "ON")
 
     def test_setup_user_command_is_recognized(self):
         args = parse_args(["fathom", "setup", "user", "user2"])

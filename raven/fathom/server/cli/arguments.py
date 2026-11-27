@@ -46,21 +46,11 @@ class AppCommand(StrEnum):
 
     SETUP = "setup"
 
+    RESET = "reset"
+
     USER = "user"
 
-    PROJECT = "project"
-
-    CREATE = "create"
-
-    LIST = "list"
-
-    DELETE = "delete"
-
-    PERMISSION = "permission"
-
-    GET = "get"
-
-    SET = "set"
+    SHARED_SECRET = "shared-secret"
 
 
 @dataclass(frozen=True)
@@ -85,27 +75,9 @@ class AppArgs:
 
     command: AppCommand = AppCommand.SERVE
 
-    user_command: AppCommand = AppCommand.UNSPECIFIED
+    reset_subject: AppCommand = AppCommand.UNSPECIFIED
 
-    project_command: AppCommand = AppCommand.UNSPECIFIED
-
-    user_permission_command: AppCommand = AppCommand.UNSPECIFIED
-
-    user_identifier: str = ""
-
-    user_name: str = ""
-
-    user_is_admin: bool = False
-
-    project_identifier: str = ""
-
-    project_name: str = ""
-
-    project_description: str = ""
-
-    user_permission_key: str = ""
-
-    user_permission_value: str = ""
+    reset_user_identifier: str = ""
 
     ready_event: Optional[Event] = None
 
@@ -204,148 +176,34 @@ def parse_args(argv: list[str]) -> AppArgs:
              "This step is interactive."
     )
 
-    user_parser = subparsers.add_parser(
+    reset_parser = subparsers.add_parser(
+        str(AppCommand.RESET),
+        help="Perform a local administrative reset operation. "
+             "Requires authentication as the system user."
+    )
+    reset_subparsers = reset_parser.add_subparsers(
+        dest="reset_subject",
+        required=True,
+        metavar="<SUBJECT>",
+    )
+
+    reset_user = reset_subparsers.add_parser(
         str(AppCommand.USER),
-        help="Manage dedicated application users. This command requires you "
-             "to authenticate and have administrative privileges."
+        help="Reset a user's credentials. The user will be placed in RESET "
+             "state and must re-establish their password via the client "
+             "sign-up procedure using the current shared secret."
     )
-    user_subparsers = user_parser.add_subparsers(
-        dest="user_command",
-        required=True,
-        metavar="<USER_COMMAND>",
-    )
-
-    user_create = user_subparsers.add_parser(
-        str(AppCommand.CREATE),
-        help=f"Create a {APPLICATION_NAME} user that a client can use "
-             "to connect to this server."
-    )
-    user_create.add_argument(
+    reset_user.add_argument(
         "identifier",
         metavar="<IDENTIFIER>",
-        help="The unique identifier of the user to create."
-    )
-    user_create.add_argument(
-        "--name",
-        default="",
-        metavar="<NAME>",
-        help="The human-readable display name of the user."
-    )
-    user_create.add_argument(
-        "--admin",
-        action="store_true",
-        default=False,
-        help="Create the user with administrator permissions."
+        help="The unique identifier of the user whose credentials to reset."
     )
 
-    user_subparsers.add_parser(
-        str(AppCommand.LIST),
-        help="List all users that are mananged "
-            f"by this {APPLICATION_NAME} server."
-    )
-
-    user_delete = user_subparsers.add_parser(
-        str(AppCommand.DELETE),
-        help=f"Delete a user from this {APPLICATION_NAME} server."
-    )
-    user_delete.add_argument(
-        "identifier",
-        metavar="<IDENTIFIER>",
-        help="The unique identifier of the user to delete."
-    )
-
-    permission_parser = user_subparsers.add_parser(
-        str(AppCommand.PERMISSION),
-        help=f"Manage permissions for a {APPLICATION_NAME} user."
-    )
-    permission_subparsers = permission_parser.add_subparsers(
-        dest="user_permission_command",
-        required=True,
-        metavar="<COMMAND>",
-    )
-    permission_get = permission_subparsers.add_parser(
-        str(AppCommand.GET),
-        help="Show the current value of a permission for a user."
-    )
-    permission_get.add_argument(
-        "identifier",
-        metavar="<IDENTIFIER>",
-        help="The unique identifier of the user whose permission to get."
-    )
-    permission_get.add_argument(
-        "permission",
-        choices=("allow_overwrite",),
-        metavar="<PERMISSION>",
-        help="The key of the permission to get."
-    )
-    permission_set = permission_subparsers.add_parser(
-        str(AppCommand.SET),
-        help="Set a permission for a user."
-    )
-    permission_set.add_argument(
-        "identifier",
-        metavar="<IDENTIFIER>",
-        help="The unique identifier of the user whose permission to set."
-    )
-    permission_set.add_argument(
-        "permission",
-        choices=("allow_overwrite",),
-        metavar="<PERMISSION>",
-        help="The key of the permission to set."
-    )
-    permission_set.add_argument(
-        "value",
-        metavar="<VALUE>",
-        help="The permission value."
-    )
-
-    project_parser = subparsers.add_parser(
-        str(AppCommand.PROJECT),
-        help="Manage deployable projects."
-    )
-    project_subparsers = project_parser.add_subparsers(
-        dest="project_command",
-        required=True,
-        metavar="<PROJECT_COMMAND>",
-    )
-
-    project_create = project_subparsers.add_parser(
-        str(AppCommand.CREATE),
-        help="Create a project that is managed "
-            f"by this {APPLICATION_NAME} server."
-    )
-    project_create.add_argument(
-        "identifier",
-        metavar="<IDENTIFIER>",
-        help="The unique identifier of the project to create."
-    )
-    project_create.add_argument(
-        "--name",
-        default="",
-        metavar="<NAME>",
-        help="The human-readable display name of the project."
-    )
-    project_create.add_argument(
-        "--description",
-        default="",
-        metavar="<DESCRIPTION>",
-        help="The human-readable description of the project."
-    )
-
-    project_subparsers.add_parser(
-        str(AppCommand.LIST),
-        help="List all projects that are managed "
-            f"by this {APPLICATION_NAME} server."
-    )
-
-    project_delete = project_subparsers.add_parser(
-        str(AppCommand.DELETE),
-        help=f"Delete a project from this {APPLICATION_NAME} server."
-    )
-    project_delete.add_argument(
-        "identifier",
-        metavar="<IDENTIFIER>",
-        help="The unique identifier of the project to delete."
+    reset_subparsers.add_parser(
+        str(AppCommand.SHARED_SECRET),
+        help="Rotate the organisation's shared signup secret. "
+             "Users who are currently in ONBOARDING or RESET state will "
+             "need their credentials reset again to receive the new secret."
     )
 
     parser.add_version_argument()
@@ -365,27 +223,10 @@ def parse_args(argv: list[str]) -> AppArgs:
             if args.command is None
             else AppCommand(args.command)
         ),
-        user_command=AppCommand(
-            getattr(args, "user_command", str(AppCommand.UNSPECIFIED))
+        reset_subject=AppCommand(
+            getattr(args, "reset_subject", str(AppCommand.UNSPECIFIED))
         ),
-        project_command=AppCommand(
-            getattr(args, "project_command", str(AppCommand.UNSPECIFIED))
-        ),
-        user_permission_command=AppCommand(
-            getattr(
-                args,
-                "user_permission_command",
-                str(AppCommand.UNSPECIFIED),
-            )
-        ),
-        user_identifier=getattr(args, "identifier", ""),
-        user_name=getattr(args, "name", ""),
-        user_is_admin=getattr(args, "admin", False),
-        project_identifier=getattr(args, "identifier", ""),
-        project_name=getattr(args, "name", ""),
-        project_description=getattr(args, "description", ""),
-        user_permission_key=getattr(args, "permission", ""),
-        user_permission_value=getattr(args, "value", ""),
+        reset_user_identifier=getattr(args, "identifier", ""),
         ready_event=ready_event,
         shutdown_event=shutdown_event,
     )

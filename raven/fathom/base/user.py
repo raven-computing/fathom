@@ -27,6 +27,8 @@ class UserState(StrEnum):
 
     INACTIVE = "inactive"
 
+    RESET = "reset"
+
 
 @dataclass
 class User:

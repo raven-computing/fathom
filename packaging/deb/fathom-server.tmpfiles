@@ -1,0 +1,5 @@
+d /var/lib/fathom-server 0750 fathom fathom -
+d /var/lib/fathom-server/ds 0750 fathom fathom -
+d /var/lib/fathom-server/logs 0750 fathom fathom -
+d /var/lib/fathom-server/site 0750 fathom fathom -
+d /var/lib/fathom-server/staging 0750 fathom fathom -

@@ -1,0 +1,179 @@
+#!/bin/sh
+
+set -eu;
+
+unset PYTHONHOME PYTHONPATH PIP_PREFIX PIP_TARGET PIP_USER;
+
+PACKAGE_ROOT="/usr/lib/fathom-server";
+RELEASE_ROOT="${PACKAGE_ROOT}/releases";
+STATE_ROOT="/var/lib/fathom-server";
+CONFIG_FILE="/etc/fathom-server/fathom.cfg";
+ENV_FILE="/etc/fathom-server/environment";
+CONSTRAINTS_FILE="/usr/share/fathom-server/python-dependencies.txt";
+WHEEL_DIR="/usr/share/fathom-server/wheels";
+RUNNING_MARKER="${STATE_ROOT}/.service-was-running";
+
+cleanup_stage="";
+
+cleanup() {
+  if [ -n "${cleanup_stage}" ] && [ -d "${cleanup_stage}" ]; then
+    rm -rf -- "${cleanup_stage}";
+  fi
+  if [ -f "${RUNNING_MARKER}" ] &&
+     [ -L "${PACKAGE_ROOT}/current" ] &&
+     command -v deb-systemd-invoke >/dev/null 2>&1; then
+    if deb-systemd-invoke start fathom-server.service; then
+      rm -f "${RUNNING_MARKER}";
+    fi
+  fi
+}
+
+trap cleanup EXIT;
+trap 'exit 1' HUP INT TERM;
+
+load_environment() {
+  if [ -r "${ENV_FILE}" ]; then
+    set -a;
+    # shellcheck disable=SC1090
+    . "${ENV_FILE}";
+    set +a;
+  fi
+}
+
+fail() {
+  echo "fathom-server: $*" >&2;
+  exit 1;
+}
+
+case "${1:-}" in
+  configure)
+  getent group fathom >/dev/null 2>&1 || \
+      addgroup --quiet --system fathom;
+  getent passwd fathom >/dev/null 2>&1 || \
+      adduser --quiet --system --ingroup fathom --home "${STATE_ROOT}" \
+          --no-create-home fathom;
+
+  install -d -o fathom -g fathom -m 0750 \
+      "${STATE_ROOT}" \
+      "${STATE_ROOT}/ds" \
+      "${STATE_ROOT}/logs" \
+      "${STATE_ROOT}/site" \
+      "${STATE_ROOT}/staging";
+  install -d -o root -g root -m 0755 "${RELEASE_ROOT}";
+
+  [ -x /usr/bin/python3 ] || fail "/usr/bin/python3 is not available";
+  /usr/bin/python3 -c \
+      'import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)' \
+      || fail "Python 3.11 or newer is required";
+  [ -r "${CONSTRAINTS_FILE}" ] ||
+      fail "missing dependency constraints: ${CONSTRAINTS_FILE}";
+  base_wheels="$(
+    find "${WHEEL_DIR}" -maxdepth 1 -type f \
+        -name 'raven_fathom_base-*.whl' -print
+  )";
+  server_wheels="$(
+    find "${WHEEL_DIR}" -maxdepth 1 -type f \
+        -name 'raven_fathom_server-*.whl' -print
+  )";
+  [ "$(printf '%s\n' "${base_wheels}" | sed '/^$/d' | wc -l)" -eq 1 ] ||
+      fail "expected exactly one Fathom base wheel";
+  [ "$(printf '%s\n' "${server_wheels}" | sed '/^$/d' | wc -l)" -eq 1 ] ||
+      fail "expected exactly one Fathom server wheel";
+
+  load_environment;
+  unset PYTHONHOME PYTHONPATH PIP_PREFIX PIP_TARGET PIP_USER;
+  PIP_CONFIG_FILE=/dev/null;
+  export PIP_CONFIG_FILE;
+
+  package_version="$(
+    dpkg-query -W -f='${Version}' fathom-server 2>/dev/null || true
+  )";
+  [ -n "${package_version}" ] || fail "cannot determine package version";
+  release_id="$(
+    printf '%s' "${package_version}" |
+        tr ':/+~' '-----' |
+        tr -cd 'A-Za-z0-9._-'
+  )";
+  python_tag="$(
+    /usr/bin/python3 -c \
+        'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'
+  )";
+
+  cleanup_stage="$(
+    mktemp -d \
+        "${RELEASE_ROOT}/${release_id}-py${python_tag}.XXXXXX"
+  )";
+  chmod 0755 "${cleanup_stage}";
+  /usr/bin/python3 -m venv "${cleanup_stage}" ||
+      fail "could not create the private Fathom virtual environment";
+
+  "${cleanup_stage}/bin/python" -m pip install \
+      --disable-pip-version-check \
+      --no-cache-dir \
+      --only-binary=:all: \
+      --no-index \
+      --no-deps \
+      "${base_wheels}" ||
+      fail "Fathom base wheel installation failed; the previous release is unchanged";
+
+  "${cleanup_stage}/bin/python" -m pip install \
+      --disable-pip-version-check \
+      --no-cache-dir \
+      --only-binary=:all: \
+      --constraint "${CONSTRAINTS_FILE}" \
+      "${server_wheels}" ||
+      fail "Fathom server installation failed; the previous release is unchanged";
+
+  A_FATHOM_HOME="${STATE_ROOT}" \
+      "${cleanup_stage}/bin/fathom-server" \
+      --config-file "${CONFIG_FILE}" \
+      -# >/dev/null ||
+      fail "the newly installed Fathom entry point failed validation";
+
+  previous_target="";
+  if [ -L "${PACKAGE_ROOT}/current" ]; then
+    previous_target="$(readlink "${PACKAGE_ROOT}/current")";
+  fi
+  new_target="${cleanup_stage}";
+  link_stage="${PACKAGE_ROOT}/.current.$$";
+  rm -f "${link_stage}";
+  ln -s "${new_target}" "${link_stage}";
+  mv -Tf "${link_stage}" "${PACKAGE_ROOT}/current";
+  cleanup_stage="";
+
+  if [ -f "${RUNNING_MARKER}" ]; then
+    rm -f "${RUNNING_MARKER}";
+    if [ -d /run/systemd/system ]; then
+      systemctl daemon-reload;
+    fi
+    if ! deb-systemd-invoke start fathom-server.service; then
+      if [ -n "${previous_target}" ]; then
+        rm -f "${PACKAGE_ROOT}/current";
+        ln -s "${previous_target}" "${PACKAGE_ROOT}/current";
+        deb-systemd-invoke start fathom-server.service || true;
+        rm -rf -- "${new_target}";
+      fi
+      fail "the upgraded service did not start; the previous release was restored";
+    fi
+  else
+    echo "fathom-server: Python runtime installed successfully.";
+    echo "fathom-server: Run initial setup as the fathom service account:";
+    echo "  sudo -u fathom /usr/bin/fathom-server setup";
+    echo "";
+    echo "fathom-server: Once setup is complete, enable and start the service:";
+    echo "  systemctl enable --now fathom-server.service";
+  fi
+
+  for candidate in "${RELEASE_ROOT}"/*; do
+    [ -d "${candidate}" ] || continue;
+    if [ "${candidate}" != "${new_target}" ] &&
+       [ "${candidate}" != "${previous_target}" ]; then
+      rm -rf -- "${candidate}";
+    fi
+  done
+  ;;
+esac
+
+#DEBHELPER#
+
+exit 0;

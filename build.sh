@@ -10,19 +10,22 @@ ${USAGE}
 
 Options:
 
-  [--clean]         Remove the build data and related files and then exit.
+  [--clean]          Remove the build data and related files and then exit.
 
-  [--docs]          Build the documentation and then exit.
+  [--docs]           Build the documentation and then exit.
 
-  [--isolated]      Execute the entire build process in an isolated Docker container.
+  [--isolated]       Execute the entire build process in an isolated Docker container.
 
-  [--no-virtualenv] Do not use a virtual environment for the build.
+  [--native-package] Build a native installable package. Currently only Debian
+                     (.deb) packages are supported.
 
-  [--skip-tests]    Do not run unit tests.
+  [--no-virtualenv]  Do not use a virtual environment for the build.
 
-  [--verbose]       Enable verbose output. This will show additional information on the screen.
+  [--skip-tests]     Do not run unit tests.
 
-  [-?|--help]       Show this help message.
+  [--verbose]        Enable verbose output. This will show additional information on the screen.
+
+  [-?|--help]        Show this help message.
 
 EOS
 )
@@ -31,6 +34,7 @@ EOS
 ARG_CLEAN=false;
 ARG_DOCS=false;
 ARG_ISOLATED=false;
+ARG_NATIVE_PACKAGE=false;
 ARG_NO_VIRTUALENV=false;
 ARG_SKIP_TESTS=false;
 ARG_VERBOSE=false;
@@ -61,6 +65,11 @@ for arg in "$@"; do
     ;;
     --no-virtualenv)
     ARG_NO_VIRTUALENV=true;
+    shift
+    ;;
+    --native-package)
+    ARG_NATIVE_PACKAGE=true;
+    ARGS_ISOLATED+=($arg);
     shift
     ;;
     --skip-tests)
@@ -207,5 +216,15 @@ if (( $? != 0 )); then
   logE "Failed to build server distribution packages";
   exit 1;
 fi
+
+
+if [[ $ARG_NATIVE_PACKAGE == true ]]; then
+  logI "Building Debian native installable package";
+  if ! bash packaging/build.sh --wheel-dir "${_DIST_DIRECTORY}"; then
+    logE "Failed to build Debian native package";
+    exit 1;
+  fi
+fi
+
 logI "Build successful";
 exit 0;

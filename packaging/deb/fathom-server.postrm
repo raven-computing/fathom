@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -eu;
+
+PACKAGE_ROOT="/usr/lib/fathom-server";
+STATE_ROOT="/var/lib/fathom-server";
+
+case "${1:-}" in
+  remove)
+  rm -rf -- "${PACKAGE_ROOT}/releases";
+  rm -f -- "${PACKAGE_ROOT}/current";
+  ;;
+  purge)
+  rm -rf -- "${PACKAGE_ROOT}" "${STATE_ROOT}";
+  if command -v deluser >/dev/null 2>&1 &&
+    getent passwd fathom >/dev/null 2>&1; then
+    deluser --quiet --system fathom || true;
+  fi
+  ;;
+esac
+
+#DEBHELPER#
+
+exit 0;

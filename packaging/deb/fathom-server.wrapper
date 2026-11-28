@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eu;
+
+unset PYTHONHOME PYTHONPATH;
+
+RUNTIME="/usr/lib/fathom-server/current/bin/fathom-server";
+CONFIG_FILE="/etc/fathom-server/fathom.cfg";
+STATE_ROOT="/var/lib/fathom-server";
+
+A_FATHOM_HOME="${STATE_ROOT}";
+export A_FATHOM_HOME;
+
+if [ ! -x "${RUNTIME}" ]; then
+  echo "fathom-server: the private Python runtime is not installed." >&2;
+  echo "fathom-server: retry 'dpkg --configure fathom-server'." >&2;
+  exit 1;
+fi
+
+exec "${RUNTIME}" --working-directory "${STATE_ROOT}" --config-file "${CONFIG_FILE}" "$@";

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -eu;
+
+STATE_ROOT="/var/lib/fathom-server";
+RUNNING_MARKER="${STATE_ROOT}/.service-was-running";
+
+if [ "${1:-}" = "upgrade" ] &&
+  command -v systemctl >/dev/null 2>&1 &&
+  systemctl is-active --quiet fathom-server.service; then
+  install -d -o fathom -g fathom -m 0750 "${STATE_ROOT}";
+  touch "${RUNNING_MARKER}";
+  chown fathom:fathom "${RUNNING_MARKER}";
+fi
+
+#DEBHELPER#
+
+exit 0;

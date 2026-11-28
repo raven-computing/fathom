@@ -1,0 +1,4 @@
+# Fathom server third-party Python dependencies.
+CherryPy==18.10.0
+jsonschema==4.26.0
+peewee==4.4.0

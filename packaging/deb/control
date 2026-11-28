@@ -1,0 +1,24 @@
+Source: fathom-server
+Section: net
+Priority: optional
+Maintainer: Raven Computing <info@raven-computing.com>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.2
+Homepage: https://raven-computing.com
+Rules-Requires-Root: no
+
+Package: fathom-server
+Architecture: all
+Pre-Depends: adduser
+Depends:
+ ca-certificates,
+ python3 (>= 3.11),
+ python3-venv,
+ ${misc:Depends}
+Description: Fathom documentation deployment server
+ Fathom is a server for receiving documentation deployments and publishing
+ them to managed filesystem locations.
+ .
+ This Debian meta-package bundles the Fathom base and server wheels, installs
+ them and their third-party Python dependencies in a private virtual
+ environment, and never modifies Debian's system Python environment.

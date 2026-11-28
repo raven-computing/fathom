@@ -1,0 +1,2 @@
+# Environment loaded by the systemd service and package upgrade scripts.
+A_FATHOM_HOME=/var/lib/fathom-server

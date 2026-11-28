@@ -1,0 +1,25 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=none
+
+override_dh_auto_build:
+	:
+
+override_dh_auto_install:
+	dh_install
+	test -n "$(FATHOM_DEBIAN_WHEEL_DIR)"
+	test -d "$(FATHOM_DEBIAN_WHEEL_DIR)"
+	install -D -m 0755 packaging/deb/fathom-server.wrapper \
+		debian/fathom-server/usr/bin/fathom-server
+	chmod 0755 debian/fathom-server/usr/bin/fathom-server
+	chmod 0600 debian/fathom-server/etc/fathom-server/environment
+	install -D -m 0644 packaging/deb/python-dependencies.txt \
+		debian/fathom-server/usr/share/fathom-server/python-dependencies.txt
+	install -d -m 0755 \
+		debian/fathom-server/usr/share/fathom-server/wheels
+	install -m 0644 "$(FATHOM_DEBIAN_WHEEL_DIR)"/*.whl \
+		debian/fathom-server/usr/share/fathom-server/wheels/
+
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
